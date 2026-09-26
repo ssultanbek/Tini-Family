@@ -6,6 +6,7 @@ import { familyPresentation } from '../familyPresentation.ts';
 import { store } from '../store.ts';
 import { frames, sheets } from './art.ts';
 import { crispText } from './crispText.ts';
+import type { MacHouse } from './mac.ts';
 
 type Character = { root: Phaser.GameObjects.Container; body: Phaser.GameObjects.Container; box: Phaser.GameObjects.Container; count: Phaser.GameObjects.Text;
   lens: Phaser.GameObjects.Graphics; state: Phaser.GameObjects.Text; speech?: { text: string; until: number } };
@@ -18,7 +19,7 @@ export class Family {
   private detach: () => void;
   private lastBubbles = '';
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  constructor(private scene: Phaser.Scene) {
+  constructor(private scene: Phaser.Scene, private mac?: MacHouse) {
     for (const actor of actors) this.characters[actor] = this.draw(actor);
     this.detach = animationQueues.attach((event, options) => this.animate(event, options));
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
@@ -154,6 +155,8 @@ export class Family {
           g.fillStyle(0xffc53d).fillCircle(x, y, F.spark.radius);
         }
         sparks.add(g);
+        // Point from the sparks to whatever the blocked path is on the Mac (e.g. ~/.ssh -> SSH keys).
+        this.mac?.aim(event.target, { x: c.root.x, y: c.root.y });
         try { await move(this.atSegment(event.segmentId), F.motion.bump); } finally { sparks.destroy(); }
         break;
       }

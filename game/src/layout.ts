@@ -2,7 +2,7 @@
 export const yardLayout = {
   width: 1100, height: 880,
   ground: { x: 280, y: 200, width: 540, height: 490 },
-  outside: { x: 550, y: 28 }, yardLabel: { x: 550, y: 258 },
+  outside: { x: 550, y: 20 }, yardLabel: { x: 550, y: 258 },
   gate: { x: 410, y: 690, width: 116, height: 30, labelY: 744 },
   path: { x: 386, y: 510, width: 48, height: 350 },
   house: { x: 438, y: 367, width: 224, height: 168, labelY: 310, countY: 572,
@@ -19,9 +19,15 @@ export const yardLayout = {
   ],
   fence: { length: 240, tileScale: 3, glowPad: 10, thickness: 24, postWidth: 12, postHeight: 40, postStep: 28,
     dash: 16, dashGap: 10, stroke: 3, railGap: 6, nailSize: 3, shake: 2 },
-  sign: { width: 254, height: 130, padding: 12, titleY: -47, detailY: -6, statusY: 43, shadow: 4 },
+  sign: { width: 268, height: 130, padding: 12, titleY: -47, detailY: -6, statusY: 43, shadow: 4 },
   grass: { step: 44, blade: 4, offset: 14 },
   tileScale: 3,
+  // "Your Mac" house: a strip added left of the old canvas (world x < 0), so every yard position stays put.
+  mac: { strip: 290, x: -272, width: 252, titleY: 122, titleHeight: 82, roomsY: 180, roomHeight: 128, roomGap: 12,
+    tile: 36, icon: 50, iconX: 42, labelX: 78, labelY: -17, lockY: 21, outline: 6,
+    titleSize: 32, subtitleSize: 20, labelSize: 25, lockSize: 20,
+    flashMs: 1800, dot: { step: 16, radius: 4 } },
+  hedge: { step: 30, size: 44, jitter: 6 },
   // Decorative Kenney props outside the fence; kept clear of every sign, label and the path.
   decor: [
     { frame: 16, x: 40, y: 70 }, { frame: 28, x: 110, y: 40 }, { frame: 5, x: 190, y: 110 }, { frame: 28, x: 60, y: 170 },
@@ -30,8 +36,11 @@ export const yardLayout = {
     { frame: 16, x: 50, y: 720 }, { frame: 16, x: 130, y: 800 }, { frame: 28, x: 230, y: 740 }, { frame: 29, x: 300, y: 830 },
     { frame: 15, x: 1060, y: 720 }, { frame: 16, x: 980, y: 810 }, { frame: 5, x: 880, y: 760 }, { frame: 17, x: 520, y: 830 },
   ],
-  type: { small: 21, label: 25, heading: 28, font: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
+  type: { small: 23, label: 27, heading: 30, minFit: 17, font: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
 };
+/** The Phaser canvas: the old yard plus the Mac strip on its left. */
+export const canvasWidth = yardLayout.width + yardLayout.mac.strip;
+
 export const dashboardLayout = {
   '--page-width': '1440px', '--page-padding': '24px', '--gap': '20px',
   '--card-padding': '24px', '--radius': '14px', '--body-size': '18px',
@@ -42,11 +51,11 @@ export const dashboardLayout = {
 export const gameLayout = {
   ...dashboardLayout, '--page-width': '1800px', '--page-padding': '20px',
   '--card-padding': '20px', '--gap': '16px', '--yard-controls-width': '390px',
-  '--yard-min-width': '660px', '--yard-top': '16px', '--yard-aspect': `${yardLayout.width} / ${yardLayout.height}`,
+  '--yard-min-width': '660px', '--yard-top': '16px', '--yard-aspect': `${canvasWidth} / ${yardLayout.height}`,
 };
 
 export const familyLayout = {
-  homes: { tini: { x: 355, y: 610 }, tina: { x: 735, y: 350 }, dog: { x: 730, y: 445 } },
+  homes: { tini: { x: 355, y: 610 }, tina: { x: 760, y: 318 }, dog: { x: 730, y: 445 } },
   zones: { gate: { x: 410, y: 630 }, yard: { x: 550, y: 625 }, house: { x: 730, y: 445 }, outside: { x: 410, y: 820 } },
   approach: 66, bumpApproach: 26,
   body: { width: 44, height: 34, radius: 12, headY: -17, headRadius: 17, shadowY: 18, shadowWidth: 52, shadowHeight: 19,
@@ -54,7 +63,7 @@ export const familyLayout = {
     footX: 12, footY: 19, footWidth: 12, footHeight: 13, hatY: -32, hatWidth: 40, hatHeight: 9, bowX: 17, bowY: -30, bowRadius: 8 },
   sprite: { scale: 4, y: -6 },
   walk: { pixelsPerMs: 0.42, minMs: 180, maxMs: 900, stepMs: 150, hop: 7, sway: 4, minDistance: 3 },
-  nameY: 47, stateY: 76, nameSize: 25, stateSize: 23, labelPadding: 4,
+  nameY: 47, stateY: 78, nameSize: 27, stateSize: 24, labelPadding: 4,
   box: { x: 0, y: 9, width: 76, height: 40, textSize: 20, tapeWidth: 7 },
   inspection: { x: 30, y: -12, radius: 15, handle: 17, stroke: 5 },
   spark: { count: 8, distance: 39, radius: 5, stroke: 3 },

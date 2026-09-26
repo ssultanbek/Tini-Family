@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
-import { yardLayout, familyLayout } from '../layout.ts';
+import { yardLayout, familyLayout, canvasWidth } from '../layout.ts';
 import { store } from '../store.ts';
 import { familyPresentation } from '../familyPresentation.ts';
 
@@ -16,7 +16,7 @@ export function Yard() {
       if (cancelled || !host.current) return;
       game = new Phaser.Game({
         type: Phaser.AUTO, parent: host.current,
-        width: yardLayout.width, height: yardLayout.height,
+        width: canvasWidth, height: yardLayout.height,
         pixelArt: true, roundPixels: true, backgroundColor: '#d7dfcc',
         scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
         scene: [YardScene], audio: { noAudio: true },
@@ -30,9 +30,10 @@ export function Yard() {
     {error ? <p role="alert">{error} <a href="/?view=dashboard">Dashboard</a></p> : <div className="yard-stage">
       <div className="yard-canvas" ref={host} role="img" aria-label={description} />
       <div className="family-bubbles" aria-live="polite">{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}`} style={{
-        left: `${Math.max(familyLayout.bubble.edge, Math.min(yardLayout.width - familyLayout.bubble.edge, bubble.x)) / yardLayout.width * 100}%`,
+        // Bubble x is in yard coordinates; the canvas also shows the Mac strip to its left.
+        left: `${Math.max(familyLayout.bubble.edge, Math.min(canvasWidth - familyLayout.bubble.edge, bubble.x + yardLayout.mac.strip)) / canvasWidth * 100}%`,
         top: `${(bubble.y - familyLayout.bubble.offsetY) / yardLayout.height * 100}%`,
-        '--bubble-width': `${familyLayout.bubble.width / yardLayout.width * 100}%`,
+        '--bubble-width': `${familyLayout.bubble.width / canvasWidth * 100}%`,
         '--bubble-padding': `${familyLayout.bubble.padding}px`, '--bubble-font': `${familyLayout.bubble.fontSize}px`,
       } as CSSProperties}><strong>{bubble.actor === 'tini' ? 'Tini' : bubble.actor === 'tina' ? 'Tina' : 'Dog'}</strong><p>{bubble.text}</p></div>)}</div>
     </div>}

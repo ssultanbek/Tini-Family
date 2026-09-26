@@ -5,6 +5,7 @@ import { store } from '../store.ts';
 import { Family } from './Family.ts';
 import { fenceLook, frames, sheets } from './art.ts';
 import { crispText } from './crispText.ts';
+import { MacHouse } from './mac.ts';
 
 const styles: Record<SegmentStatus, { color: number; label: string; text: string }> = {
   planned: { color: 0x79858a, label: '○ Planned', text: '#42505a' },
@@ -23,6 +24,9 @@ export class YardScene extends Phaser.Scene {
   private epoch = -1;
   private bricks = -1;
   private family?: Family;
+  private mac?: MacHouse;
+  private hedge?: Phaser.GameObjects.Container;
+  private hedgeSignature = '';
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   constructor() { super('yard'); }
@@ -37,8 +41,11 @@ export class YardScene extends Phaser.Scene {
   }
 
   create() {
+    // The Mac strip lives at world x < 0, so the camera starts there and every yard position is unchanged.
+    this.cameras.main.setScroll(-L.mac.strip, 0);
     this.drawGround();
-    this.family = new Family(this);
+    this.mac = new MacHouse(this);
+    this.family = new Family(this, this.mac);
     this.redraw();
     const unsubscribe = store.subscribe(() => this.redraw());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -48,6 +55,9 @@ export class YardScene extends Phaser.Scene {
       this.tweens.killAll();
       this.segmentViews.clear();
       this.house = undefined;
+      this.mac = undefined;
+      this.hedge = undefined;
+      this.hedgeSignature = '';
       this.epoch = -1;
       this.bricks = -1;
     });
@@ -60,9 +70,9 @@ export class YardScene extends Phaser.Scene {
   private drawGround() {
     const size = sheets.tile * L.tileScale;
     for (let y = size / 2; y < L.height + size / 2; y += size) {
-      for (let x = size / 2; x < L.width + size / 2; x += size) {
+      for (let x = size / 2 - L.mac.strip; x < L.width + size / 2; x += size) {
         // Stable, hand-free variety: the same grass pattern on every load.
-        const n = (Math.floor(x / size) * 7 + Math.floor(y / size) * 13) % 23;
+        const n = ((Math.floor(x / size) * 7 + Math.floor(y / size) * 13) % 23 + 23) % 23;
         this.tile(x, y, n === 0 ? frames.grassFlowers : n < 5 ? frames.grassTuft : frames.grass);
       }
     }
@@ -88,6 +98,7 @@ export class YardScene extends Phaser.Scene {
       for (const view of this.segmentViews.values()) view.objects.forEach(object => object.destroy());
       this.segmentViews.clear();
       this.bricks = -1;
+      this.mac?.clear();
       this.epoch = state.epoch;
     }
     const ids = new Set(state.world.segments.map(segment => segment.id));
@@ -106,8 +117,34 @@ export class YardScene extends Phaser.Scene {
       if (!slot) return;
       this.segmentViews.set(segment.id, { signature, objects: this.drawSegment(segment, slot, instant) });
     });
+    this.drawHedge(state.world.segments.length);
     this.family?.sync(state.world, instant);
     if (this.bricks !== state.world.bricks) this.drawHouse(state.world);
+  }
+
+  /** Wrap sentences; shrink a single long word (like a folder path) instead of splitting it mid-word. */
+  private fitText(text: Phaser.GameObjects.Text, maxWidth: number) {
+    if (text.width <= maxWidth) return text;
+    if (/\s/.test(text.text.trim())) return text.setWordWrapWidth(maxWidth, true);
+    const size = parseFloat(String(text.style.fontSize));
+    return text.setFontSize(Math.max(L.type.minFit, Math.floor(size * maxWidth / text.width)));
+  }
+
+  /** A hedge seals every left-side slot (facing the Mac) that has no fence segment yet. */
+  private drawHedge(segmentCount: number) {
+    const open = L.slots.map((slot, index) => ({ slot, index })).filter(({ slot, index }) => slot.vertical && slot.x < L.width / 2 && index >= segmentCount);
+    const signature = open.map(({ index }) => index).join();
+    if (signature === this.hedgeSignature && this.hedge) return;
+    this.hedgeSignature = signature;
+    this.hedge?.destroy();
+    this.hedge = this.add.container(0, 0).setDepth(2);
+    const h = L.hedge, f = L.fence;
+    for (const { slot } of open) {
+      for (let d = -f.length / 2 + h.step / 2, i = 0; d <= f.length / 2 - h.step / 2 + 1; d += h.step, i++) {
+        // Slight alternating offset so it reads as a thick, living hedge rather than a row of stamps.
+        this.hedge.add(this.tile(slot.x + (i % 2 ? h.jitter : -h.jitter), slot.y + d, 5, h.size));
+      }
+    }
   }
 
   private drawSegment(segment: Segment, slot: typeof L.slots[number], instant: boolean) {
@@ -142,7 +179,7 @@ export class YardScene extends Phaser.Scene {
     plate.fillStyle(0xfffdf4).fillRect(-s.width / 2, -s.height / 2, s.width, s.height);
     plate.lineStyle(f.stroke, style.color).strokeRect(-s.width / 2, -s.height / 2, s.width, s.height);
     const title = this.text(0, s.titleY, segment.label, L.type.label, undefined, true);
-    const detail = this.text(0, s.detailY, segment.detail).setWordWrapWidth(s.width - s.padding * 2, true);
+    const detail = this.fitText(this.text(0, s.detailY, segment.detail), s.width - s.padding * 2);
     const status = this.text(0, s.statusY, style.label, L.type.small, style.text, true);
     sign.add([plate, title, detail, status]);
     // Snapshot/reset is a static redraw. Live status effects never queue or delay facts.
