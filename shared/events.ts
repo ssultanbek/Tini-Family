@@ -1,5 +1,5 @@
 // ============================================================================
-// TINI FAMILY EVENT CONTRACT  (v1)
+// TINI FAMILY EVENT CONTRACT  (v1.2)
 // Only Sultan edits this file. The game imports it; it never adds to it.
 // Engine -> game: "event" messages (EngineEvent) and one "snapshot" on connect.
 // Game -> engine: "command" messages (GameCommand). Clicks only, never decisions.
@@ -93,7 +93,8 @@ export type EngineEvent = Base & (
   | { type: "launch.locked"; reason: string }                          // new work since the last inspection; Tina must re-check before anything leaves
   | { type: "launch.done"; url?: string }
   | { type: "report.ready"; report: AccessReport }
-  | { type: "raw.log"; channel: "hook" | "config" | "sdk" | "scan"; text: string } // raw-view toggle only
+  | { type: "raw.log"; channel: "hook" | "config" | "sdk" | "scan" | "ai" | "engine"; text: string } // raw-view toggle only; "ai" = AI ladder, "engine" = ignored commands etc. (v1.2)
+  | { type: "prompt.suggested"; text: string }                        // v1.2: replay pre-fills the prompt bar; the presenter just presses Send
   | { type: "engine.error"; message: string }
 );
 
@@ -107,6 +108,7 @@ export type GameCommand =
   | { type: "escalation.choose"; escalationId: string; optionId: EscalationOption["id"] }
   | { type: "fix.apply"; findingId: string; fixId: string }
   | { type: "launch" }
+  | { type: "stop" }                        // v1.2: ends the running turn ("Stopped by you"); Tina still inspects
   | { type: "reset" };
 
 /** Everything the game needs to draw the world right now (sent on connect/reconnect). */
@@ -125,4 +127,5 @@ export interface WorldState {
   launchUnlocked: boolean;
   report: AccessReport | null;
   rawLog: string[];               // last 200 lines
+  suggestedPrompt?: string | null; // v1.2: pre-filled prompt text (replay); cleared by user.prompt
 }

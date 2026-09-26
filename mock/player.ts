@@ -54,8 +54,16 @@ export class Player {
     let lastTs: number | null = null;
     try {
       for (const line of lines) {
-        if (line.kind === "command") { await this.gate(line.command.type, run); continue; }
+        if (line.kind === "command") {
+          const c = line.command as GameCommand;
+          // v1.2: pre-fill the prompt bar with the recorded text before waiting for Send.
+          if (c.type === "start") this.send({ actor: "system", type: "prompt.suggested", text: c.prompt });
+          if (c.type === "prompt") this.send({ actor: "system", type: "prompt.suggested", text: c.text });
+          await this.gate(c.type, run);
+          continue;
+        }
         const ev = line.event as EngineEvent;
+        if (ev.type === "prompt.suggested") continue; // re-emitted from the commands above
         const gap = lastTs === null ? 0 : Math.min(ev.ts - lastTs, 4000); // cap dead air at 4s
         lastTs = ev.ts;
         await this.sleep(Math.max(0, gap), run);

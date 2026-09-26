@@ -8,6 +8,7 @@ const choice = (process.argv[2] ?? "narrow") as "narrow" | "all" | "deny";
 const sock = io(`http://localhost:${process.env.PORT ?? ENGINE_PORT}`);
 let state: WorldState | null = null;
 let lastSeq = 0;
+let suggested = 0; // v1.2: prompt.suggested before each prompt gate
 const send = (c: GameCommand) => sock.emit(SOCKET.command, c);
 
 sock.on(SOCKET.snapshot, (s: WorldState) => { state = s; lastSeq = s.seq; send({ type: "reset" }); });
@@ -15,6 +16,7 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.seq <= lastSeq && e.type !== "session.reset") return;
   if (e.seq !== lastSeq + 1 && e.type !== "session.reset") console.log(`!! gap: got #${e.seq} after #${lastSeq}`);
   lastSeq = e.seq; state = reduce(state!, e);
+  if (e.type === "prompt.suggested") suggested++;
   if (e.type === "session.phase" && e.phase === "idle") send({ type: "start", prompt: "Build a modern, serious-looking website for Rivera Construction." });
   if (e.type === "session.phase" && e.phase === "contract") send({ type: "approve.plan" });
   if (e.type === "escalation.opened") send({ type: "escalation.choose", escalationId: e.escalationId, optionId: choice });
@@ -26,9 +28,9 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.type === "launch.unlocked" && state!.turns.length === 3) {
     const s = state!;
     const ok = s.segments.every((g) => g.status === "green") && s.launchUnlocked && s.findings.length === 0
-      && s.phase === "ready" && s.turns.length === 3 && s.turns.every((t) => t.summary) && s.bricks === 16;
+      && s.phase === "ready" && s.turns.length === 3 && s.turns.every((t) => t.summary) && s.bricks === 16 && suggested === 3 && s.suggestedPrompt === null;
     console.log(`segments: ${s.segments.map((g) => g.id + "=" + g.status).join(", ")}`);
-    console.log(`turns=${s.turns.map((t) => t.id).join(",")} blocked=${s.blocked.length} bricks=${s.bricks} choice=${choice} -> ${ok ? "PASS" : "FAIL"}`);
+    console.log(`turns=${s.turns.map((t) => t.id).join(",")} blocked=${s.blocked.length} bricks=${s.bricks} suggested=${suggested} choice=${choice} -> ${ok ? "PASS" : "FAIL"}`);
     process.exit(ok ? 0 : 1);
   }
 });

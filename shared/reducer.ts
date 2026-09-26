@@ -5,7 +5,7 @@ import type { EngineEvent, Segment, WorldState } from "./events.ts";
 export function initialState(): WorldState {
   return {
     seq: 0, phase: "idle", prompt: null, turns: [], segments: [], contract: null, dog: "sleeping", bricks: 0,
-    blocked: [], openEscalation: null, findings: [], launchUnlocked: false, report: null, rawLog: [],
+    blocked: [], openEscalation: null, findings: [], launchUnlocked: false, report: null, rawLog: [], suggestedPrompt: null,
   };
 }
 
@@ -17,7 +17,8 @@ export function reduce(s: WorldState, e: EngineEvent): WorldState {
   switch (e.type) {
     case "session.reset": return { ...initialState(), seq: e.seq };
     case "session.phase": n.phase = e.phase; break;
-    case "user.prompt": n.prompt = e.text; break;
+    case "user.prompt": n.prompt = e.text; n.suggestedPrompt = null; break;
+    case "prompt.suggested": n.suggestedPrompt = e.text; break;
     case "turn.started": n.turns = [...s.turns, { id: e.turnId, prompt: e.prompt }]; n.prompt = e.prompt; break;
     case "turn.finished": n.turns = s.turns.map((t) => (t.id === e.turnId ? { ...t, summary: e.summary } : t)); break;
     case "launch.locked": n.launchUnlocked = false; break;

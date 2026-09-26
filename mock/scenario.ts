@@ -36,6 +36,15 @@ const FACE_FINDING: Finding = {
 
 const s = (wait: number, ev: Ev): Step => ({ wait, ev });
 let brickTotal = 0; // the house keeps growing across turns
+
+// v1.2: replay pre-fills the prompt bar before each prompt gate (turn id -> text).
+export const SUGGESTED: Record<number, string> = {
+  1: "Build a modern, serious-looking website for Rivera Construction. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.",
+  2: "Add a careers page using the job descriptions in ~/Documents/Rivera-HR",
+  3: "Make the header darker",
+};
+const suggest = (turnId: number): Step[] =>
+  SUGGESTED[turnId] ? [s(0, { actor: "system", type: "prompt.suggested", text: SUGGESTED[turnId] })] : [];
 const bricks = (_start: number, files: ["read" | "write" | "edit" | "run", string][]) =>
   files.map(([op, file]) => s(700, { actor: "dog", type: "dog.brick.placed", op, file, bricks: ++brickTotal }));
 
@@ -46,6 +55,7 @@ export function riveraScenario(): Step[] {
     s(0, { actor: "system", type: "session.reset" }),
     s(0, { actor: "system", type: "session.phase", phase: "idle" }),
     s(0, { actor: "dog", type: "dog.state", state: "sleeping" }),
+    ...suggest(1),
     { gate: "start", then: (cmd) => [
       s(0, { actor: "system", type: "user.prompt", text: cmd.type === "start" ? cmd.prompt : "" }),
       s(0, { actor: "system", type: "turn.started", turnId: 1, prompt: cmd.type === "start" ? cmd.prompt : "" }),
@@ -151,7 +161,7 @@ export function riveraScenario(): Step[] {
 // Maria keeps working in the same project. Each prompt is a new turn inside the
 // same fence. If the prompt names a new folder (contains "~/"), Tini asks first.
 function followUps(turnId: number, segs: () => Segment[]): Step[] {
-  return [{ gate: "prompt", then: (cmd) => {
+  return [...suggest(turnId), { gate: "prompt", then: (cmd) => {
     const text = cmd.type === "prompt" ? cmd.text : "";
     const newFolder = text.match(/~\/[^\s,]+/)?.[0];
     const steps: Step[] = [
