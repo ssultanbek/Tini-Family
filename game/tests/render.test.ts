@@ -26,6 +26,7 @@ test('the overlay renders at every step of the recorded story', async () => {
     if (store.getSnapshot().world.contract) seen.add('contract');
     if (store.getSnapshot().world.openEscalation) seen.add('escalation');
     if (html.includes('✓ Fixed')) seen.add('fixed-finding');
+    if (html.includes('report-screen') && html.includes('Data leaves to') && html.includes('fonts.googleapis.com')) seen.add('report');
   }
-  assert.deepEqual([...seen].sort(), ['contract', 'escalation', 'fixed-finding']);
+  assert.deepEqual([...seen].sort(), ['contract', 'escalation', 'fixed-finding', 'report']);
 });

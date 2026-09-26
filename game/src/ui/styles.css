@@ -110,3 +110,26 @@ a { color: #205640; }
 
 /* M4: cards animate in and out; a fixed finding turns green before it leaves. */
 .finding.fixed { border-left-color: #397848; background: #f1f9f1; transition: background .3s, border-color .3s; }
+
+/* M4: access report end screen. */
+.report-reopen { margin-left: .6em; }
+.report-screen { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--page-padding); background: #0f1f18d9; overflow: auto; }
+.report-panel { width: min(1100px, 100%); max-height: calc(100vh - 2 * var(--page-padding)); overflow: auto; background: #fbfcf8; border-radius: calc(var(--radius) * 1.4); padding: calc(var(--card-padding) * 1.5); box-shadow: 0 24px 80px #0008; font-size: 19px; }
+.report-header h2 { font-size: 34px; letter-spacing: -.02em; margin-top: .2em; }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22em), 1fr)); gap: var(--gap); margin-top: calc(var(--gap) * 1.5); }
+.report-section, .report-leaves { border-radius: var(--radius); padding: var(--card-padding); border: 2px solid; border-top-width: 8px; background: #fff; }
+.report-section h3, .report-leaves h3 { display: flex; align-items: center; gap: .5em; margin: 0; font-size: 23px; }
+.report-icon { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; font-size: .9em; border: 2px solid currentColor; }
+.report-count { margin-left: auto; min-width: 1.8em; text-align: center; border-radius: 999px; padding: .05em .5em; color: #fff; background: #17251e; }
+.report-section ul, .report-leaves ul { list-style: none; padding: 0; }
+.report-section li { display: grid; gap: .1em; padding: .55em 0; border-top: 1px solid #e3e9e4; }
+.report-section li span { color: #465a50; }
+.report-allowed { border-color: #397848; color: #205d34; }
+.report-blocked { border-color: #b6372c; color: #9a2922; }
+.report-narrowed { border-color: #ad8500; color: #6b5200; }
+.report-fixed { border-color: #2f6fae; color: #1f4f80; }
+.report-section li strong { color: #172f24; }
+.report-leaves { margin-top: var(--gap); border-color: #5b4a8a; color: #43346e; }
+.report-leaves ul { display: flex; flex-wrap: wrap; gap: .5em; }
+.report-leaves li { margin: 0; padding: .3em .8em; border-radius: 999px; background: #ece8f6; color: #2e2350; }
+.report-actions { margin-top: calc(var(--gap) * 1.5); justify-content: flex-end; }

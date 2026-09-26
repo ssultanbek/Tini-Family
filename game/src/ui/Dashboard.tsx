@@ -3,6 +3,7 @@ import type { EngineEvent, GameCommand, SegmentStatus } from '../../../shared/ev
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { commandKey, store } from '../store.ts';
 import { fixedAwaitingGreen } from './fixedFindings.ts';
+import { ReportScreen } from './Report.tsx';
 import { dashboardLayout, gameLayout } from '../layout.ts';
 
 export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
@@ -52,13 +53,15 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
   const [adjustSent, setAdjustSent] = useState(false);
   const [raw, setRaw] = useState(false);
   const [dismissed, setDismissed] = useState<number[]>([]);
+  const [reportOpen, setReportOpen] = useState(true);
   const log = useRef<HTMLDivElement>(null);
   const available = connected && synced;
   const busy = (command: GameCommand) => !available || pending.includes(commandKey(command));
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [events.length, raw]);
-  useEffect(() => { setDismissed([]); setAdjustSent(false); setAdjustment(''); }, [state.epoch]);
+  useEffect(() => { setDismissed([]); setAdjustSent(false); setAdjustment(''); setReportOpen(true); }, [state.epoch]);
   const escalation = world.openEscalation;
   const fixed = fixedAwaitingGreen(world, events);
+  const siteUrl = events.reduce<string | undefined>((url, event) => event.type === 'launch.done' ? event.url : url, undefined);
   const start: GameCommand = { type: 'start', prompt: prompt.trim() };
   const launch: GameCommand = { type: 'launch' };
 
@@ -79,7 +82,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
       {world.findings.map(finding => <MotionCard key={finding.id} title={finding.title} className="finding"><p className="badge offline">! {finding.severity} · {finding.segmentId}</p><p>{finding.explanation}</p>{raw && finding.file && <p className="path">{finding.file}</p>}<div className="button-row">{finding.fixes.map(fix => <button key={fix.id} disabled={busy({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })} onClick={() => send({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })}>{fix.label}</button>)}</div>{pending.includes(`fix:${finding.id}`) && <p role="status">Fix requested. Waiting for the engine…</p>}</MotionCard>)}
       {fixed.map(({ finding, summary }) => <MotionCard key={finding.id} title={finding.title} className="finding fixed"><p className="badge online">✓ Fixed · {finding.segmentId}</p><p>{summary}</p><p className="muted">Waiting for Tina to mark the fence green…</p></MotionCard>)}
       </AnimatePresence>
-      <Card title="Launch"><p>{world.phase === 'launched' ? 'Launched. The engine’s access report appears below.' : world.launchUnlocked ? 'The engine has unlocked launch.' : 'Waiting for the engine to unlock launch.'}</p><button disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? 'Launched' : pending.includes('launch') ? 'Launch sent…' : 'Launch'}</button></Card>
+      <Card title="Launch"><p>{world.phase === 'launched' ? 'Launched. The engine’s access report appears below.' : world.launchUnlocked ? 'The engine has unlocked launch.' : 'Waiting for the engine to unlock launch.'}</p><button disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? 'Launched' : pending.includes('launch') ? 'Launch sent…' : 'Launch'}</button>{world.report && !reportOpen && <button className="secondary report-reopen" onClick={() => setReportOpen(true)}>Show access report</button>}</Card>
       {world.report && <Card title="Access report">{(['allowed', 'blocked', 'narrowed', 'fixed'] as const).map(category => <div key={category}><h3 className="capitalize">{category}</h3>{world.report![category].length ? <ul>{world.report![category].map((line, i) => <li key={i}><strong>{line.what}</strong><br />{line.why}</li>)}</ul> : <p>None reported.</p>}</div>)}<h3>Data leaves to</h3><Lines items={world.report.dataLeavesTo} /></Card>}
     </div><details className="yard-details" open={yard ? undefined : true}><summary>Fence details, crew & event log</summary><div className="stack">
       <Card title="The fence"><div className="legend">{Object.entries(statusLabels).map(([status, label]) => <span key={status} className={`status ${status}`}>{label}</span>)}</div>{world.segments.length ? <div className="segments">{world.segments.map(segment => <article key={segment.id} className={`segment ${segment.status}`}><div className="segment-heading"><h3>{segment.label}</h3><span className={`status ${segment.status}`}>{statusLabels[segment.status]}</span></div><p>{segment.detail}</p></article>)}</div> : <p className="muted">The engine has not proposed a fence yet.</p>}</Card>
@@ -88,6 +91,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
       <Card title={`Blocked attempts · ${world.blocked.length}`}>{world.blocked.length ? world.blocked.map(block => <article className="blocked-history" key={block.seq}><strong>{block.target}</strong>{block.simulated && <span className="tag">Simulated attack</span>}<p>{block.reason}</p><p className="muted">{block.tool} · {block.layer}</p></article>) : <p className="muted">None reported.</p>}</Card>
     </div></details></div></main>
     <aside className="toasts" aria-label="Blocked attempt notifications" aria-live="polite">{world.blocked.filter(block => !dismissed.includes(block.seq)).slice(-2).map(block => <div className="toast" key={block.seq}><div className="segment-heading"><strong>Access blocked</strong><button className="dismiss" aria-label={`Dismiss notification for ${block.target}`} onClick={() => setDismissed(current => [...current, block.seq])}>×</button></div>{block.simulated && <span className="tag">Simulated attack</span>}<p className="path">{block.target}</p><p>{block.reason}</p></div>)}</aside>
+    <AnimatePresence>{world.report && reportOpen && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportOpen(false)} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
     <footer>Engine: localhost:4000 · Last event #{world.seq} · <a href="/?view=dashboard">Dashboard</a></footer>
   </div></MotionConfig>;
 }
