@@ -16,10 +16,10 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 |---|---|---|
 | 0. Prove the fence | **done** (Sept 26) | Spike 5/5 PASS on the Mac (total $0.13). Guard tests 25/25, typecheck clean. Check 3 blocked by Seatbelt ("Operation not permitted"); check 5 = one session_id across 2 results. |
 | 1. Engine backbone + AI ladder | **done** (Sept 26) | Contract v1.2 pushed. `engine/src/{project,crew,standins,recorder,replay,server,main,ai}.ts`. Loop test PASS (narrow/all/deny + replay), ai.stress 100/100, ai:smoke real sources, edge tests, typecheck clean. |
-| 2. Demo kit | not started | |
-| 3. Tini: planning, access, staging | not started | |
-| 4. Dog: persistent session | not started | Checkpoint A after this stage |
-| 5. Escalation + attack harness | not started | |
+| 2. Demo kit | committed (f5e1362, second session) | Generator + verifier in `demo-kit/`; demo world present at ~/Clients/Rivera, ~/Pictures/Jobsite2024 (1,212 files), ~/Documents/Rivera-HR. Report from that session. |
+| 3. Tini: planning, access, staging | committed (43d7cf5, second session) | `tini/{paths,planner,stager,access}.ts`, `tina/preinspect.ts`, `test:tini`. Used by `--mode live`: live run planned 5 segments in 3s, staged ./assets, rewrote paths, prompt card for Rivera-HR. Report from that session. |
+| 4. Dog: persistent session | **done** (Sept 26) | `runner.ts`, `live.ts`, `--mode live`. Live 4-turn run PASS ($1.16), replay of it PASS, guard 32+12, typecheck clean. Checkpoint A: engine live on :4000. |
+| 5. Escalation + attack harness | in progress (second session) | |
 | 6. Tina per-turn inspection | not started | |
 | 7. Fixes, launch/relock, report | not started | Checkpoint B after this stage |
 | 8. Demo hardening | not started | Feature freeze 3:00 AM (revised) |
@@ -40,12 +40,20 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 - Stage 1: agent escalations deliver approved files as a follow-up message after Claude's current result (Crew.runTurn with followUp=true); denied agent requests send no follow-up. Prompt escalations append the note to Maria's held prompt.
 - Stage 1: recordings start a new file per Reset and are only written once the session has a command. Replay drops the recorded `engine` raw.log lines (they were the live run's stray clicks).
 - Stage 1: Gemini gets no `httpOptions.timeout` (server rejects deadlines under 10s); the 8s timeout is client-side.
+- Stage 1 follow-up: the mock now goes to `ready` right after inspection, even with reds (matches the engine).
+- Stage 4: SDK caps verified (sdk.d.ts + spike/probe-turns.ts): `maxTurns` is per user turn (set 40); `maxBudgetUsd` and `total_cost_usd` are per query() = whole session (set $6). Per-turn cost cap ($2) is ours, estimated from assistant usage, enforced with interrupt(). Stage 0's spike cost was over-counted (results are cumulative): real ~$0.115.
+- Stage 4: interrupt() resolves at once (`{"still_queued":[]}`); the stream then yields a synthetic tool_result rejection, "[Request interrupted by user]", and a result `error_during_execution` / `aborted_streaming`. The runner swallows that late result; the session keeps working.
+- Stage 4: sandbox allows read+write of `~/.npm` (package cache). `~/.npmrc` stays denied: guard tests + a probe showing a `.npm`-prefixed sibling is blocked by Seatbelt (subpath rule, not string prefix).
+- Stage 4: a hook denial of a non-sensitive folder (`guard.escalationFolder`: no dotfiles, Library, keys, home root) emits fence.blocked and calls ctx.escalate(folder, "agent") without blocking the hook; deduped per folder per project. Sparks deduped per target per turn.
+- Stage 4: guard no longer treats bare slashes (sed/regex `s/a/b/`, `"//"`) as the path "/" (live-run false positive). Real paths like /etc/passwd stay blocked.
+- Stage 4: website turns append "Keep it a simple static site ... Don't start a local server or open a browser to preview it: Tini launches the site after Tina's check." (Claude tried `python3 -m http.server` + curl localhost in the live run; blocked by the network rule.)
+- Stage 4: live mode loads Stage 3 (`engine/src/tini`) at runtime, so the engine builds without it.
 
 ## Open issues
 
-- Findings that a later rescan no longer finds have no "resolved" event in the contract (only `fix.applied` clears them). Stage 6 must decide: emit `fix.applied` with a system fixId, or add an event (contract change).
+- Game vs real engine (teammate): Approve stays clickable while the engine re-plans after Adjust; the engine ignores it (can't approve an unseen plan) and the game's pending "approve.plan" never clears (only fence.plan.approved clears it). Fix in game: clear pending approve on fence.plan.proposed and/or disable Approve unless phase is contract. The game's story check sends adjust+approve in the same tick, so it stalls on the engine (passes with that line removed).
+- Game hasn't adopted v1.2 yet: no Stop button, no prompt.suggested prefill, no `ai`/`engine` raw-view chips. Adjust hint still says "the mock does not change the plan".
+- Claude (Sonnet) did not follow the Jobsite2024 pointer in the live run, and it spotted and refused the template's ~/.ssh instruction on its own. The agent escalation path is covered by stand-in tests; the demo recording needs a run where it happens (or Stage 5's harness/prompting).
+- Stage 6 will add the additive event `finding.cleared { findingId, reason }` (decided): findings a rescan no longer finds.
+- Temporary in `live.ts` until Stage 5: approved escalation files are copied by name heuristics (narrow skips IMG_*, scan_*, login/password files), GPS stripped with exiftool.
 - The game's RawView channel chips list only hook/config/sdk/scan; `ai` and `engine` lines still show but can't be filtered (teammate).
-- Spike's `osSandboxHit` regex also matches the word "sandbox" in prompts/replies, so it reads true on checks 1-2 where the hook denied first. Cosmetic; Stage 4 event mapping should match "Operation not permitted" only.
-- SDK prints "claude.ai connectors are disabled because ANTHROPIC_API_KEY ... is set" on stderr every session. Harmless; filter it from the stderr log in Stage 4.
-
-- sandbox denyRead ["~/"] also blocks ~/.npm, so npm/npx inside the dog's Bash may fail. Decide in Stage 4 (allowRead/allowWrite ~/.npm, or keep demo builds dependency-free).
