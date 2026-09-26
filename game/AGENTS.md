@@ -26,8 +26,10 @@ deadline Sunday 10 AM, feature freeze Saturday midnight.
   `escalation.choose`, `fix.apply`, `launch`, `reset`. Nothing else.
 - Events carry segment ids and zones, never pixels. All positions live in `src/layout.ts`.
 - Top-down 2D only. No Anthropic logos or mascot art. Kenney CC0 art only.
-- Never run `git push`, `git reset`, `git checkout`, `git stash` or force anything.
-  Altair commits and pushes himself.
+- After each finished step (build passes + story run works): git pull, then
+  git add game/ only, commit with message 'game: <what works now>', and git push.
+  Never add files outside game/, never force-push, never reset or rebase. If pull shows
+  a conflict outside game/, stop and tell Altair to call Sultan.
 
 ## Locked technical decisions
 - Stack: Vite + TypeScript + React + Framer Motion + socket.io-client + **Phaser 3**.
