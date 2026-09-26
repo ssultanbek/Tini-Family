@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { GameCommand, WorldState } from '../../../shared/events.ts';
 import { promptCommand } from './promptMode.ts';
+import { STOPPABLE } from '../store.ts';
 
 export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
 // Typing helpers only: they fill the box, the engine decides what happens.
@@ -23,7 +24,8 @@ export function PromptBar({ world, send, available, pending, epoch }: { world: W
   const disabled = !available || working || waiting;
   const submit = () => { if (command && text.trim() && send(command)) setText(''); };
   // While the crew works the bar can't send anything, so it shrinks to one line and covers no cards.
-  if (working) return <div className="prompt-bar working" role="status"><span className="working-dot" aria-hidden="true" />Tini is working… you can prompt again when the crew is done.</div>;
+  if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">Tini is working… you can prompt again when the crew is done.</span>
+    {STOPPABLE.includes(world.phase) && <StopButton world={world} send={send} available={available} pending={pending} />}</div>;
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
     <label htmlFor="prompt-input">{first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
     <div className="prompt-row">
@@ -45,4 +47,17 @@ export function TurnHistory({ world }: { world: WorldState }) {
       {turn.summary ? <p className="turn-summary">✓ {turn.summary}</p> : <p className="turn-summary working">⋯ The crew is on it</p>}
     </motion.li>)}</AnimatePresence>
   </ol>;
+}
+
+/** v1.2 `stop`: two clicks, so a stray click during the demo can't end a turn. */
+function StopButton({ world, send, available, pending }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[] }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => { if (!armed) return; const timer = setTimeout(() => setArmed(false), 4000); return () => clearTimeout(timer); }, [armed]);
+  // In the first turn's setup the engine drops back to the start; later it ends the turn and Tina still checks.
+  const setup = world.turns.length <= 1 && world.phase !== 'building';
+  const stopping = pending.includes('stop');
+  return <button type="button" className={`stop-button ${armed ? 'armed' : ''}`} disabled={!available || stopping}
+    onClick={() => { if (!armed) { setArmed(true); return; } setArmed(false); send({ type: 'stop' }); }}>
+    {stopping ? 'Stopping…' : armed ? (setup ? 'Really stop? Setup is cancelled' : 'Really stop? Tina still checks') : '■ Stop'}
+  </button>;
 }

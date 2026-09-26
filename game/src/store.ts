@@ -1,6 +1,9 @@
-import type { Actor, EngineEvent, GameCommand, WorldState } from '../../shared/events.ts';
+import type { Actor, EngineEvent, GameCommand, Phase, WorldState } from '../../shared/events.ts';
 import { initialState, reduce } from '../../shared/reducer.ts';
 import { animationQueues } from './queue.ts';
+
+/** Phases in which the engine accepts `stop` (v1.2); the Stop button shows only then. */
+export const STOPPABLE: Phase[] = ['planning', 'contract', 'fencing', 'building'];
 
 export function commandKey(command: GameCommand): string {
   if (command.type === 'fix.apply') return `fix:${command.findingId}`;
@@ -47,6 +50,8 @@ export function createStore(queues = animationQueues) {
       if (event.type === 'escalation.resolved') acknowledged.push(`escalation:${event.escalationId}`);
       if (event.type === 'fix.applied') acknowledged.push(`fix:${event.findingId}`);
       if (event.type === 'launch.done') acknowledged.push('launch');
+      // Stop is answered by the turn ending ("Stopped by you") or the crew leaving the stoppable phases.
+      if (event.type === 'turn.finished' || (event.type === 'session.phase' && !STOPPABLE.includes(event.phase))) acknowledged.push('stop');
       pending = event.type === 'engine.error' ? [] : pending.filter(key => !acknowledged.includes(key));
       current = {
         ...current, world: reduce(current.world, event), pending,

@@ -25,6 +25,8 @@ test('the overlay renders at every step of the recorded story', async () => {
     for (const [view, page] of [['dashboard', dashboardHtml], ['game', gameHtml]]) {
       assert.ok(page.includes('keys to the room, not the house'), `${view}: title bar tagline`);
       if (store.getSnapshot().world.phase === 'building') assert.ok(page.includes('Tini is working'), `${view}: prompt bar is disabled while the crew works`);
+      const phase = store.getSnapshot().world.phase;
+      assert.equal(page.includes('■ Stop'), ['planning', 'contract', 'fencing', 'building'].includes(phase), `${view}: Stop only while stoppable (${phase})`);
     }
     const html = dashboardHtml + gameHtml;
     if (store.getSnapshot().world.contract) seen.add('contract');

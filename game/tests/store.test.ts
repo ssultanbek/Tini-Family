@@ -101,3 +101,16 @@ test('an Approve the engine ignored while re-planning is freed by the next propo
   store.event({ actor: 'tini', type: 'fence.plan.proposed', segments: [], contract: { title: 'Plan', allowed: [], stripped: [], outside: '' }, seq: 21, ts: 0 });
   assert.deepEqual(store.getSnapshot().pending, []);
 });
+
+test('Stop stays pending until the turn ends or the crew leaves the stoppable phases', () => {
+  const store = createStore();
+  store.snapshot({ ...initialState(), seq: 30, phase: 'building', turns: [{ id: 2, prompt: 'Darker header' }] });
+  store.sent({ type: 'stop' });
+  store.event({ actor: 'dog', type: 'dog.brick.placed', op: 'write', file: 'x', bricks: 1, seq: 31, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, ['stop']);
+  store.event({ actor: 'dog', type: 'turn.finished', turnId: 2, summary: 'Stopped by you', seq: 32, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, []);
+  store.sent({ type: 'stop' });
+  store.event({ actor: 'system', type: 'session.phase', phase: 'inspecting', seq: 33, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, []);
+});

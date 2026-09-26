@@ -208,3 +208,9 @@ a { color: #205640; }
 .game-app .report-screen { padding-bottom: var(--page-padding); }
 .game-app .report-panel { max-height: calc(100vh - 2 * var(--page-padding)); }
 .app:not(.game-app) .toasts { bottom: calc(var(--page-padding) + 130px); max-height: calc(100vh - 200px); }
+.prompt-bar.working .stop-button { margin-left: auto; flex: none; min-height: 0; padding: .3em .8em; font-size: 16px; background: #fff; color: #9a2922; border-color: #b6372c; }
+.prompt-bar.working .stop-button:hover:not(:disabled) { background: #ffe5e1; }
+.prompt-bar.working .stop-button.armed { background: #b6372c; color: #fff; }
+.prompt-bar.working { flex-wrap: wrap; }
+.prompt-bar.working > span[role="status"] { flex: 1 1 14em; }
+.game-app .prompt-bar.working .stop-button { flex: 1 1 100%; margin-left: 0; }
