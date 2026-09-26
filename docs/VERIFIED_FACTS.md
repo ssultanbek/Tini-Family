@@ -20,7 +20,11 @@ Items marked **VERIFY** were not confirmed yet: confirm before relying on them.
   - `resume` / `sessionId`, for resume after restart.
   - `systemPrompt: { type: "preset", preset: "claude_code", append: "..." }` keeps Claude Code's prompt and adds ours.
   - `env` **replaces** the whole subprocess environment. Spread `process.env` if you set it.
-- **VERIFY:** `Query.interrupt()` for the Stop button (check `sdk.d.ts` for the Query interface) and how an interrupted turn surfaces in the message stream.
+- `Query.interrupt()` (verified live, spike/probe-turns.ts): resolves at once with `{"still_queued":[]}`. The stream then yields a synthetic tool_result ("The user doesn't want to proceed with this tool use..."), a user text "[Request interrupted by user]", and a result `subtype: "error_during_execution"`, `is_error: true`, `terminal_reason: "aborted_streaming"`. The same session then answers the next pushed message normally. `Query.close()` ends the session.
+- **Caps** (sdk.d.ts + probe): `maxTurns` counts API round-trips **per user turn** (`num_turns` resets each turn; 2+2 with maxTurns=3 passed). `maxBudgetUsd` is **per query() call** = the whole streaming session. `total_cost_usd` on each result is the **cumulative** session total: read the latest, never sum results.
+- Each pushed user message re-emits `system/init` in the stream.
+- PostToolUse hook input: `tool_name`, `tool_input`, `tool_response`, `tool_use_id` (Write's response: `{type:"create", filePath, content, ...}`).
+- Sandbox `allowRead`/`allowWrite` accept `~/` paths and match by path component: allowing `~/.npm` does not open `~/.npmrc-*` siblings (probe: "Operation not permitted").
 - **Hooks:**
   - PreToolUse returns `{ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow"|"deny"|"ask"|"defer", permissionDecisionReason, updatedInput? } }`.
   - `deny` beats everything else. Return `{}` to change nothing.

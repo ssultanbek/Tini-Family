@@ -69,6 +69,18 @@ export function sensitiveReason(abs: string): string | null {
   return null;
 }
 
+/**
+ * True if a path (as typed: ~/x, /Users/me/x, $HOME/x) must never be handed over:
+ * keys, credentials, private app data, the home folder itself, its parents, or
+ * anything outside home. Follows symlinks. The runner hard-blocks these with no card.
+ */
+export function isSensitive(p: string): boolean {
+  const abs = path.resolve(expandHome(p));
+  let real = abs;
+  try { real = fs.realpathSync(abs); } catch { real = realish(abs); }
+  return sensitiveReason(abs) !== null || sensitiveReason(real) !== null;
+}
+
 export type Judged =
   | { ok: true; raw: string; abs: string; display: string; isDir: boolean }
   | { ok: false; raw: string; abs: string; display: string; why: "missing" | "sensitive"; reason: string };

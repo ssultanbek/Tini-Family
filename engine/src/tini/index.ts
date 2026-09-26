@@ -3,3 +3,5 @@ export { planFence, projectsRoot, NPM_REGISTRY, OUTSIDE_LINE, type Plan, type So
 export { stageFence, stripGps, type Staged } from "./stager.ts";
 export { checkAccess, rewritePrompt, type AccessResult } from "./access.ts";
 export { extractPaths, extractDomains, judgePath, sensitiveReason } from "./paths.ts";
+export { isSensitive } from "./paths.ts";
+export { createEscalation, sanitizeSubset, fallbackSubset, buildCard, type EscalationDeps, type EscalationApplied } from "./escalation.ts";

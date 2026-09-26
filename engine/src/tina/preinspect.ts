@@ -11,7 +11,7 @@ const DATA_EXT = new Set([".csv", ".tsv", ".xlsx", ".xls", ".json", ".numbers"])
 const CODE_EXT = new Set([".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".html", ".css", ".py", ".rb", ".go", ".java", ".sh"]);
 /** Never inspected, counted or copied. */
 export const SKIP_NAMES = new Set([".DS_Store", ".tini-demo-kit", "Thumbs.db"]);
-const WALK_LIMIT = 20000;
+export const WALK_LIMIT = 20000;
 
 export type FileKind = "image" | "document" | "data" | "code" | "other";
 export function kindOf(file: string): FileKind {
@@ -26,7 +26,7 @@ export function kindOf(file: string): FileKind {
 // Risky names. Matched per word so "syntax.md" isn't "tax" and a code LICENSE file isn't a license.
 const RISKY_WORDS: [RegExp, string][] = [
   [/^passports?$/, "looks like a passport"],
-  [/^(tax|taxes|w2|1099)$/, "looks like tax papers"],
+  [/^(tax|taxes|w2)$/, "looks like tax papers"],
   [/^(bank|banking|statement)$/, "looks like bank records"],
   [/^(license|licence|dl)$/, "looks like a license or ID"],
   [/^ssn$/, "looks like a Social Security number"],
@@ -55,7 +55,7 @@ export interface FolderInspection {
   truncated: boolean;
 }
 
-function walk(root: string, isDir: boolean) {
+export function walk(root: string, isDir: boolean) {
   const files: string[] = [], symlinks: string[] = [];
   if (!isDir) return { files: [path.basename(root)], symlinks, truncated: false };
   const stack = [""];
