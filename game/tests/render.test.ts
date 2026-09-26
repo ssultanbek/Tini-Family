@@ -15,15 +15,18 @@ after(() => vite.close());
 test('the overlay renders at every step of the recorded story', async () => {
   const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
   const { Dashboard } = await vite.ssrLoadModule('/src/ui/Dashboard.tsx') as typeof import('../src/ui/Dashboard.tsx');
-  const { Yard } = await vite.ssrLoadModule('/src/ui/Yard.tsx') as typeof import('../src/ui/Yard.tsx');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
   store.connection(true);
-  const render = (dashboard: boolean) => renderToString(createElement(Dashboard, { send: () => true, yard: dashboard ? undefined : createElement(Yard) }));
+  const render = (dashboard: boolean) => renderToString(dashboard ? createElement(Dashboard, { send: () => true }) : createElement(GameView, { send: () => true }));
   const seen = new Set<string>();
   for (const event of recorded) {
     store.event(event);
-    const html = render(true);
-    assert.ok(html.includes('keys to the room, not the house'), 'title bar tagline');
-    render(false);
+    const dashboardHtml = render(true), gameHtml = render(false);
+    for (const [view, page] of [['dashboard', dashboardHtml], ['game', gameHtml]]) {
+      assert.ok(page.includes('keys to the room, not the house'), `${view}: title bar tagline`);
+      if (store.getSnapshot().world.phase === 'building') assert.ok(page.includes('Tini is working'), `${view}: prompt bar is disabled while the crew works`);
+    }
+    const html = dashboardHtml + gameHtml;
     if (store.getSnapshot().world.contract) seen.add('contract');
     if (store.getSnapshot().world.openEscalation) seen.add('escalation');
     if (html.includes('✓ Fixed')) seen.add('fixed-finding');
@@ -33,7 +36,6 @@ test('the overlay renders at every step of the recorded story', async () => {
     if (html.includes('🔒')) seen.add('launch-locked');
     if (html.includes('Turn 3')) seen.add('turn-history');
     if (html.includes('prompt-bar')) seen.add('prompt-bar');
-    if (store.getSnapshot().world.phase === 'building') assert.ok(html.includes('Tini is working'), 'prompt bar is disabled while the crew works');
   }
   assert.deepEqual([...seen].sort(), ['agent-escalation', 'contract', 'escalation', 'fixed-finding', 'launch-locked', 'prompt-bar', 'prompt-escalation', 'report', 'turn-history']);
 });

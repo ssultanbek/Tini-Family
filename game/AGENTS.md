@@ -26,8 +26,10 @@ deadline Sunday 10 AM, feature freeze Saturday midnight.
   `escalation.choose`, `fix.apply`, `launch`, `reset`. Nothing else.
 - Events carry segment ids and zones, never pixels. All positions live in `src/layout.ts`.
 - Top-down 2D only. No Anthropic logos or mascot art. Kenney CC0 art only.
-- After each finished step (build passes + story run works): git pull, then
-  git add game/ only, commit with message 'game: <what works now>', and git push.
+- Do NOT push after each step. Push only when Altair explicitly says so. Then:
+  git pull, git add game/ only, commit with message 'game: <what works now>', git push.
+- Design phase: never change the dashboard view (`/?view=dashboard`, `src/ui/Dashboard.tsx`).
+  It is the emergency fallback. Redesign only the game view at `/`.
   Never add files outside game/, never force-push, never reset or rebase. If pull shows
   a conflict outside game/, stop and tell Altair to call Sultan.
 
