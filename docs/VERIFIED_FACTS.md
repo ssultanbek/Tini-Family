@@ -46,6 +46,8 @@ Items marked **VERIFY** were not confirmed yet: confirm before relying on them.
   ```
   `config` supports `systemInstruction`, `responseMimeType: "application/json"`, `responseJsonSchema`, `abortSignal`, `httpOptions: { timeout, retryOptions: { attempts } }`. The result text is `res.text`.
 - **The SDK retries 5 times by default.** Set `httpOptions.retryOptions.attempts: 1` so the ladder controls timing.
+- **Don't set `httpOptions.timeout` below 10s** (verified live, Sept 26): the SDK sends it to Google as a server deadline and the API answers `400 INVALID_ARGUMENT "Manually set deadline 8s is too short. Minimum allowed deadline is 10s."`. The ladder enforces its 8s client-side (own timer + `abortSignal`) and sends no timeout.
+- `gemini-3.8-flash` accepted by the API with this project's key (ai:smoke, Sept 26). Real 503 "high demand" errors do happen; the ladder's one retry recovered.
 - **Current Flash model:** "Gemini 3.8 Flash", id `gemini-3.8-flash` (per ai.google.dev, Sept 2026). Keep it overridable with `GEMINI_MODEL`, and confirm it's listed in the project's AI Studio.
 - Rate limits are per **project**. Linking billing moves Free → Tier 1 instantly. That fixes 429 (quota) errors, not 503s.
 - **503 means Google's servers are overloaded**, not us; retry and fall back. There are reports of requests that **hang with no error**, so the client-side timeout (8s) is mandatory.
@@ -55,6 +57,7 @@ Items marked **VERIFY** were not confirmed yet: confirm before relying on them.
 - `@anthropic-ai/sdk` **0.128.0**, model `claude-haiku-4-5` (dated id `claude-haiku-4-5-20251001`).
 - Use `new Anthropic({ apiKey, maxRetries: 0 })`, and per request `{ signal, timeout }`.
 - Haiku accepts images (base64 image blocks), so it can back up Gemini vision too.
+- Structured outputs (`output_config: { format: ... }`) support Haiku 4.5, but the ladder puts the JSON Schema in the system prompt and validates with zod instead, so any zod schema works on both rungs. Verified live with `claude-haiku-4-5` (ai:smoke).
 - Keys not scoped to a workspace must send the anthropic-workspace-id header on every request (400 otherwise). We use a workspace-scoped key, so no header is needed. Source: platform.claude.com/docs/manage-claude/authentication.
 
 ## Other
