@@ -132,6 +132,7 @@ export function riveraScenario(): Step[] {
     s(500, { actor: "tina", type: "segment.red", segmentId: "photos", finding: FACE_FINDING }),
     { lazy: () => [...SEGMENTS, ...extra].filter((g) => g.id !== "web-packages" && g.id !== "photos").map((g) => s(200, { actor: "tina", type: "segment.green", segmentId: g.id } as Ev)) },
     s(0, { actor: "tina", type: "tina.inspect.finished", scope: "final", redCount: 2 }),
+    s(0, { actor: "system", type: "session.phase", phase: "ready" }), // like the engine: ready even with reds; launch stays locked
     s(200, { actor: "tina", type: "speech", text: "Two red spots. I can't launch like this." }),
     ...[0, 1].map((): Step => ({ gate: "fix.apply", then: (cmd) => {
       if (cmd.type !== "fix.apply") return [];
@@ -142,7 +143,6 @@ export function riveraScenario(): Step[] {
       ];
     } })),
     s(400, { actor: "tina", type: "speech", text: "All green. Now you can launch." }),
-    s(0, { actor: "system", type: "session.phase", phase: "ready" }),
     s(0, { actor: "system", type: "launch.unlocked" }),
     { gate: "launch" },
     s(800, { actor: "system", type: "launch.done", url: "http://localhost:5050" }),
