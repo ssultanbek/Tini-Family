@@ -54,3 +54,18 @@ test('the raw view renders every channel and pretty JSON for the whole story', a
     assert.equal(text, JSON.stringify(event, null, 2), 'highlighting never changes the JSON text');
   }
 });
+
+test('a v1.2 prompt.suggested pre-fills the prompt bar in both views; sending clears it', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { Dashboard } = await vite.ssrLoadModule('/src/ui/Dashboard.tsx') as typeof import('../src/ui/Dashboard.tsx');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  const pages = () => [renderToString(createElement(GameView, { send: () => true })), renderToString(createElement(Dashboard, { send: () => true }))];
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 500, phase: 'ready', launchUnlocked: true, turns: [{ id: 1, prompt: 'Build it', summary: 'Built' }] });
+  for (const page of pages()) assert.ok(!page.includes('Make the header darker</textarea>'));
+  store.event({ actor: 'system', type: 'prompt.suggested', text: 'Make the header darker', seq: 501, ts: 0 });
+  for (const page of pages()) assert.ok(page.includes('Make the header darker</textarea>'), 'suggestion pre-filled');
+  store.event({ actor: 'system', type: 'user.prompt', text: 'Make the header darker', seq: 502, ts: 0 });
+  assert.equal(store.getSnapshot().world.suggestedPrompt, null);
+});

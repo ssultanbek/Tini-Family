@@ -9,10 +9,12 @@ const SUGGESTIONS = ['Add a careers page using the job descriptions in ~/Documen
 
 /** Always on screen. Sends `start` when idle, `prompt` when ready or launched, nothing otherwise. */
 export function PromptBar({ world, send, available, pending, epoch }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[]; epoch: number }) {
-  // Until Maria types, the box offers the example only for the very first prompt.
+  // Until Maria types, the box shows the engine's suggestion (v1.2 `prompt.suggested`, used by replays),
+  // else the example for the very first prompt. A new suggestion replaces whatever was typed.
   const [draft, setDraft] = useState<string | null>(null);
-  useEffect(() => { setDraft(null); }, [epoch]);
-  const text = draft ?? (world.phase === 'idle' ? DEFAULT_PROMPT : '');
+  const suggested = world.suggestedPrompt ?? null;
+  useEffect(() => { setDraft(null); }, [epoch, suggested]);
+  const text = draft ?? suggested ?? (world.phase === 'idle' ? DEFAULT_PROMPT : '');
   const setText = (value: string) => setDraft(value);
   const command = promptCommand(world.phase, text.trim());
   const waiting = pending.includes('start') || pending.includes('prompt');
