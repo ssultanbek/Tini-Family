@@ -13,7 +13,7 @@ import { stripGpsBatch } from "../tina/exif.ts";
 import { flagNoun, inspectFolder, type FolderReport } from "../tina/inspect-folder.ts";
 import { kindOf } from "../tina/preinspect.ts";
 import { judgePath, slug } from "./paths.ts";
-import type { Staged } from "./stager.ts";
+import { recordBaseline, type Staged } from "./stager.ts";
 
 export interface EscalationDeps {
   /** The current project's staged fence (null before Approve). */
@@ -300,6 +300,7 @@ export function createEscalation(deps: EscalationDeps) {
     for (const f of leftovers) fs.rmSync(f, { force: true });
     if (leftovers.length) ctx.log("scan", `${leftovers.length} image(s) from ${display} couldn't be cleaned and were left out`);
     const fileCount = copied.length - leftovers.length;
+    recordBaseline(staged, copied);
 
     const images = files.filter((f) => kindOf(f) === "image").length - leftovers.length;
     const detailParts = [images ? `${fmt(images)} ${images === 1 ? "photo" : "photos"}` : "", fileCount - images ? `${fmt(fileCount - images)} ${fileCount - images === 1 ? "file" : "files"}` : ""].filter(Boolean);

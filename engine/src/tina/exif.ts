@@ -54,3 +54,26 @@ export async function stripGpsBatch(files: string[]): Promise<string[]> {
   const after = await readGps(files);
   return files.filter((f) => after.get(path.resolve(f)) !== false);
 }
+
+/** Identifying tags we look for in published photos (exiftool JSON key names). */
+export const IDENTIFYING_TAGS = ["GPSLatitude", "GPSLongitude", "Artist", "OwnerName", "SerialNumber", "Creator", "By-line"] as const;
+
+/** Reads the identifying tags from many files in one exiftool process. Keyed by absolute path. */
+export async function identifyingTags(files: string[]): Promise<Map<string, Record<string, string>>> {
+  const out = new Map<string, Record<string, string>>();
+  if (!files.length) return out;
+  const { stdout } = await run(["-json", "-n", "-fast2", "-q", "-q", ...IDENTIFYING_TAGS.map((t) => `-${t}`)], files);
+  let rows: Record<string, unknown>[] = [];
+  try { rows = JSON.parse(stdout || "[]"); } catch { /* treated as no tags */ }
+  for (const r of rows) {
+    const tags: Record<string, string> = {};
+    for (const t of IDENTIFYING_TAGS) if (r[t] !== undefined && String(r[t]).trim() !== "") tags[t] = String(r[t]);
+    out.set(path.resolve(String(r.SourceFile)), tags);
+  }
+  return out;
+}
+
+/** Removes ALL metadata from one photo (keeps orientation and colour profile so it still looks right). */
+export async function stripAllMetadata(file: string): Promise<void> {
+  await run(["-q", "-q", "-overwrite_original", "-all=", "-tagsFromFile", "@", "-Orientation", "-ICC_Profile"], [file]);
+}

@@ -1,6 +1,7 @@
 // On Approve: create a fresh workspace and carry cleaned copies of every approved
 // folder into ./assets/<segmentId>/. Originals are never modified: we only read them.
 // Copies lose their GPS (and nothing else: Tina's Photos finding relies on the rest).
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { exiftool } from "exiftool-vendored";
@@ -14,6 +15,18 @@ export interface Staged {
   workspace: string;
   pathMap: Record<string, string>;   // "~/Clients/Rivera/Photos" -> "./assets/photos"
   fenceNote: string;                 // appended to Claude's system prompt
+  /** sha1 of every asset copy as staged (workspace-relative path). Tina treats an unchanged, unreferenced copy as input, not output. */
+  baseline?: Record<string, string>;
+}
+
+export function sha1File(file: string): string {
+  return crypto.createHash("sha1").update(fs.readFileSync(file)).digest("hex");
+}
+
+/** Records the current bytes of these workspace files as "as staged". */
+export function recordBaseline(staged: { workspace: string; baseline?: Record<string, string> }, absFiles: string[]): void {
+  staged.baseline ??= {};
+  for (const f of absFiles) { try { staged.baseline[path.relative(staged.workspace, f)] = sha1File(f); } catch { /* removed (e.g. couldn't be cleaned) */ } }
 }
 
 /** Removes GPS only (EXIF GPS IFD and XMP GPS tags). Everything else stays. */
@@ -35,6 +48,7 @@ export async function stageFence(plan: Plan, emit: (ev: Ev) => void): Promise<St
 
   const pathMap: Record<string, string> = {};
   const noteLines: string[] = [];
+  const copiedAll: string[] = [];
 
   for (const seg of plan.segments) {
     if (seg.kind === "folder") {
@@ -51,6 +65,7 @@ export async function stageFence(plan: Plan, emit: (ev: Ev) => void): Promise<St
         const to = path.join(destDir, rel);
         fs.mkdirSync(path.dirname(to), { recursive: true });
         fs.copyFileSync(from, to, fs.constants.COPYFILE_EXCL);
+        copiedAll.push(to);
         // Strip every image copy, not just the ones Tina saw GPS in. Fail closed: a copy
         // whose GPS can't be removed is deleted rather than handed to Claude.
         if (kindOf(rel) === "image") strips.push(stripGps(to).catch(() => { fs.rmSync(to, { force: true }); dropped++; }));
@@ -70,7 +85,9 @@ export async function stageFence(plan: Plan, emit: (ev: Ev) => void): Promise<St
   }
 
   const fence: Fence = { workspace, allowedDomains: [...plan.allowedDomains] };
-  return { fence, workspace, pathMap, fenceNote: fenceNote(workspace, noteLines, plan.allowedDomains) };
+  const staged: Staged = { fence, workspace, pathMap, fenceNote: fenceNote(workspace, noteLines, plan.allowedDomains) };
+  recordBaseline(staged, copiedAll);
+  return staged;
 }
 
 function fenceNote(workspace: string, assetLines: string[], domains: string[]): string {
