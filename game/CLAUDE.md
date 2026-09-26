@@ -129,3 +129,6 @@ git add game && git commit -m "game: <what works now>" && git push   # every tim
 
 Never `git add` anything outside `game/`. Never force-push. If `git pull` shows a
 conflict outside `game/`, stop and call Sultan.
+
+
+Also read and follow @AGENTS.md in this folder (locked technical decisions).

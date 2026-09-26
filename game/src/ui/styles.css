@@ -1,0 +1,109 @@
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #182d25; background: #f2f5f0; font-synthesis: none; text-rendering: optimizeLegibility; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.app { max-width: var(--page-width); padding: var(--page-padding); margin: auto; font-size: var(--body-size); line-height: 1.5; }
+h1, h2, h3, p { margin: 0; overflow-wrap: anywhere; }
+h1 { font-size: var(--title-size); letter-spacing: -.04em; }
+h2 { font-size: var(--heading-size); line-height: 1.3; }
+h3 { font-size: var(--body-size); }
+p, ul, .button-row, form, pre { margin-top: .8em; margin-bottom: 0; }
+ul { padding-left: 1.3em; }
+li + li { margin-top: .5em; }
+button, textarea, input { font: inherit; }
+button { background: #205640; color: #fff; border: 2px solid #205640; border-radius: calc(var(--radius) / 2); min-height: var(--control-height); padding: .55em .85em; cursor: pointer; font-weight: 650; }
+button:hover:not(:disabled) { background: #163d2c; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+textarea { display: block; width: 100%; min-height: var(--input-height); padding: .7em; margin: .5em 0 .8em; border: 1px solid #899a91; border-radius: calc(var(--radius) / 2); color: inherit; background: #fff; resize: vertical; }
+label { font-weight: 650; }
+.secondary { color: #243c30; background: #fff; border-color: #829489; }
+.secondary:hover:not(:disabled) { background: #e8efe8; }
+.topbar, .header-actions, .segment-heading, .button-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); flex-wrap: wrap; }
+.topbar { margin-bottom: var(--gap); }
+.eyebrow { font-weight: 750; letter-spacing: .08em; color: #50685a; }
+.muted { color: #52645b; }
+.badge, .status, .tag { display: inline-block; border-radius: calc(var(--radius) / 2); padding: .15em .5em; font-weight: 700; }
+.online { background: #dcefe1; color: #1b5731; }
+.offline { background: #ffe5e1; color: #84281f; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12em), 1fr)); gap: var(--gap); margin-bottom: var(--gap); }
+.stats > div { background: #172f24; color: #fff; padding: var(--card-padding); border-radius: var(--radius); }
+.stats span, .stats strong { display: block; }
+.stats span { color: #c8d8cc; }
+.stats strong { font-size: var(--stat-size); text-transform: capitalize; }
+.columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30em), 1fr)); gap: var(--gap); align-items: start; }
+.stack { display: grid; gap: var(--gap); }
+.card { padding: var(--card-padding); background: white; border: 1px solid #ccd8cf; border-radius: var(--radius); min-width: 0; }
+.card > h2 { margin-bottom: .7em; }
+.card h3 { margin-top: 1em; }
+.action-card { border: 2px solid #548563; }
+.finding { border-left: 6px solid #ad3028; }
+.adjust { padding-top: var(--gap); border-top: 1px solid #ccd8cf; }
+.option { display: grid; gap: .3em; text-align: left; width: 100%; }
+.option span { font-weight: 400; }
+.recommended { background: #e9f4e8; border-color: #357047; color: #17452b; }
+.recommended:hover:not(:disabled) { background: #d7ebd7; }
+.option .recommend-label { font-weight: 750; }
+.button-row { justify-content: flex-start; }
+.legend { display: flex; gap: .5em; flex-wrap: wrap; margin-bottom: var(--gap); }
+.segments { display: grid; gap: .7em; }
+.segment { padding: .9em; border: 2px solid #ccd8cf; border-left-width: 6px; border-radius: calc(var(--radius) / 2); }
+.segment h3 { margin: 0; }
+.segment p { margin-top: .35em; }
+.planned { background: #f0f2f3; color: #414a53; border-color: #8a949d; }
+.segment.planned { border-style: dashed; }
+.built { background: #f6e9d8; color: #6e421e; border-color: #99663c; }
+.inspecting { background: #fff3bb; color: #685000; border-color: #ad8500; }
+.red { background: #ffebe9; color: #9a2922; border-color: #b6372c; }
+.green { background: #e4f3e5; color: #205d34; border-color: #397848; }
+.speech { border-left: 3px solid #a6bba9; padding-left: .7em; margin-top: .3em; }
+.toggle { display: flex; gap: .5em; align-items: center; }
+.toggle input { width: 1.2em; height: 1.2em; accent-color: #205640; }
+.event-log { max-height: var(--log-height); overflow: auto; margin-top: var(--gap); overflow-anchor: none; }
+.event { border-bottom: 1px solid #d7e0d9; padding: .8em 0; }
+.event-meta { color: #53685a; }
+.event p { margin-top: .2em; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #17251e; color: #e3eee5; padding: .8em; border-radius: calc(var(--radius) / 2); }
+.raw-log { max-height: var(--raw-height); overflow: auto; }
+.path { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+.capitalize { text-transform: capitalize; }
+.notice, .error { padding: var(--card-padding); border-radius: var(--radius); margin-bottom: var(--gap); background: #fff1c5; color: #694d00; }
+.error { background: #ffe5e1; color: #84281f; }
+.blocked-history + .blocked-history { margin-top: var(--gap); padding-top: var(--gap); border-top: 1px solid #ccd8cf; }
+.tag { background: #fff0bf; color: #694b00; margin: .35em 0; }
+.toasts { position: fixed; right: var(--page-padding); bottom: var(--page-padding); width: min(var(--toast-width), calc(100vw - 2 * var(--page-padding))); max-height: var(--toast-height); overflow: auto; display: grid; gap: var(--gap); z-index: 10; }
+.toast { background: #fff; border: 2px solid #a9392e; border-radius: var(--radius); padding: var(--card-padding); box-shadow: 0 6px 24px #17251e30; }
+.toast p { margin-top: .4em; }
+.dismiss { background: transparent; color: #8a2c23; border: none; padding: 0 .4em; }
+.dismiss:hover:not(:disabled) { background: #ffe5e1; }
+footer { margin-top: var(--gap); color: #53685a; }
+a { color: #205640; }
+
+/* Shared M1 controls form the React overlay; the canvas owns no input or state. */
+.yard-details { min-width: 0; }
+.yard-details > summary { display: none; }
+.yard-shell { display: grid; grid-template-columns: minmax(0, 1fr) var(--yard-controls-width); gap: var(--gap); align-items: start; }
+.yard-view { position: sticky; top: var(--yard-top); overflow: hidden; border: 1px solid #9da98f; border-radius: var(--radius); background: #d7dfcc; }
+.yard-caption { padding: .8em 1em; display: flex; justify-content: space-between; gap: .5em; flex-wrap: wrap; background: #233e2d; color: #fffdf4; }
+.yard-caption strong { letter-spacing: .1em; }
+.yard-canvas { width: 100%; aspect-ratio: var(--yard-aspect); }
+.yard-canvas canvas { display: block; image-rendering: pixelated; }
+.yard-help, .yard-note { margin: 0; padding: .45em 1em; text-align: center; background: #f2f3e6; }
+.yard-note { color: #52645b; }
+.game-app .columns { display: grid; grid-template-columns: minmax(0, 1fr); position: relative; z-index: 1; }
+.game-app .stats > div { padding: .55em 1em; }
+.game-app .yard-details > summary { display: block; cursor: pointer; padding: .75em; font-weight: 700; background: #e1e9dc; border-radius: var(--radius); }
+.game-app .yard-details[open] > summary { margin-bottom: var(--gap); }
+.game-app .toasts { position: static; width: auto; max-height: none; margin-top: var(--gap); }
+@media (max-width: 1100px) {
+  .yard-shell { grid-template-columns: minmax(0, 1fr); }
+  .yard-view { position: relative; top: auto; overflow-x: auto; }
+  .yard-canvas { min-width: var(--yard-min-width); }
+}
+
+.yard-stage { position: relative; }
+.family-bubbles { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.family-bubble { position: absolute; transform: translate(-50%, -100%); width: var(--bubble-width); min-width: 190px; padding: var(--bubble-padding); border: 3px solid #267fc4; border-radius: 16px 16px 16px 3px; background: #fffdf4; color: #172f24; box-shadow: 0 3px 0 #172f2420; font-size: var(--bubble-font); line-height: 1.3; }
+.family-bubble p { margin-top: .25em; }
+.bubble-tina { border-color: #a74891; }
+.bubble-dog { border-color: #a96624; }
+@media (max-width: 1100px) { .yard-stage { min-width: var(--yard-min-width); } }
