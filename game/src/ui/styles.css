@@ -172,3 +172,4 @@ a { color: #205640; }
 .titlebar .secondary:hover:not(:disabled) { background: #244a37; }
 .titlebar .raw-toggle { background: #0d1712; border-color: #3d5c4a; }
 .titlebar .raw-toggle.on { background: #7ee2a8; color: #0d1712; }
+.report-panel:focus { outline: none; }

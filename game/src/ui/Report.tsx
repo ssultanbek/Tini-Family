@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { AccessReport, ReportLine } from '../../../shared/events.ts';
 
@@ -18,9 +19,13 @@ function Section({ title, icon, lines, empty, kind }: { title: string; icon: str
 
 /** End screen: drawn only from the engine's report.ready payload. */
 export function ReportScreen({ report, url, onClose, onReset, resetBusy }: { report: AccessReport; url?: string; onClose: () => void; onReset: () => void; resetBusy: boolean }) {
+  const panel = useRef<HTMLDivElement>(null);
+  // Focus the panel top (not the bottom buttons) so the title is what's on screen.
+  useEffect(() => { panel.current?.focus({ preventScroll: true }); }, []);
   return <motion.div className="report-screen" role="dialog" aria-modal="true" aria-labelledby="report-title"
+    onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-    <motion.div className="report-panel" initial="hidden" animate="show" variants={{ hidden: { scale: .96 }, show: { scale: 1, transition: { staggerChildren: .08 } } }}>
+    <motion.div className="report-panel" ref={panel} tabIndex={-1} initial="hidden" animate="show" variants={{ hidden: { scale: .96 }, show: { scale: 1, transition: { staggerChildren: .08 } } }}>
       <motion.header className="report-header" variants={rise}>
         <p className="eyebrow">LAUNCHED · ACCESS REPORT</p>
         <h2 id="report-title">Here’s everything the dog could touch</h2>
@@ -32,7 +37,7 @@ export function ReportScreen({ report, url, onClose, onReset, resetBusy }: { rep
         {report.dataLeavesTo.length ? <ul>{report.dataLeavesTo.map(host => <li key={host} className="path">{host}</li>)}</ul> : <p className="muted">No outside servers. Nothing leaves your machine.</p>}
       </motion.section>
       <motion.div className="button-row report-actions" variants={rise}>
-        <button className="secondary" onClick={onClose} autoFocus>Back to the yard</button>
+        <button className="secondary" onClick={onClose}>Back to the yard</button>
         <button disabled={resetBusy} onClick={onReset}>{resetBusy ? 'Reset sent…' : 'Start over'}</button>
       </motion.div>
     </motion.div>
