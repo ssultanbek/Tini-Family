@@ -19,12 +19,16 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.type === "session.phase" && e.phase === "contract") send({ type: "approve.plan" });
   if (e.type === "escalation.opened") send({ type: "escalation.choose", escalationId: e.escalationId, optionId: choice });
   if (e.type === "tina.inspect.finished" && e.scope === "final") for (const f of state!.findings) send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id });
-  if (e.type === "launch.unlocked") send({ type: "launch" });
-  if (e.type === "report.ready") {
+  if (e.type === "launch.unlocked" && state!.turns.length === 1) send({ type: "launch" });
+  // Turn 2 names a new folder (escalation from the prompt); turn 3 needs nothing new.
+  if (e.type === "report.ready") send({ type: "prompt", text: "Add a careers page using the job descriptions in ~/Documents/Rivera-HR" });
+  if (e.type === "launch.unlocked" && state!.turns.length === 2) send({ type: "prompt", text: "Make the header darker" });
+  if (e.type === "launch.unlocked" && state!.turns.length === 3) {
     const s = state!;
-    const ok = s.segments.every((g) => g.status === "green") && s.launchUnlocked && s.findings.length === 0 && s.phase === "launched";
+    const ok = s.segments.every((g) => g.status === "green") && s.launchUnlocked && s.findings.length === 0
+      && s.phase === "ready" && s.turns.length === 3 && s.turns.every((t) => t.summary) && s.bricks === 16;
     console.log(`segments: ${s.segments.map((g) => g.id + "=" + g.status).join(", ")}`);
-    console.log(`blocked=${s.blocked.length} bricks=${s.bricks} choice=${choice} -> ${ok ? "PASS" : "FAIL"}`);
+    console.log(`turns=${s.turns.map((t) => t.id).join(",")} blocked=${s.blocked.length} bricks=${s.bricks} choice=${choice} -> ${ok ? "PASS" : "FAIL"}`);
     process.exit(ok ? 0 : 1);
   }
 });

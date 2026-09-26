@@ -35,17 +35,20 @@ const FACE_FINDING: Finding = {
 };
 
 const s = (wait: number, ev: Ev): Step => ({ wait, ev });
-const bricks = (start: number, files: ["read" | "write" | "edit" | "run", string][]) =>
-  files.map(([op, file], i) => s(700, { actor: "dog", type: "dog.brick.placed", op, file, bricks: start + i + 1 }));
+let brickTotal = 0; // the house keeps growing across turns
+const bricks = (_start: number, files: ["read" | "write" | "edit" | "run", string][]) =>
+  files.map(([op, file]) => s(700, { actor: "dog", type: "dog.brick.placed", op, file, bricks: ++brickTotal }));
 
 export function riveraScenario(): Step[] {
   let extra: Segment[] = []; // segments added by escalation, inspected at the end too
+  brickTotal = 0;
   return [
     s(0, { actor: "system", type: "session.reset" }),
     s(0, { actor: "system", type: "session.phase", phase: "idle" }),
     s(0, { actor: "dog", type: "dog.state", state: "sleeping" }),
     { gate: "start", then: (cmd) => [
       s(0, { actor: "system", type: "user.prompt", text: cmd.type === "start" ? cmd.prompt : "" }),
+      s(0, { actor: "system", type: "turn.started", turnId: 1, prompt: cmd.type === "start" ? cmd.prompt : "" }),
     ] },
     s(300, { actor: "system", type: "session.phase", phase: "planning" }),
     s(400, { actor: "tini", type: "speech", text: "Let me see what this job needs..." }),
@@ -82,7 +85,7 @@ export function riveraScenario(): Step[] {
     s(0, { actor: "dog", type: "fence.blocked", target: "~/Pictures/Jobsite2024", tool: "Glob", layer: "hook", simulated: false,
       reason: "Claude asked for a folder you didn't name. Tini is asking you first." }),
     s(300, { actor: "tina", type: "tina.inspect.started", scope: "folder" }),
-    s(1500, { actor: "tini", type: "escalation.opened", escalationId: "esc-1", requested: "~/Pictures/Jobsite2024",
+    s(1500, { actor: "tini", type: "escalation.opened", escalationId: "esc-1", source: "agent", requested: "~/Pictures/Jobsite2024",
       ask: "Claude wants more job-site photos for the gallery.",
       inspection: { totalFiles: 1212, highlights: [
         { label: "job-site photos", count: 12, severity: "low" },
@@ -110,6 +113,7 @@ export function riveraScenario(): Step[] {
     } },
     ...bricks(7, [["read", "assets/jobsite/photo-03.jpg"], ["edit", "gallery.html"], ["run", "npx serve --version"]]),
     s(800, { actor: "dog", type: "dog.state", state: "done" }),
+    s(0, { actor: "dog", type: "turn.finished", turnId: 1, summary: "Built a 3-page site: home, services, gallery." }),
     // --- final inspection ---
     s(500, { actor: "system", type: "session.phase", phase: "inspecting" }),
     s(0, { actor: "tina", type: "tina.inspect.started", scope: "final" }),
@@ -140,5 +144,63 @@ export function riveraScenario(): Step[] {
       fixed: [{ what: "script.js", why: "API key moved out of the website" }, { what: "crew-truck.jpg", why: "Face and plate blurred" }],
       dataLeavesTo: ["fonts.googleapis.com"],
     } }),
+    ...followUps(2, () => [...SEGMENTS, ...extra]),
   ];
+}
+
+// Maria keeps working in the same project. Each prompt is a new turn inside the
+// same fence. If the prompt names a new folder (contains "~/"), Tini asks first.
+function followUps(turnId: number, segs: () => Segment[]): Step[] {
+  return [{ gate: "prompt", then: (cmd) => {
+    const text = cmd.type === "prompt" ? cmd.text : "";
+    const newFolder = text.match(/~\/[^\s,]+/)?.[0];
+    const steps: Step[] = [
+      s(0, { actor: "system", type: "user.prompt", text }),
+      s(0, { actor: "system", type: "turn.started", turnId, prompt: text }),
+      s(0, { actor: "system", type: "launch.locked", reason: "New work since Tina's last inspection" }),
+      s(0, { actor: "system", type: "session.phase", phase: "planning" }),
+    ];
+    if (newFolder) {
+      steps.push(
+        s(600, { actor: "tini", type: "speech", text: `You mentioned ${newFolder}. That's outside the fence, let me check it.` }),
+        s(0, { actor: "tina", type: "tina.inspect.started", scope: "folder" }),
+        s(1200, { actor: "tini", type: "escalation.opened", escalationId: `esc-t${turnId}`, source: "prompt", requested: newFolder,
+          ask: "Your new request needs a folder that isn't inside the fence yet.",
+          inspection: { totalFiles: 8, highlights: [{ label: "documents", count: 7, severity: "low" }, { label: "file with a password in it", count: 1, severity: "high" }] },
+          options: [
+            { id: "narrow", label: "Allow the 7 documents", detail: "The file with a password stays out.", recommended: true },
+            { id: "all", label: "Allow the whole folder", detail: "All 8 files.", recommended: false },
+            { id: "deny", label: "Deny", detail: "Claude works without it.", recommended: false },
+          ] }),
+        { gate: "escalation.choose", then: (c) => {
+          const choice = c.type === "escalation.choose" ? c.optionId : "deny";
+          const out: Step[] = [s(0, { actor: "system", type: "escalation.resolved", escalationId: `esc-t${turnId}`, choice, summary: choice === "deny" ? "Request denied" : "Folder added" })];
+          if (choice !== "deny") {
+            const g = seg(`extra-${turnId}`, newFolder.split("/").pop() || "Folder", "folder", choice === "narrow" ? "7 documents" : "8 files");
+            const before = segs;
+            segs = () => [...before(), g];
+            out.push(s(400, { actor: "tini", type: "fence.segment.built", segment: g }), s(400, { actor: "tini", type: "tini.carry.box", segmentId: g.id, fileCount: choice === "narrow" ? 7 : 8 }));
+          }
+          return out;
+        } },
+      );
+    } else {
+      steps.push(s(600, { actor: "tini", type: "speech", text: "Nothing new needed. Same fence." }));
+    }
+    steps.push(
+      s(300, { actor: "system", type: "session.phase", phase: "building" }),
+      s(0, { actor: "dog", type: "dog.state", state: "working" }),
+      { lazy: () => bricks(100 * turnId, [["read", "index.html"], ["write", `page-${turnId}.html`], ["edit", "styles.css"]]) },
+      s(600, { actor: "dog", type: "dog.state", state: "done" }),
+      s(0, { actor: "dog", type: "turn.finished", turnId, summary: `Done: ${text.slice(0, 60)}` }),
+      s(300, { actor: "system", type: "session.phase", phase: "inspecting" }),
+      s(0, { actor: "tina", type: "tina.inspect.started", scope: "final" }),
+      { lazy: () => segs().flatMap((g) => [s(300, { actor: "tina", type: "tina.inspect.segment", segmentId: g.id } as Ev), s(100, { actor: "tina", type: "segment.green", segmentId: g.id } as Ev)]) },
+      s(0, { actor: "tina", type: "tina.inspect.finished", scope: "final", redCount: 0 }),
+      s(0, { actor: "system", type: "session.phase", phase: "ready" }),
+      s(0, { actor: "system", type: "launch.unlocked" }),
+      { lazy: () => followUps(turnId + 1, segs) },
+    );
+    return steps;
+  } }];
 }

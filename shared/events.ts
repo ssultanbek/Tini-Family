@@ -3,6 +3,8 @@
 // Only Sultan edits this file. The game imports it; it never adds to it.
 // Engine -> game: "event" messages (EngineEvent) and one "snapshot" on connect.
 // Game -> engine: "command" messages (GameCommand). Clicks only, never decisions.
+// A project is long-lived: Maria sends many prompts (turns) into the same fence,
+// for any kind of task, not just websites. Nothing here assumes a single prompt.
 // No pixel positions anywhere: only segment ids and zones.
 // ============================================================================
 
@@ -69,6 +71,8 @@ export type EngineEvent = Base & (
   | { type: "session.reset" }
   | { type: "session.phase"; phase: Phase }
   | { type: "user.prompt"; text: string }
+  | { type: "turn.started"; turnId: number; prompt: string }          // one per prompt Maria sends; the house keeps growing across turns
+  | { type: "turn.finished"; turnId: number; summary: string }        // Claude's short summary of what it did this turn
   | { type: "speech"; text: string }                                   // speech bubble over `actor`, ~2-3s
   | { type: "fence.plan.proposed"; segments: Segment[]; contract: ContractCard }
   | { type: "fence.plan.approved" }
@@ -77,7 +81,7 @@ export type EngineEvent = Base & (
   | { type: "dog.state"; state: "sleeping" | "working" | "waiting" | "done" }
   | { type: "dog.brick.placed"; op: "read" | "write" | "edit" | "run"; file: string; bricks: number } // bricks = running total
   | { type: "fence.blocked"; target: string; reason: string; layer: "hook" | "os-sandbox"; tool: string; segmentId?: string; simulated: boolean }
-  | { type: "escalation.opened"; escalationId: string; requested: string; ask: string; inspection: { totalFiles: number; highlights: InspectionHighlight[] }; options: EscalationOption[] }
+  | { type: "escalation.opened"; escalationId: string; source?: "agent" | "prompt"; requested: string; ask: string; inspection: { totalFiles: number; highlights: InspectionHighlight[] }; options: EscalationOption[] }
   | { type: "escalation.resolved"; escalationId: string; choice: EscalationOption["id"]; summary: string }
   | { type: "tina.inspect.started"; scope: "folder" | "final"; segmentId?: string }
   | { type: "tina.inspect.segment"; segmentId: string }                // Tina walks to this segment and looks
@@ -86,6 +90,7 @@ export type EngineEvent = Base & (
   | { type: "segment.green"; segmentId: string }
   | { type: "tina.inspect.finished"; scope: "folder" | "final"; redCount: number }
   | { type: "launch.unlocked" }
+  | { type: "launch.locked"; reason: string }                          // new work since the last inspection; Tina must re-check before anything leaves
   | { type: "launch.done"; url?: string }
   | { type: "report.ready"; report: AccessReport }
   | { type: "raw.log"; channel: "hook" | "config" | "sdk" | "scan"; text: string } // raw-view toggle only
@@ -95,7 +100,8 @@ export type EngineEvent = Base & (
 export type EngineEventType = EngineEvent["type"];
 
 export type GameCommand =
-  | { type: "start"; prompt: string }
+  | { type: "start"; prompt: string }       // first prompt: creates the project and its fence
+  | { type: "prompt"; text: string }        // every later prompt in the same project
   | { type: "approve.plan" }
   | { type: "adjust.plan"; text: string }
   | { type: "escalation.choose"; escalationId: string; optionId: EscalationOption["id"] }
@@ -107,7 +113,8 @@ export type GameCommand =
 export interface WorldState {
   seq: number;
   phase: Phase;
-  prompt: string | null;
+  prompt: string | null;          // latest prompt
+  turns: { id: number; prompt: string; summary?: string }[];
   segments: Segment[];
   contract: ContractCard | null;
   dog: "sleeping" | "working" | "waiting" | "done";

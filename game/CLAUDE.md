@@ -16,6 +16,23 @@ original dog: never use Anthropic's logo or mascot art.
 A real engine (built by Sultan) decides everything and sends events. **The game
 only shows events and sends clicks back.**
 
+## This is a workspace people keep using, not a one-shot website builder
+
+Maria opens a project and keeps prompting, many times: "build the site", then
+"add a careers page", "make the header darker", "use the files in ~/Documents/HR".
+And the task can be anything done with Claude Code (a website, a script, a data
+analysis, fixing code), not only websites. So:
+
+- **The prompt bar is always on screen** (bottom of the page). When `phase` is
+  `idle` it sends `start` (first prompt, creates the project). When `phase` is
+  `ready` or `launched` it sends `prompt`. In every other phase it's disabled and
+  shows "Tini is working...".
+- **Show the turn history** from `state.turns` (each prompt with Claude's summary).
+- **The house is "the project"** and keeps growing across turns (`bricks` is a running total).
+- **Launch can lock again.** A new turn sends `launch.locked` until Tina re-inspects.
+- **Never hard-code website words** in the UI. Every label (segments, cards,
+  findings, report) comes from events.
+
 ## Hard rules (never break these)
 
 1. **Only edit files inside `/game`.** Never edit `/shared`, `/mock`, `/engine`.
@@ -63,6 +80,9 @@ the whole story. Read it before building the network layer.
 - `socket.io-client` for the connection.
 - In `vite.config.ts` set `server: { port: 5173, fs: { allow: [".."] } }` so
   `../shared` imports work.
+- **No CDNs.** No Google Fonts links, no libraries or images loaded from the
+  internet. Everything must be installed with npm or saved in `public/`, because
+  the demo must work with the Wi-Fi off.
 - Art: **Kenney.nl free packs only (CC0)**: "Tiny Town" for grass, paths,
   fences and houses; "Tiny Dungeon" for Tini and Tina; an animal from Kenney
   for the dog. Put them in `game/public/assets/`. Pick, never draw.
@@ -71,18 +91,20 @@ the whole story. Read it before building the network layer.
 
 | Thing on screen | Driven by |
 |---|---|
-| Empty yard, dog sleeping, prompt box + Start | `phase: "idle"`, send `start` with the prompt text |
+| Empty yard, dog sleeping, prompt bar | `phase: "idle"`, send `start` with the prompt text |
+| A new turn begins / ends (turn history) | `turn.started`, `turn.finished` (summary) |
+| Later prompts | prompt bar in `ready`/`launched`, send `prompt` with the text |
 | Tini thinking, Tina pre-inspecting | `speech`, `tina.inspect.started` |
 | **Contract card** (Approve / Adjust) | `fence.plan.proposed` (`contract`), phase `contract` |
 | Fence segments appearing with labels | `fence.segment.built` (label + detail painted on the segment) |
 | Tini carrying a box from gate into yard | `tini.carry.box` |
 | House growing | `dog.brick.placed` (`bricks` = total; each event adds one brick) |
 | Dog bumps the fence, sparks, reason toast | `fence.blocked` (show "simulated attack" tag when `simulated` is true) |
-| **Escalation card** (3 buttons, recommended one highlighted) | `escalation.opened`; closes on `escalation.resolved`. The dog keeps working while it's open. |
+| **Escalation card** (3 buttons, recommended one highlighted) | `escalation.opened`; closes on `escalation.resolved`. Header depends on `source`: `agent` = "Claude is asking for more", `prompt` = "Your request needs something outside the fence". The dog keeps working while it's open. |
 | Tina walking the fence | `tina.inspect.segment` |
 | Red segment + **finding card** with fix buttons | `segment.red` (`finding.fixes` are the buttons) |
 | Segment turns green | `segment.green` |
-| **Launch button** (disabled until unlocked) | `launch.unlocked`, send `launch` |
+| **Launch button** (disabled until unlocked) | `launch.unlocked`, send `launch`; `launch.locked` disables it again and shows its `reason` |
 | **Access report** | `report.ready` |
 | **Raw view toggle** (for engineer judges) | `raw.log` lines + the raw JSON of every event |
 
@@ -119,6 +141,9 @@ cd game && npm install && npm run dev                  # http://localhost:5173
 ```
 
 To restart the story, send `{ type: "reset" }` (add a small Reset button in the corner).
+The fake engine keeps accepting prompts after the first story ends. A prompt that
+contains a folder like `~/Documents/Rivera-HR` makes Tini ask first (escalation
+card with `source: "prompt"`); any other prompt goes straight to the dog.
 
 ## Git (do this every time)
 
