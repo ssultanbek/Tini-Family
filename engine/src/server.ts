@@ -16,7 +16,8 @@ export function startServer({ hub, driver, mode, port = ENGINE_PORT, gameDist }:
   if (gameDist && fs.existsSync(path.join(gameDist, "index.html"))) app.use(express.static(gameDist));
 
   const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: ["http://localhost:5173", "http://127.0.0.1:5173"] } });
+  // CORS: the game's dev server, or the built game served by this engine itself.
+  const io = new Server(server, { cors: { origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4000", "http://127.0.0.1:4000"] } });
   hub.on((e) => io.emit(SOCKET.event, e));
   io.on("connection", (sock) => {
     sock.emit(SOCKET.snapshot, hub.state);
