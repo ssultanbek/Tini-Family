@@ -1,0 +1,31 @@
+// Auto-clicks through the whole flow and checks the final world state.
+// Also doubles as the reference for how the game talks to the engine.
+import { io } from "socket.io-client";
+import { ENGINE_PORT, SOCKET, type EngineEvent, type GameCommand, type WorldState } from "../shared/events.ts";
+import { reduce } from "../shared/reducer.ts";
+
+const choice = (process.argv[2] ?? "narrow") as "narrow" | "all" | "deny";
+const sock = io(`http://localhost:${process.env.PORT ?? ENGINE_PORT}`);
+let state: WorldState | null = null;
+let lastSeq = 0;
+const send = (c: GameCommand) => sock.emit(SOCKET.command, c);
+
+sock.on(SOCKET.snapshot, (s: WorldState) => { state = s; lastSeq = s.seq; send({ type: "reset" }); });
+sock.on(SOCKET.event, (e: EngineEvent) => {
+  if (e.seq <= lastSeq && e.type !== "session.reset") return;
+  if (e.seq !== lastSeq + 1 && e.type !== "session.reset") console.log(`!! gap: got #${e.seq} after #${lastSeq}`);
+  lastSeq = e.seq; state = reduce(state!, e);
+  if (e.type === "session.phase" && e.phase === "idle") send({ type: "start", prompt: "Build a modern, serious-looking website for Rivera Construction." });
+  if (e.type === "session.phase" && e.phase === "contract") send({ type: "approve.plan" });
+  if (e.type === "escalation.opened") send({ type: "escalation.choose", escalationId: e.escalationId, optionId: choice });
+  if (e.type === "tina.inspect.finished" && e.scope === "final") for (const f of state!.findings) send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id });
+  if (e.type === "launch.unlocked") send({ type: "launch" });
+  if (e.type === "report.ready") {
+    const s = state!;
+    const ok = s.segments.every((g) => g.status === "green") && s.launchUnlocked && s.findings.length === 0 && s.phase === "launched";
+    console.log(`segments: ${s.segments.map((g) => g.id + "=" + g.status).join(", ")}`);
+    console.log(`blocked=${s.blocked.length} bricks=${s.bricks} choice=${choice} -> ${ok ? "PASS" : "FAIL"}`);
+    process.exit(ok ? 0 : 1);
+  }
+});
+setTimeout(() => { console.log("TIMEOUT"); process.exit(1); }, 60000);

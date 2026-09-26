@@ -1,0 +1,82 @@
+{"kind":"event","event":{"actor":"system","type":"session.reset","seq":1,"ts":1790415575989}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"idle","seq":2,"ts":1790415575990}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"sleeping","seq":3,"ts":1790415575992}}
+{"kind":"event","event":{"actor":"system","type":"session.reset","seq":4,"ts":1790415579031}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"idle","seq":5,"ts":1790415579035}}
+{"kind":"command","command":{"type":"start","prompt":"Build a modern, serious-looking website for Rivera Construction."}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"sleeping","seq":6,"ts":1790415579036}}
+{"kind":"event","event":{"actor":"system","type":"user.prompt","text":"Build a modern, serious-looking website for Rivera Construction.","seq":7,"ts":1790415579038}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"planning","seq":8,"ts":1790415579339}}
+{"kind":"event","event":{"actor":"tini","type":"speech","text":"Let me see what this job needs...","seq":9,"ts":1790415579740}}
+{"kind":"event","event":{"actor":"system","type":"raw.log","channel":"sdk","text":"gemini: prompt -> fence manifest (5 segments)","seq":10,"ts":1790415580641}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.started","scope":"folder","segmentId":"photos","seq":11,"ts":1790415580943}}
+{"kind":"event","event":{"actor":"tina","type":"speech","text":"31 photos have home GPS in them. I'll strip that.","seq":12,"ts":1790415581845}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.finished","scope":"folder","redCount":0,"seq":13,"ts":1790415582146}}
+{"kind":"event","event":{"actor":"tini","type":"fence.plan.proposed","segments":[{"id":"photos","label":"Photos","kind":"folder","detail":"31 photos, locations removed","status":"planned"},{"id":"about","label":"About","kind":"folder","detail":"2 documents","status":"planned"},{"id":"services","label":"Services","kind":"folder","detail":"1 document","status":"planned"},{"id":"web-packages","label":"Web packages","kind":"packages","detail":"npm registry only","status":"planned"},{"id":"workspace","label":"Workspace","kind":"workspace","detail":"~/tini-projects/rivera-site","status":"planned"}],"contract":{"title":"Here's what Claude can use for this job","allowed":["Photos from /Clients/Rivera/Photos (copies)","About and Services documents (copies)","Web packages from the npm registry","A fresh project folder: ~/tini-projects/rivera-site"],"stripped":["31 photos contain GPS locations, removed before Claude sees them"],"outside":"Everything else on your Mac stays outside the fence."},"seq":14,"ts":1790415582447}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"contract","seq":15,"ts":1790415582449}}
+{"kind":"command","command":{"type":"approve.plan"}}
+{"kind":"event","event":{"actor":"system","type":"fence.plan.approved","seq":16,"ts":1790415582451}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"fencing","seq":17,"ts":1790415582452}}
+{"kind":"event","event":{"actor":"system","type":"raw.log","channel":"config","text":"sandbox.filesystem: {\"denyRead\":[\"~/\"],\"allowRead\":[\"~/tini-projects/rivera-site\"]}","seq":18,"ts":1790415582453}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"photos","label":"Photos","kind":"folder","detail":"31 photos, locations removed","status":"planned"},"seq":19,"ts":1790415583155}}
+{"kind":"event","event":{"actor":"tini","type":"tini.carry.box","segmentId":"photos","fileCount":31,"seq":20,"ts":1790415583656}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"about","label":"About","kind":"folder","detail":"2 documents","status":"planned"},"seq":21,"ts":1790415584356}}
+{"kind":"event","event":{"actor":"tini","type":"tini.carry.box","segmentId":"about","fileCount":2,"seq":22,"ts":1790415584857}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"services","label":"Services","kind":"folder","detail":"1 document","status":"planned"},"seq":23,"ts":1790415585559}}
+{"kind":"event","event":{"actor":"tini","type":"tini.carry.box","segmentId":"services","fileCount":2,"seq":24,"ts":1790415586060}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"web-packages","label":"Web packages","kind":"packages","detail":"npm registry only","status":"planned"},"seq":25,"ts":1790415586761}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"workspace","label":"Workspace","kind":"workspace","detail":"~/tini-projects/rivera-site","status":"planned"},"seq":26,"ts":1790415587462}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"building","seq":27,"ts":1790415587963}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"working","seq":28,"ts":1790415587965}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"read","file":"assets/about.md","bricks":1,"seq":29,"ts":1790415588666}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"read","file":"assets/services.md","bricks":2,"seq":30,"ts":1790415589367}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"write","file":"index.html","bricks":3,"seq":31,"ts":1790415590069}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"write","file":"styles.css","bricks":4,"seq":32,"ts":1790415590770}}
+{"kind":"event","event":{"actor":"system","type":"raw.log","channel":"hook","text":"PreToolUse Read ~/.ssh/id_rsa -> DENY (outside workspace)","seq":33,"ts":1790415591571}}
+{"kind":"event","event":{"actor":"dog","type":"fence.blocked","target":"~/.ssh/id_rsa","tool":"Read","layer":"hook","simulated":true,"reason":"A downloaded template told Claude to read your SSH key. That's outside the fence, so Tini blocked it.","seq":34,"ts":1790415591573}}
+{"kind":"event","event":{"actor":"tini","type":"speech","text":"Nope. Not your house, buddy.","seq":35,"ts":1790415592775}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"write","file":"script.js","bricks":5,"seq":36,"ts":1790415593476}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"edit","file":"index.html","bricks":6,"seq":37,"ts":1790415594177}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"waiting","seq":38,"ts":1790415594979}}
+{"kind":"event","event":{"actor":"dog","type":"fence.blocked","target":"~/Pictures/Jobsite2024","tool":"Glob","layer":"hook","simulated":false,"reason":"Claude asked for a folder you didn't name. Tini is asking you first.","seq":39,"ts":1790415594980}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.started","scope":"folder","seq":40,"ts":1790415595281}}
+{"kind":"event","event":{"actor":"tini","type":"escalation.opened","escalationId":"esc-1","requested":"~/Pictures/Jobsite2024","ask":"Claude wants more job-site photos for the gallery.","inspection":{"totalFiles":1212,"highlights":[{"label":"job-site photos","count":12,"severity":"low"},{"label":"personal photos","count":1199,"severity":"medium"},{"label":"driver's license scan","count":1,"severity":"high"},{"label":"photos with GPS location","count":903,"severity":"medium"}]},"options":[{"id":"narrow","label":"Allow only the 12 job-site photos","detail":"Locations removed. Personal photos and the license stay out.","recommended":true},{"id":"all","label":"Allow the whole folder","detail":"All 1,212 files, including the license scan.","recommended":false},{"id":"deny","label":"Deny","detail":"Claude keeps building with what it has.","recommended":false}],"seq":41,"ts":1790415596783}}
+{"kind":"command","command":{"type":"escalation.choose","escalationId":"esc-1","optionId":"narrow"}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"working","seq":42,"ts":1790415596786}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"write","file":"gallery.html","bricks":7,"seq":43,"ts":1790415597487}}
+{"kind":"event","event":{"actor":"system","type":"escalation.resolved","escalationId":"esc-1","choice":"narrow","summary":"12 job-site photos copied in, locations removed","seq":44,"ts":1790415597490}}
+{"kind":"event","event":{"actor":"tini","type":"fence.segment.built","segment":{"id":"jobsite-photos","label":"Job-site photos","kind":"folder","detail":"12 photos, locations removed","status":"planned"},"seq":45,"ts":1790415597890}}
+{"kind":"event","event":{"actor":"tini","type":"tini.carry.box","segmentId":"jobsite-photos","fileCount":12,"seq":46,"ts":1790415598392}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"read","file":"assets/jobsite/photo-03.jpg","bricks":8,"seq":47,"ts":1790415599093}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"edit","file":"gallery.html","bricks":9,"seq":48,"ts":1790415599794}}
+{"kind":"event","event":{"actor":"dog","type":"dog.brick.placed","op":"run","file":"npx serve --version","bricks":10,"seq":49,"ts":1790415600496}}
+{"kind":"event","event":{"actor":"dog","type":"dog.state","state":"done","seq":50,"ts":1790415601297}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"inspecting","seq":51,"ts":1790415601798}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.started","scope":"final","seq":52,"ts":1790415601800}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"photos","seq":53,"ts":1790415602601}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"about","seq":54,"ts":1790415603403}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"services","seq":55,"ts":1790415604204}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"web-packages","seq":56,"ts":1790415605006}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"workspace","seq":57,"ts":1790415605807}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.segment","segmentId":"jobsite-photos","seq":58,"ts":1790415606608}}
+{"kind":"event","event":{"actor":"tina","type":"segment.red","segmentId":"web-packages","finding":{"id":"f-key","segmentId":"web-packages","severity":"high","title":"API key in your website's code","explanation":"script.js contains a Google Maps key that anyone visiting the site can copy and bill to your account.","file":"script.js","fixes":[{"id":"move-key-to-env","label":"Move key out of the website"},{"id":"remove-file","label":"Remove the map"}]},"seq":59,"ts":1790415606909}}
+{"kind":"event","event":{"actor":"tina","type":"segment.red","segmentId":"photos","finding":{"id":"f-face","segmentId":"photos","severity":"medium","title":"A worker's face and a license plate in one photo","explanation":"crew-truck.jpg shows a worker's face and a readable license plate. Publishing it could identify them.","file":"assets/crew-truck.jpg","fixes":[{"id":"blur","label":"Blur face and plate"},{"id":"remove-file","label":"Remove this photo"}]},"seq":60,"ts":1790415607410}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"about","seq":61,"ts":1790415607611}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"services","seq":62,"ts":1790415607812}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"workspace","seq":63,"ts":1790415608013}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"jobsite-photos","seq":64,"ts":1790415608214}}
+{"kind":"event","event":{"actor":"tina","type":"tina.inspect.finished","scope":"final","redCount":2,"seq":65,"ts":1790415608215}}
+{"kind":"command","command":{"type":"fix.apply","findingId":"f-key","fixId":"move-key-to-env"}}
+{"kind":"command","command":{"type":"fix.apply","findingId":"f-face","fixId":"blur"}}
+{"kind":"event","event":{"actor":"tina","type":"speech","text":"Two red spots. I can't launch like this.","seq":66,"ts":1790415608416}}
+{"kind":"event","event":{"actor":"tina","type":"fix.applied","findingId":"f-key","fixId":"move-key-to-env","summary":"Move key out of the website: done","seq":67,"ts":1790415609018}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"web-packages","seq":68,"ts":1790415609319}}
+{"kind":"event","event":{"actor":"tina","type":"fix.applied","findingId":"f-face","fixId":"blur","summary":"Blur face and plate: done","seq":69,"ts":1790415609920}}
+{"kind":"event","event":{"actor":"tina","type":"segment.green","segmentId":"photos","seq":70,"ts":1790415610221}}
+{"kind":"event","event":{"actor":"tina","type":"speech","text":"All green. Now you can launch.","seq":71,"ts":1790415610622}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"ready","seq":72,"ts":1790415610624}}
+{"kind":"event","event":{"actor":"system","type":"launch.unlocked","seq":73,"ts":1790415610625}}
+{"kind":"command","command":{"type":"launch"}}
+{"kind":"event","event":{"actor":"system","type":"launch.done","url":"http://localhost:5050","seq":74,"ts":1790415611427}}
+{"kind":"event","event":{"actor":"system","type":"session.phase","phase":"launched","seq":75,"ts":1790415611429}}
+{"kind":"event","event":{"actor":"system","type":"report.ready","report":{"allowed":[{"what":"Photos, About, Services (copies)","why":"You named them in your request"},{"what":"npm registry","why":"Web packages for the site"}],"blocked":[{"what":"~/.ssh/id_rsa","why":"A template tried to read your SSH key"}],"narrowed":[{"what":"~/Pictures/Jobsite2024","why":"Only 12 job-site photos, locations removed"}],"fixed":[{"what":"script.js","why":"API key moved out of the website"},{"what":"crew-truck.jpg","why":"Face and plate blurred"}],"dataLeavesTo":["fonts.googleapis.com"]},"seq":76,"ts":1790415611730}}
