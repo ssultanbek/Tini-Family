@@ -4,6 +4,7 @@ import { yardLayout as L } from '../layout.ts';
 import { store } from '../store.ts';
 import { Family } from './Family.ts';
 import { fenceLook, frames, sheets } from './art.ts';
+import { crispText } from './crispText.ts';
 
 const styles: Record<SegmentStatus, { color: number; label: string; text: string }> = {
   planned: { color: 0x79858a, label: '○ Planned', text: '#42505a' },
@@ -52,8 +53,8 @@ export class YardScene extends Phaser.Scene {
     });
   }
 
-  private text(x: number, y: number, value: string, size = L.type.small, color = '#213a2b') {
-    return this.add.text(x, y, value, { fontFamily: L.type.font, fontSize: size, color, align: 'center' }).setOrigin(0.5);
+  private text(x: number, y: number, value: string, size = L.type.small, color = '#213a2b', bold = false) {
+    return crispText(this, x, y, value, { fontFamily: L.type.font, fontSize: size, color, align: 'center', fontStyle: bold ? 'bold' : '' }).setOrigin(0.5);
   }
 
   private drawGround() {
@@ -74,9 +75,9 @@ export class YardScene extends Phaser.Scene {
     g.fillStyle(0x5b3b24).fillRect(gate.x - gate.width / 2, gate.y - gate.height / 2, gate.width, gate.height);
     g.lineStyle(L.fence.stroke, 0xe9c27f).strokeRect(gate.x - gate.width / 2, gate.y - gate.height / 2, gate.width, gate.height);
     this.text(L.outside.x, L.outside.y, 'OUTSIDE · everything beyond the fence', L.type.label);
-    this.text(L.yardLabel.x, L.yardLabel.y, 'THE YARD', L.type.heading).setFontStyle('bold');
-    this.text(gate.x, gate.labelY, 'GATE', L.type.label).setFontStyle('bold');
-    this.text(L.house.x + L.house.width / 2, L.house.labelY, 'HOUSE · the project', L.type.label).setFontStyle('bold');
+    this.text(L.yardLabel.x, L.yardLabel.y, 'THE YARD', L.type.heading, undefined, true);
+    this.text(gate.x, gate.labelY, 'GATE', L.type.label, undefined, true);
+    this.text(L.house.x + L.house.width / 2, L.house.labelY, 'HOUSE · the project', L.type.label, undefined, true);
   }
 
   private redraw() {
@@ -140,9 +141,9 @@ export class YardScene extends Phaser.Scene {
     plate.fillStyle(0x203523, 0.1).fillRect(-s.width / 2 + s.shadow, -s.height / 2 + s.shadow, s.width, s.height);
     plate.fillStyle(0xfffdf4).fillRect(-s.width / 2, -s.height / 2, s.width, s.height);
     plate.lineStyle(f.stroke, style.color).strokeRect(-s.width / 2, -s.height / 2, s.width, s.height);
-    const title = this.text(0, s.titleY, segment.label, L.type.label).setFontStyle('bold');
+    const title = this.text(0, s.titleY, segment.label, L.type.label, undefined, true);
     const detail = this.text(0, s.detailY, segment.detail).setWordWrapWidth(s.width - s.padding * 2, true);
-    const status = this.text(0, s.statusY, style.label, L.type.small, style.text).setFontStyle('bold');
+    const status = this.text(0, s.statusY, style.label, L.type.small, style.text, true);
     sign.add([plate, title, detail, status]);
     // Snapshot/reset is a static redraw. Live status effects never queue or delay facts.
     if (!instant && !this.reducedMotion) {
@@ -174,7 +175,7 @@ export class YardScene extends Phaser.Scene {
     }
     g.lineStyle(L.fence.stroke, 0x3b3027).strokeRect(h.x, h.y, h.width, h.height);
     this.house.add([g, ...tiles]);
-    const label = this.text(h.x + h.width / 2, h.countY, `${world.bricks} ${world.bricks === 1 ? 'brick' : 'bricks'} placed`, L.type.label).setFontStyle('bold');
+    const label = this.text(h.x + h.width / 2, h.countY, `${world.bricks} ${world.bricks === 1 ? 'brick' : 'bricks'} placed`, L.type.label, undefined, true);
     this.house.add(label);
   }
 }

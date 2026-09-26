@@ -30,7 +30,7 @@ export const yardLayout = {
     { frame: 16, x: 50, y: 720 }, { frame: 16, x: 130, y: 800 }, { frame: 28, x: 230, y: 740 }, { frame: 29, x: 300, y: 830 },
     { frame: 15, x: 1060, y: 720 }, { frame: 16, x: 980, y: 810 }, { frame: 5, x: 880, y: 760 }, { frame: 17, x: 520, y: 830 },
   ],
-  type: { small: 21, label: 25, heading: 28, font: 'Arial, sans-serif' },
+  type: { small: 21, label: 25, heading: 28, font: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
 };
 export const dashboardLayout = {
   '--page-width': '1440px', '--page-padding': '24px', '--gap': '20px',
@@ -53,6 +53,7 @@ export const familyLayout = {
     eyeX: 6, eyeY: -20, eyeRadius: 3, noseY: -11, noseRadius: 4, earX: 19, earY: -19, earWidth: 13, earHeight: 28,
     footX: 12, footY: 19, footWidth: 12, footHeight: 13, hatY: -32, hatWidth: 40, hatHeight: 9, bowX: 17, bowY: -30, bowRadius: 8 },
   sprite: { scale: 4, y: -6 },
+  walk: { pixelsPerMs: 0.42, minMs: 180, maxMs: 900, stepMs: 150, hop: 7, sway: 4, minDistance: 3 },
   nameY: 47, stateY: 76, nameSize: 25, stateSize: 23, labelPadding: 4,
   box: { x: 0, y: 9, width: 76, height: 40, textSize: 20, tapeWidth: 7 },
   inspection: { x: 30, y: -12, radius: 15, handle: 17, stroke: 5 },
