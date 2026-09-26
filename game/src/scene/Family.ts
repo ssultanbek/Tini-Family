@@ -4,6 +4,7 @@ import { familyLayout as F, segmentPosition, brickPosition } from '../layout.ts'
 import { animationQueues, type AnimatedActor, type AnimationOptions } from '../queue.ts';
 import { familyPresentation } from '../familyPresentation.ts';
 import { store } from '../store.ts';
+import { frames, sheets } from './art.ts';
 
 type Character = { root: Phaser.GameObjects.Container; box: Phaser.GameObjects.Container; count: Phaser.GameObjects.Text;
   lens: Phaser.GameObjects.Graphics; state: Phaser.GameObjects.Text; speech?: { text: string; until: number } };
@@ -29,20 +30,20 @@ export class Family {
     const p = F.homes[actor], b = F.body;
     const root = this.scene.add.container(p.x, p.y).setDepth(20);
     const g = this.scene.add.graphics();
-    g.fillStyle(0x213a2b, 0.2).fillEllipse(0, b.shadowY, b.shadowWidth, b.shadowHeight);
-    g.fillStyle(0x273c46).fillRoundedRect(-b.footX - b.footWidth / 2, b.footY, b.footWidth, b.footHeight, b.radius / 2)
-      .fillRoundedRect(b.footX - b.footWidth / 2, b.footY, b.footWidth, b.footHeight, b.radius / 2);
-    g.fillStyle(colors[actor]).fillRoundedRect(-b.width / 2, -b.height / 2, b.width, b.height, b.radius);
-    g.fillStyle(actor === 'dog' ? 0xe1a55b : 0xffd7ad).fillCircle(0, b.headY, b.headRadius);
-    if (actor === 'dog') {
+    g.fillStyle(0x213a2b, 0.25).fillEllipse(0, b.shadowY, b.shadowWidth, b.shadowHeight);
+    const parts: Phaser.GameObjects.GameObject[] = [g];
+    if (actor !== 'dog') {
+      // Tini and Tina are Kenney Tiny Dungeon characters; only the dog is still drawn.
+      parts.push(this.scene.add.image(0, F.sprite.y, 'dungeon', frames[actor]).setDisplaySize(sheets.tile * F.sprite.scale, sheets.tile * F.sprite.scale));
+    } else {
+      g.fillStyle(0x273c46).fillRoundedRect(-b.footX - b.footWidth / 2, b.footY, b.footWidth, b.footHeight, b.radius / 2)
+        .fillRoundedRect(b.footX - b.footWidth / 2, b.footY, b.footWidth, b.footHeight, b.radius / 2);
+      g.fillStyle(colors.dog).fillRoundedRect(-b.width / 2, -b.height / 2, b.width, b.height, b.radius);
+      g.fillStyle(0xe1a55b).fillCircle(0, b.headY, b.headRadius);
       g.fillStyle(0x6d4226).fillEllipse(-b.earX, b.earY, b.earWidth, b.earHeight).fillEllipse(b.earX, b.earY, b.earWidth, b.earHeight);
       g.fillStyle(0x342b25).fillCircle(0, b.noseY, b.noseRadius);
-    } else if (actor === 'tini') {
-      g.fillStyle(0xffd556).fillRect(-b.hatWidth / 2, b.hatY, b.hatWidth, b.hatHeight);
-    } else {
-      g.fillStyle(0xf9b6df).fillCircle(b.bowX, b.bowY, b.bowRadius);
+      g.fillStyle(0x192b2a).fillCircle(-b.eyeX, b.eyeY, b.eyeRadius).fillCircle(b.eyeX, b.eyeY, b.eyeRadius);
     }
-    g.fillStyle(0x192b2a).fillCircle(-b.eyeX, b.eyeY, b.eyeRadius).fillCircle(b.eyeX, b.eyeY, b.eyeRadius);
     const label = this.text(0, F.nameY, names[actor], F.nameSize);
     const state = this.text(0, F.stateY, '', F.stateSize).setVisible(actor === 'dog');
     const box = this.scene.add.container(F.box.x, F.box.y).setVisible(false);
@@ -56,7 +57,7 @@ export class Family {
     const l = F.inspection;
     lens.fillStyle(0xe2fbff, 0.8).fillCircle(l.x, l.y, l.radius);
     lens.lineStyle(l.stroke, 0x34364a).strokeCircle(l.x, l.y, l.radius).lineBetween(l.x + l.radius, l.y + l.radius, l.x + l.radius + l.handle, l.y + l.radius + l.handle);
-    root.add([g, label, state, box, lens]);
+    root.add([...parts, label, state, box, lens]);
     return { root, box, count, lens, state };
   }
   sync(world: WorldState, instant: boolean) {

@@ -17,10 +17,19 @@ export const yardLayout = {
     { x: 280, y: 568, vertical: true, labelX: 135, labelY: 568 },
     { x: 280, y: 326, vertical: true, labelX: 135, labelY: 326 },
   ],
-  fence: { length: 224, thickness: 24, postWidth: 12, postHeight: 40, postStep: 28,
+  fence: { length: 240, tileScale: 3, glowPad: 10, thickness: 24, postWidth: 12, postHeight: 40, postStep: 28,
     dash: 16, dashGap: 10, stroke: 3, railGap: 6, nailSize: 3, shake: 2 },
   sign: { width: 254, height: 130, padding: 12, titleY: -47, detailY: -6, statusY: 43, shadow: 4 },
   grass: { step: 44, blade: 4, offset: 14 },
+  tileScale: 3,
+  // Decorative Kenney props outside the fence; kept clear of every sign, label and the path.
+  decor: [
+    { frame: 16, x: 40, y: 70 }, { frame: 28, x: 110, y: 40 }, { frame: 5, x: 190, y: 110 }, { frame: 28, x: 60, y: 170 },
+    { frame: 15, x: 1060, y: 60 }, { frame: 16, x: 990, y: 120 }, { frame: 28, x: 900, y: 50 }, { frame: 29, x: 1060, y: 190 },
+    { frame: 5, x: 60, y: 450 }, { frame: 17, x: 200, y: 460 }, { frame: 94, x: 1050, y: 450 }, { frame: 5, x: 900, y: 460 },
+    { frame: 16, x: 50, y: 720 }, { frame: 16, x: 130, y: 800 }, { frame: 28, x: 230, y: 740 }, { frame: 29, x: 300, y: 830 },
+    { frame: 15, x: 1060, y: 720 }, { frame: 16, x: 980, y: 810 }, { frame: 5, x: 880, y: 760 }, { frame: 17, x: 520, y: 830 },
+  ],
   type: { small: 21, label: 25, heading: 28, font: 'Arial, sans-serif' },
 };
 export const dashboardLayout = {
@@ -43,6 +52,7 @@ export const familyLayout = {
   body: { width: 44, height: 34, radius: 12, headY: -17, headRadius: 17, shadowY: 18, shadowWidth: 52, shadowHeight: 19,
     eyeX: 6, eyeY: -20, eyeRadius: 3, noseY: -11, noseRadius: 4, earX: 19, earY: -19, earWidth: 13, earHeight: 28,
     footX: 12, footY: 19, footWidth: 12, footHeight: 13, hatY: -32, hatWidth: 40, hatHeight: 9, bowX: 17, bowY: -30, bowRadius: 8 },
+  sprite: { scale: 4, y: -6 },
   nameY: 47, stateY: 76, nameSize: 25, stateSize: 23, labelPadding: 4,
   box: { x: 0, y: 9, width: 76, height: 40, textSize: 20, tapeWidth: 7 },
   inspection: { x: 30, y: -12, radius: 15, handle: 17, stroke: 5 },
