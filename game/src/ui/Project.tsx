@@ -20,10 +20,12 @@ export function PromptBar({ world, send, available, pending, epoch }: { world: W
   const first = world.phase === 'idle';
   const disabled = !available || working || waiting;
   const submit = () => { if (command && text.trim() && send(command)) setText(''); };
+  // While the crew works the bar can't send anything, so it shrinks to one line and covers no cards.
+  if (working) return <div className="prompt-bar working" role="status"><span className="working-dot" aria-hidden="true" />Tini is working… you can prompt again when the crew is done.</div>;
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
-    <label htmlFor="prompt-input">{first ? 'Start a project: tell the crew what you need' : working ? 'Tini is working…' : 'What next? Same project, same fence'}</label>
+    <label htmlFor="prompt-input">{first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
     <div className="prompt-row">
-      <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder={working ? 'Tini is working… you can prompt again when the crew is done.' : 'Ask for the next thing…'}
+      <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder="Ask for the next thing…"
         onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
       <button disabled={disabled || !text.trim()}>{waiting ? 'Sent…' : first ? 'Start' : 'Send'}</button>
     </div>
@@ -33,7 +35,7 @@ export function PromptBar({ world, send, available, pending, epoch }: { world: W
 
 /** Every prompt in this project with Claude's summary once the engine sends it. */
 export function TurnHistory({ world }: { world: WorldState }) {
-  if (!world.turns.length) return <p className="muted">{world.prompt ?? 'No prompts yet. Type in the bar at the bottom to start the project.'}</p>;
+  if (!world.turns.length) return <p className="muted">{world.prompt ?? 'No prompts yet. Use the prompt bar to start the project.'}</p>;
   return <ol className="turns">
     <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       <span className="turn-number">Turn {turn.id}</span>

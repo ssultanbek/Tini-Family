@@ -196,10 +196,15 @@ a { color: #205640; }
 .report-screen { padding-bottom: 160px; }
 .report-panel { max-height: calc(100vh - 180px); }
 .raw-view { z-index: 25; }
-/* In the game view the prompt bar docks over the controls column so it never covers the yard. */
-@media (min-width: 1101px) {
-  .game-app .prompt-bar { left: auto; transform: none; right: max(var(--page-padding), calc((100vw - var(--page-width)) / 2 + var(--page-padding))); width: var(--yard-controls-width); }
-  .game-app .prompt-row { flex-direction: column; }
-  .game-app .prompt-row textarea { height: 4.2em; }
-  .game-app .app, .game-app { padding-bottom: calc(var(--page-padding) + 190px); }
-}
+/* In the game view the prompt bar leads the controls column and sticks to the top while scrolling. */
+.game-app { padding-bottom: var(--page-padding); }
+.game-app .prompt-bar { position: sticky; top: var(--yard-top); left: auto; bottom: auto; transform: none; width: auto; z-index: 5; box-shadow: 0 6px 20px #17251e30; }
+.game-app .prompt-row { flex-direction: column; }
+.game-app .prompt-row textarea { height: 4.2em; }
+.prompt-bar.working { display: flex; align-items: center; gap: .6em; padding: .55em .9em; color: #52645b; font-weight: 650; background: #f2f5f0; }
+.working-dot { flex: none; width: .7em; height: .7em; border-radius: 50%; background: #ad8500; animation: working-pulse 1s ease-in-out infinite alternate; }
+@keyframes working-pulse { from { opacity: .3; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .working-dot { animation: none; } }
+.game-app .report-screen { padding-bottom: var(--page-padding); }
+.game-app .report-panel { max-height: calc(100vh - 2 * var(--page-padding)); }
+.app:not(.game-app) .toasts { bottom: calc(var(--page-padding) + 130px); max-height: calc(100vh - 200px); }
