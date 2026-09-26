@@ -1,0 +1,23 @@
+{
+  "name": "demo-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo-kit": "tsx src/build.ts",
+    "demo-kit:verify": "tsx src/verify.ts",
+    "demo-kit:manifest": "tsx src/manifest.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289",
+    "piexifjs": "^1.0.6",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

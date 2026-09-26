@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs"; import os from "node:os"; import path from "node:path";
-import { checkToolCall, realish, type Fence } from "../src/guard.ts";
+import { checkToolCall, escalationFolder, realish, type Fence } from "../src/guard.ts";
 
 const ws = realish(fs.mkdtempSync(path.join(os.homedir(), "tini-ws-")));
 fs.mkdirSync(path.join(ws, "assets"));
@@ -35,12 +35,33 @@ const cases: [string, any, boolean][] = [
   ["Bash", { command: "curl https://registry.npmjs.org/react" }, true],
   ["Agent", { prompt: "go" }, false],
   ["WebFetch", { url: "https://x.com" }, false],
+  // sed/regex slashes are not paths (live run: a spark on "/" from sed 's/.*src=\"//;s/\"$//')
+  ["Bash", { command: `grep -oE 'src="assets/[a-z]+"' index.html | sed 's/.*src="//;s/"$//' | sort -u` }, true],
+  ["Bash", { command: "sed -i '' 's/161b22/0b0e13/g' css/styles.css" }, true],
+  ["Bash", { command: "cat /etc/passwd" }, false],
+  ["Bash", { command: "cat //Users/x/.ssh/id_rsa" }, false],
+  // ~/.npm is readable/writable by the OS sandbox (package cache); ~/.npmrc (tokens) never is.
+  ["Read", { file_path: "~/.npmrc" }, false],
+  ["Bash", { command: "cat ~/.npmrc" }, false],
+  ["Bash", { command: "cp ~/.npmrc ./npmrc-copy" }, false],
 ];
 let fail = 0;
 for (const [tool, input, want] of cases) {
   const got = t(tool, input);
   if (got !== want) { fail++; console.log("FAIL", tool, JSON.stringify(input), "want", want, "got", got); }
 }
+// Which denials may become an escalation card (non-sensitive folders only).
+const esc: [string, string | null][] = [
+  ["~/Pictures/Jobsite2024", "~/Pictures/Jobsite2024"],
+  ["~/Pictures/Jobsite2024/IMG_1000.jpg", "~/Pictures/Jobsite2024"],
+  ["~/Documents/Rivera-HR/", "~/Documents/Rivera-HR"],
+  ["~/.ssh/id_rsa", null], ["~/.npmrc", null], ["~/.aws/credentials", null], ["~/Documents/app/.env", null],
+  ["~/Library/Keychains/login.keychain-db", null], ["~/Downloads/server.pem", null], ["/etc/passwd", null], ["~", null], ["~/notes.txt", null],
+];
+for (const [target, want] of esc) {
+  const got = escalationFolder(target);
+  if (got !== want) { fail++; console.log("FAIL escalationFolder", target, "want", want, "got", got); }
+}
 fs.rmSync(ws, { recursive: true, force: true });
-console.log(fail ? `${fail} failures` : `all ${cases.length} guard cases pass`);
+console.log(fail ? `${fail} failures` : `all ${cases.length} guard cases + ${esc.length} escalation cases pass`);
 process.exit(fail ? 1 : 0);
