@@ -4,6 +4,7 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { commandKey, store } from '../store.ts';
 import { fixedAwaitingGreen } from './fixedFindings.ts';
 import { ReportScreen } from './Report.tsx';
+import { RawView } from './RawView.tsx';
 import { dashboardLayout, gameLayout } from '../layout.ts';
 
 export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
@@ -67,7 +68,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
 
   return <MotionConfig reducedMotion="user"><div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
     <header className="topbar"><div><p className="eyebrow">SHELLHACKS 2026 · {yard ? 'THE YARD' : 'LIVE DASHBOARD'}</p><h1>Tini Family</h1><p className="muted">Your AI coding agent’s safety crew.</p></div>
-      <div className="header-actions"><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{connected ? synced ? '● Connected' : '● Connected · syncing' : '○ Disconnected'}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
+      <div className="header-actions"><button className={`raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw view</button><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{connected ? synced ? '● Connected' : '● Connected · syncing' : '○ Disconnected'}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
     </header>
     {!available && <p className="notice" role="status">{state.connectionError || (connected ? 'Waiting for the engine snapshot…' : 'Waiting for the engine at localhost:4000…')}</p>}
     {state.engineError && <p className="error" role="alert">Engine error: {state.engineError}</p>}
@@ -91,6 +92,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
       <Card title={`Blocked attempts · ${world.blocked.length}`}>{world.blocked.length ? world.blocked.map(block => <article className="blocked-history" key={block.seq}><strong>{block.target}</strong>{block.simulated && <span className="tag">Simulated attack</span>}<p>{block.reason}</p><p className="muted">{block.tool} · {block.layer}</p></article>) : <p className="muted">None reported.</p>}</Card>
     </div></details></div></main>
     <aside className="toasts" aria-label="Blocked attempt notifications" aria-live="polite">{world.blocked.filter(block => !dismissed.includes(block.seq)).slice(-2).map(block => <div className="toast" key={block.seq}><div className="segment-heading"><strong>Access blocked</strong><button className="dismiss" aria-label={`Dismiss notification for ${block.target}`} onClick={() => setDismissed(current => [...current, block.seq])}>×</button></div>{block.simulated && <span className="tag">Simulated attack</span>}<p className="path">{block.target}</p><p>{block.reason}</p></div>)}</aside>
+    <AnimatePresence>{raw && <RawView key="raw" events={events} rawLog={world.rawLog} onClose={() => setRaw(false)} />}</AnimatePresence>
     <AnimatePresence>{world.report && reportOpen && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportOpen(false)} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
     <footer>Engine: localhost:4000 · Last event #{world.seq} · <a href="/?view=dashboard">Dashboard</a></footer>
   </div></MotionConfig>;

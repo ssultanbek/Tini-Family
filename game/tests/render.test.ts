@@ -30,3 +30,18 @@ test('the overlay renders at every step of the recorded story', async () => {
   }
   assert.deepEqual([...seen].sort(), ['contract', 'escalation', 'fixed-finding', 'report']);
 });
+
+test('the raw view renders every channel and pretty JSON for the whole story', async () => {
+  const { RawView } = await vite.ssrLoadModule('/src/ui/RawView.tsx') as typeof import('../src/ui/RawView.tsx');
+  const { initialState, reduce } = await import('../../shared/reducer.ts');
+  const world = recorded.reduce(reduce, initialState());
+  const html = renderToString(createElement(RawView, { events: recorded, rawLog: world.rawLog, onClose: () => {} }));
+  for (const channel of ['hook', 'config', 'sdk']) assert.ok(html.includes(`ch-${channel}`), channel);
+  assert.ok(world.rawLog.length > 0);
+  const { highlightJson } = await vite.ssrLoadModule('/src/ui/RawView.tsx') as typeof import('../src/ui/RawView.tsx');
+  for (const event of recorded) {
+    const pre = renderToString(createElement('pre', null, ...highlightJson(event)));
+    const text = pre.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    assert.equal(text, JSON.stringify(event, null, 2), 'highlighting never changes the JSON text');
+  }
+});
