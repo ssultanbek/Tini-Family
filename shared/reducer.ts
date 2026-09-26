@@ -40,6 +40,7 @@ export function reduce(s: WorldState, e: EngineEvent): WorldState {
       n.findings = [...s.findings.filter((f) => f.id !== e.finding.id), e.finding];
       break;
     case "fix.applied": n.findings = s.findings.filter((f) => f.id !== e.findingId); break;
+    case "finding.cleared": n.findings = s.findings.filter((f) => f.id !== e.findingId); break;
     case "segment.green": n.segments = setSeg(s.segments, e.segmentId, { status: "green" }); break;
     case "launch.unlocked": n.launchUnlocked = true; break;
     case "report.ready": n.report = e.report; break;

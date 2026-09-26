@@ -1,5 +1,5 @@
 // ============================================================================
-// TINI FAMILY EVENT CONTRACT  (v1.2)
+// TINI FAMILY EVENT CONTRACT  (v1.3)
 // Only Sultan edits this file. The game imports it; it never adds to it.
 // Engine -> game: "event" messages (EngineEvent) and one "snapshot" on connect.
 // Game -> engine: "command" messages (GameCommand). Clicks only, never decisions.
@@ -87,6 +87,7 @@ export type EngineEvent = Base & (
   | { type: "tina.inspect.segment"; segmentId: string }                // Tina walks to this segment and looks
   | { type: "segment.red"; segmentId: string; finding: Finding }
   | { type: "fix.applied"; findingId: string; fixId: string; summary: string }
+  | { type: "finding.cleared"; findingId: string; reason: string }      // v1.3: a finding went away on a rescan without a fix click
   | { type: "segment.green"; segmentId: string }
   | { type: "tina.inspect.finished"; scope: "folder" | "final"; redCount: number }
   | { type: "launch.unlocked" }
