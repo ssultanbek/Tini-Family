@@ -22,6 +22,7 @@ test('the overlay renders at every step of the recorded story', async () => {
   for (const event of recorded) {
     store.event(event);
     const html = render(true);
+    assert.ok(html.includes('keys to the room, not the house'), 'title bar tagline');
     render(false);
     if (store.getSnapshot().world.contract) seen.add('contract');
     if (store.getSnapshot().world.openEscalation) seen.add('escalation');
