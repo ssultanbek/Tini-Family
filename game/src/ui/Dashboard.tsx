@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import type { EngineEvent, GameCommand, SegmentStatus } from '../../../shared/events.ts';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { commandKey, store } from '../store.ts';
+import { fixedAwaitingGreen } from './fixedFindings.ts';
 import { dashboardLayout, gameLayout } from '../layout.ts';
 
 export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
@@ -8,6 +10,15 @@ const statusLabels: Record<SegmentStatus, string> = { planned: '○ Planned', bu
 const names = { tini: 'Tini', tina: 'Tina', dog: 'Dog', system: 'System' };
 function Card({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
   return <section className={`card ${className}`}><h2>{title}</h2>{children}</section>;
+}
+const cardMotion = {
+  initial: { opacity: 0, x: 48, scale: .97 },
+  animate: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 420, damping: 32 } },
+  exit: { opacity: 0, x: 64, scale: .95, transition: { duration: .25 } },
+};
+/** Cards that come and go with engine state. State decides; motion only decorates. */
+function MotionCard({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
+  return <motion.section layout className={`card ${className}`} {...cardMotion}><h2>{title}</h2>{children}</motion.section>;
 }
 function Lines({ items }: { items: string[] }) { return items.length ? <ul>{items.map((line, i) => <li key={i}>{line}</li>)}</ul> : <p className="muted">None reported.</p>; }
 function describe(event: EngineEvent): string {
@@ -34,7 +45,7 @@ function describe(event: EngineEvent): string {
 }
 
 export function Dashboard({ send, yard }: { send: (command: GameCommand) => boolean; yard?: ReactNode }) {
-  const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { world, events, speech, pending, connected, synced } = state;
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [adjustment, setAdjustment] = useState('');
@@ -47,10 +58,11 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [events.length, raw]);
   useEffect(() => { setDismissed([]); setAdjustSent(false); setAdjustment(''); }, [state.epoch]);
   const escalation = world.openEscalation;
+  const fixed = fixedAwaitingGreen(world, events);
   const start: GameCommand = { type: 'start', prompt: prompt.trim() };
   const launch: GameCommand = { type: 'launch' };
 
-  return <div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
+  return <MotionConfig reducedMotion="user"><div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
     <header className="topbar"><div><p className="eyebrow">SHELLHACKS 2026 · {yard ? 'THE YARD' : 'LIVE DASHBOARD'}</p><h1>Tini Family</h1><p className="muted">Your AI coding agent’s safety crew.</p></div>
       <div className="header-actions"><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{connected ? synced ? '● Connected' : '● Connected · syncing' : '○ Disconnected'}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
     </header>
@@ -61,9 +73,12 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
       <Card title="The job">
         {world.phase === 'idle' ? <form onSubmit={e => { e.preventDefault(); send(start); }}><label htmlFor="prompt">What should the dog build?</label><textarea id="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} /><button disabled={busy(start) || !prompt.trim()}>{pending.includes('start') ? 'Start sent…' : 'Start'}</button></form> : <p>{world.prompt ?? 'Waiting for the prompt from the engine…'}</p>}
       </Card>
-      {world.contract && <Card title={world.contract.title} className="action-card"><h3>Allowed inside</h3><Lines items={world.contract.allowed} /><h3>Removed before access</h3><Lines items={world.contract.stripped} /><p>{world.contract.outside}</p><button disabled={busy({ type: 'approve.plan' })} onClick={() => send({ type: 'approve.plan' })}>{pending.includes('approve.plan') ? 'Approval sent…' : 'Approve'}</button><form className="adjust" onSubmit={e => { e.preventDefault(); if (send({ type: 'adjust.plan', text: adjustment.trim() })) setAdjustSent(true); }}><label htmlFor="adjustment">Request an adjustment</label><textarea id="adjustment" value={adjustment} onChange={e => { setAdjustment(e.target.value); setAdjustSent(false); }} /><button className="secondary" disabled={!available || !adjustment.trim() || adjustSent}>Adjust</button>{adjustSent && <p role="status">Adjustment sent. Waiting for the engine; the mock does not change the plan.</p>}</form></Card>}
-      {escalation && <Card title="More access requested" className="action-card"><p>{escalation.ask}</p><p className="path">{escalation.requested}</p><h3>Inspection · {escalation.inspection.totalFiles.toLocaleString()} files</h3><ul>{escalation.inspection.highlights.map((item, i) => <li key={i}><strong>{item.count.toLocaleString()}</strong> {item.label} <span className="muted">({item.severity})</span></li>)}</ul><div className="stack">{escalation.options.map(option => <button key={option.id} className={`option ${option.recommended ? 'recommended' : 'secondary'}`} disabled={busy({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })} onClick={() => send({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })}>{option.recommended && <span className="recommend-label">★ Recommended by the engine</span>}<strong>{option.label}</strong><span>{option.detail}</span></button>)}</div>{pending.includes(`escalation:${escalation.escalationId}`) && <p role="status">Choice sent. Waiting for the engine…</p>}</Card>}
-      {world.findings.map(finding => <Card key={finding.id} title={finding.title} className="finding"><p className="badge offline">! {finding.severity} · {finding.segmentId}</p><p>{finding.explanation}</p>{raw && finding.file && <p className="path">{finding.file}</p>}<div className="button-row">{finding.fixes.map(fix => <button key={fix.id} disabled={busy({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })} onClick={() => send({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })}>{fix.label}</button>)}</div>{pending.includes(`fix:${finding.id}`) && <p role="status">Fix requested. Waiting for the engine…</p>}</Card>)}
+      <AnimatePresence initial={false}>
+      {world.contract && <MotionCard key="contract" title={world.contract.title} className="action-card"><h3>Allowed inside</h3><Lines items={world.contract.allowed} /><h3>Removed before access</h3><Lines items={world.contract.stripped} /><p>{world.contract.outside}</p><button disabled={busy({ type: 'approve.plan' })} onClick={() => send({ type: 'approve.plan' })}>{pending.includes('approve.plan') ? 'Approval sent…' : 'Approve'}</button><form className="adjust" onSubmit={e => { e.preventDefault(); if (send({ type: 'adjust.plan', text: adjustment.trim() })) setAdjustSent(true); }}><label htmlFor="adjustment">Request an adjustment</label><textarea id="adjustment" value={adjustment} onChange={e => { setAdjustment(e.target.value); setAdjustSent(false); }} /><button className="secondary" disabled={!available || !adjustment.trim() || adjustSent}>Adjust</button>{adjustSent && <p role="status">Adjustment sent. Waiting for the engine; the mock does not change the plan.</p>}</form></MotionCard>}
+      {escalation && <MotionCard key={escalation.escalationId} title="More access requested" className="action-card"><p>{escalation.ask}</p><p className="path">{escalation.requested}</p><h3>Inspection · {escalation.inspection.totalFiles.toLocaleString()} files</h3><ul>{escalation.inspection.highlights.map((item, i) => <li key={i}><strong>{item.count.toLocaleString()}</strong> {item.label} <span className="muted">({item.severity})</span></li>)}</ul><div className="stack">{escalation.options.map(option => <button key={option.id} className={`option ${option.recommended ? 'recommended' : 'secondary'}`} disabled={busy({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })} onClick={() => send({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })}>{option.recommended && <span className="recommend-label">★ Recommended by the engine</span>}<strong>{option.label}</strong><span>{option.detail}</span></button>)}</div>{pending.includes(`escalation:${escalation.escalationId}`) && <p role="status">Choice sent. Waiting for the engine…</p>}</MotionCard>}
+      {world.findings.map(finding => <MotionCard key={finding.id} title={finding.title} className="finding"><p className="badge offline">! {finding.severity} · {finding.segmentId}</p><p>{finding.explanation}</p>{raw && finding.file && <p className="path">{finding.file}</p>}<div className="button-row">{finding.fixes.map(fix => <button key={fix.id} disabled={busy({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })} onClick={() => send({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })}>{fix.label}</button>)}</div>{pending.includes(`fix:${finding.id}`) && <p role="status">Fix requested. Waiting for the engine…</p>}</MotionCard>)}
+      {fixed.map(({ finding, summary }) => <MotionCard key={finding.id} title={finding.title} className="finding fixed"><p className="badge online">✓ Fixed · {finding.segmentId}</p><p>{summary}</p><p className="muted">Waiting for Tina to mark the fence green…</p></MotionCard>)}
+      </AnimatePresence>
       <Card title="Launch"><p>{world.phase === 'launched' ? 'Launched. The engine’s access report appears below.' : world.launchUnlocked ? 'The engine has unlocked launch.' : 'Waiting for the engine to unlock launch.'}</p><button disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? 'Launched' : pending.includes('launch') ? 'Launch sent…' : 'Launch'}</button></Card>
       {world.report && <Card title="Access report">{(['allowed', 'blocked', 'narrowed', 'fixed'] as const).map(category => <div key={category}><h3 className="capitalize">{category}</h3>{world.report![category].length ? <ul>{world.report![category].map((line, i) => <li key={i}><strong>{line.what}</strong><br />{line.why}</li>)}</ul> : <p>None reported.</p>}</div>)}<h3>Data leaves to</h3><Lines items={world.report.dataLeavesTo} /></Card>}
     </div><details className="yard-details" open={yard ? undefined : true}><summary>Fence details, crew & event log</summary><div className="stack">
@@ -74,5 +89,5 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
     </div></details></div></main>
     <aside className="toasts" aria-label="Blocked attempt notifications" aria-live="polite">{world.blocked.filter(block => !dismissed.includes(block.seq)).slice(-2).map(block => <div className="toast" key={block.seq}><div className="segment-heading"><strong>Access blocked</strong><button className="dismiss" aria-label={`Dismiss notification for ${block.target}`} onClick={() => setDismissed(current => [...current, block.seq])}>×</button></div>{block.simulated && <span className="tag">Simulated attack</span>}<p className="path">{block.target}</p><p>{block.reason}</p></div>)}</aside>
     <footer>Engine: localhost:4000 · Last event #{world.seq} · <a href="/?view=dashboard">Dashboard</a></footer>
-  </div>;
+  </div></MotionConfig>;
 }

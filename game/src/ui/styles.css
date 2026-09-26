@@ -107,3 +107,6 @@ a { color: #205640; }
 .bubble-tina { border-color: #a74891; }
 .bubble-dog { border-color: #a96624; }
 @media (max-width: 1100px) { .yard-stage { min-width: var(--yard-min-width); } }
+
+/* M4: cards animate in and out; a fixed finding turns green before it leaves. */
+.finding.fixed { border-left-color: #397848; background: #f1f9f1; transition: background .3s, border-color .3s; }

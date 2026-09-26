@@ -6,8 +6,8 @@ import { familyPresentation } from '../familyPresentation.ts';
 export function Yard() {
   const host = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
-  const bubbles = useSyncExternalStore(familyPresentation.subscribe, familyPresentation.getSnapshot);
-  const { world } = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const bubbles = useSyncExternalStore(familyPresentation.subscribe, familyPresentation.getSnapshot, familyPresentation.getSnapshot);
+  const { world } = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   useEffect(() => {
     let cancelled = false;
     let game: import('phaser').Game | undefined;
