@@ -6,7 +6,7 @@ export const yardLayout = {
   gate: { x: 410, y: 690, width: 116, height: 30, labelY: 744 },
   path: { x: 386, y: 510, width: 48, height: 350 },
   house: { x: 438, y: 367, width: 224, height: 168, labelY: 310, countY: 572,
-    columns: 4, rows: 3, gap: 5, brickWidth: 51, brickHeight: 50, inset: 5,
+    columns: 4, rows: 3, maxRows: 8, gap: 5, brickWidth: 51, brickHeight: 50, inset: 5,
     roofInset: 8, roofLineGap: 22, roofLineWidth: 3 },
   slots: [
     { x: 410, y: 200, vertical: false, labelX: 410, labelY: 105 },

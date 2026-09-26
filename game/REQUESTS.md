@@ -2,3 +2,4 @@
 
 Write one line per missing event or field. Sultan adds it to shared/events.ts.
 
+- mock: after turn 2+ the engine sends `launch.unlocked` but has no `launch` gate, so a Launch click gets no answer (the game drops the pending click on the next `turn.started`). Should later turns be launchable, and should a new `report.ready` replace the old report?

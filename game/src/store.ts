@@ -38,7 +38,9 @@ export function createStore(queues = animationQueues) {
       lastSeq = event.seq;
       let pending = reset ? [] : current.pending;
       const acknowledged: string[] = [];
-      if (event.type === 'user.prompt') acknowledged.push('start');
+      if (event.type === 'user.prompt' || event.type === 'turn.started') acknowledged.push('start', 'prompt');
+      // A new turn starts new work; an earlier Launch click the engine never answered is dropped.
+      if (event.type === 'turn.started') acknowledged.push('launch');
       if (event.type === 'fence.plan.approved') acknowledged.push('approve.plan');
       if (event.type === 'fence.plan.proposed') acknowledged.push('adjust.plan');
       if (event.type === 'escalation.resolved') acknowledged.push(`escalation:${event.escalationId}`);

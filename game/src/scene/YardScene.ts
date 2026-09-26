@@ -66,7 +66,7 @@ export class YardScene extends Phaser.Scene {
     this.text(L.outside.x, L.outside.y, 'OUTSIDE · everything beyond the fence', L.type.label);
     this.text(L.yardLabel.x, L.yardLabel.y, 'THE YARD', L.type.heading).setFontStyle('bold');
     this.text(gate.x, gate.labelY, 'GATE', L.type.label).setFontStyle('bold');
-    this.text(L.house.x + L.house.width / 2, L.house.labelY, 'HOUSE · the website', L.type.label).setFontStyle('bold');
+    this.text(L.house.x + L.house.width / 2, L.house.labelY, 'HOUSE · the project', L.type.label).setFontStyle('bold');
   }
 
   private redraw() {
@@ -147,13 +147,18 @@ export class YardScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0xe1d8c1).fillRect(h.x, h.y, h.width, h.height);
     g.lineStyle(L.fence.stroke, 0x7f806d).strokeRect(h.x, h.y, h.width, h.height);
-    const count = Math.min(h.columns * h.rows, Math.max(0, Math.floor(world.bricks)));
+    const placed = Math.max(0, Math.floor(world.bricks));
+    // The project keeps growing across turns: add rows and shrink bricks so every brick still fits.
+    const rows = Math.min(h.maxRows, Math.max(h.rows, Math.ceil(placed / h.columns)));
+    const brickHeight = rows === h.rows ? h.brickHeight : (h.height - 2 * h.inset - (rows - 1) * h.gap) / rows;
+    const roofLineGap = h.roofLineGap * brickHeight / h.brickHeight;
+    const count = Math.min(h.columns * rows, placed);
     for (let i = 0; i < count; i++) {
       const x = h.x + h.inset + (i % h.columns) * (h.brickWidth + h.gap);
-      const y = h.y + h.inset + Math.floor(i / h.columns) * (h.brickHeight + h.gap);
+      const y = h.y + h.inset + Math.floor(i / h.columns) * (brickHeight + h.gap);
       // Each new piece extends the top-down roof footprint; no inferred completion.
-      g.fillStyle(i % 2 ? 0xb56946 : 0xc47b51).fillRect(x, y, h.brickWidth, h.brickHeight);
-      g.lineStyle(h.roofLineWidth, 0xe9a978).lineBetween(x + h.roofInset, y + h.roofLineGap, x + h.brickWidth - h.roofInset, y + h.roofLineGap);
+      g.fillStyle(i % 2 ? 0xb56946 : 0xc47b51).fillRect(x, y, h.brickWidth, brickHeight);
+      g.lineStyle(h.roofLineWidth, 0xe9a978).lineBetween(x + h.roofInset, y + roofLineGap, x + h.brickWidth - h.roofInset, y + roofLineGap);
     }
     const label = this.text(h.x + h.width / 2, h.countY, `${world.bricks} ${world.bricks === 1 ? 'brick' : 'bricks'} placed`, L.type.label).setFontStyle('bold');
     this.house.add([g, label]);

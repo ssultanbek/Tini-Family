@@ -5,9 +5,10 @@ import { commandKey, store } from '../store.ts';
 import { fixedAwaitingGreen } from './fixedFindings.ts';
 import { ReportScreen } from './Report.tsx';
 import { RawView } from './RawView.tsx';
+import { PromptBar, TurnHistory } from './Project.tsx';
+import { reportVisible, type ReportMode } from './promptMode.ts';
 import { dashboardLayout, gameLayout } from '../layout.ts';
 
-export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
 const statusLabels: Record<SegmentStatus, string> = { planned: '○ Planned', built: '▤ Built', inspecting: '◉ Inspecting', red: '! Red · needs fix', green: '✓ Green' };
 const names = { tini: 'Tini', tina: 'Tina', dog: 'Dog', system: 'System' };
 function Card({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
@@ -28,6 +29,9 @@ function Lines({ items }: { items: string[] }) { return items.length ? <ul>{item
 function describe(event: EngineEvent): string {
   switch (event.type) {
     case 'speech': case 'user.prompt': return event.text;
+    case 'turn.started': return `Turn ${event.turnId}: ${event.prompt}`;
+    case 'turn.finished': return `Turn ${event.turnId}: ${event.summary}`;
+    case 'launch.locked': return event.reason;
     case 'raw.log': return `Channel: ${event.channel} · open raw view for details`;
     case 'session.phase': return event.phase;
     case 'dog.state': return event.state;
@@ -51,21 +55,22 @@ function describe(event: EngineEvent): string {
 export function Dashboard({ send, yard }: { send: (command: GameCommand) => boolean; yard?: ReactNode }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { world, events, speech, pending, connected, synced } = state;
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [adjustment, setAdjustment] = useState('');
   const [adjustSent, setAdjustSent] = useState(false);
   const [raw, setRaw] = useState(false);
   const [dismissed, setDismissed] = useState<number[]>([]);
-  const [reportOpen, setReportOpen] = useState(true);
+  const [reportMode, setReportMode] = useState<ReportMode>('auto');
   const log = useRef<HTMLDivElement>(null);
   const available = connected && synced;
   const busy = (command: GameCommand) => !available || pending.includes(commandKey(command));
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [events.length, raw]);
-  useEffect(() => { setDismissed([]); setAdjustSent(false); setAdjustment(''); setReportOpen(true); }, [state.epoch]);
+  useEffect(() => { setDismissed([]); setAdjustSent(false); setAdjustment(''); setReportMode('auto'); }, [state.epoch]);
+  useEffect(() => { setReportMode('auto'); }, [world.turns.length]);
   const escalation = world.openEscalation;
   const fixed = fixedAwaitingGreen(world, events);
   const siteUrl = events.reduce<string | undefined>((url, event) => event.type === 'launch.done' ? event.url : url, undefined);
-  const start: GameCommand = { type: 'start', prompt: prompt.trim() };
+  const lockReason = events.reduce<string | undefined>((reason, event) => event.type === 'launch.locked' ? event.reason : event.type === 'launch.unlocked' ? undefined : reason, undefined);
+  const showReport = reportVisible(reportMode, world.phase, !!world.report);
   const launch: GameCommand = { type: 'launch' };
 
   return <MotionConfig reducedMotion="user"><div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
@@ -76,16 +81,14 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
     {state.engineError && <p className="error" role="alert">Engine error: {state.engineError}</p>}
     <div className="stats"><div><span>Current phase</span><strong>{world.phase}</strong></div><div><span>Dog state</span><strong>{world.dog}</strong></div><div><span>Bricks placed</span><strong>{world.bricks}</strong></div><div><span>Fence segments</span><strong>{world.segments.length}</strong></div></div>
     <main className={yard ? 'yard-shell' : ''}>{yard}<div className="columns"><div className="stack">
-      <Card title="The job">
-        {world.phase === 'idle' ? <form onSubmit={e => { e.preventDefault(); send(start); }}><label htmlFor="prompt">What should the dog build?</label><textarea id="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} /><button disabled={busy(start) || !prompt.trim()}>{pending.includes('start') ? 'Start sent…' : 'Start'}</button></form> : <p>{world.prompt ?? 'Waiting for the prompt from the engine…'}</p>}
-      </Card>
+      <Card title={world.turns.length ? `The project · ${world.turns.length} ${world.turns.length === 1 ? 'turn' : 'turns'}` : 'The project'}><TurnHistory world={world} /></Card>
       <AnimatePresence initial={false}>
       {world.contract && <MotionCard key="contract" title={world.contract.title} className="action-card"><h3>Allowed inside</h3><Lines items={world.contract.allowed} /><h3>Removed before access</h3><Lines items={world.contract.stripped} /><p>{world.contract.outside}</p><button disabled={busy({ type: 'approve.plan' })} onClick={() => send({ type: 'approve.plan' })}>{pending.includes('approve.plan') ? 'Approval sent…' : 'Approve'}</button><form className="adjust" onSubmit={e => { e.preventDefault(); if (send({ type: 'adjust.plan', text: adjustment.trim() })) setAdjustSent(true); }}><label htmlFor="adjustment">Request an adjustment</label><textarea id="adjustment" value={adjustment} onChange={e => { setAdjustment(e.target.value); setAdjustSent(false); }} /><button className="secondary" disabled={!available || !adjustment.trim() || adjustSent}>Adjust</button>{adjustSent && <p role="status">Adjustment sent. Waiting for the engine; the mock does not change the plan.</p>}</form></MotionCard>}
-      {escalation && <MotionCard key={escalation.escalationId} title="More access requested" className="action-card"><p>{escalation.ask}</p><p className="path">{escalation.requested}</p><h3>Inspection · {escalation.inspection.totalFiles.toLocaleString()} files</h3><ul>{escalation.inspection.highlights.map((item, i) => <li key={i}><strong>{item.count.toLocaleString()}</strong> {item.label} <span className="muted">({item.severity})</span></li>)}</ul><div className="stack">{escalation.options.map(option => <button key={option.id} className={`option ${option.recommended ? 'recommended' : 'secondary'}`} disabled={busy({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })} onClick={() => send({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })}>{option.recommended && <span className="recommend-label">★ Recommended by the engine</span>}<strong>{option.label}</strong><span>{option.detail}</span></button>)}</div>{pending.includes(`escalation:${escalation.escalationId}`) && <p role="status">Choice sent. Waiting for the engine…</p>}</MotionCard>}
+      {escalation && <MotionCard key={escalation.escalationId} title={escalation.source === 'prompt' ? 'Your request needs something outside the fence' : 'Claude is asking for more'} className="action-card"><p>{escalation.ask}</p><p className="path">{escalation.requested}</p><h3>Inspection · {escalation.inspection.totalFiles.toLocaleString()} files</h3><ul>{escalation.inspection.highlights.map((item, i) => <li key={i}><strong>{item.count.toLocaleString()}</strong> {item.label} <span className="muted">({item.severity})</span></li>)}</ul><div className="stack">{escalation.options.map(option => <button key={option.id} className={`option ${option.recommended ? 'recommended' : 'secondary'}`} disabled={busy({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })} onClick={() => send({ type: 'escalation.choose', escalationId: escalation.escalationId, optionId: option.id })}>{option.recommended && <span className="recommend-label">★ Recommended by the engine</span>}<strong>{option.label}</strong><span>{option.detail}</span></button>)}</div>{pending.includes(`escalation:${escalation.escalationId}`) && <p role="status">Choice sent. Waiting for the engine…</p>}</MotionCard>}
       {world.findings.map(finding => <MotionCard key={finding.id} title={finding.title} className="finding"><p className="badge offline">! {finding.severity} · {finding.segmentId}</p><p>{finding.explanation}</p>{raw && finding.file && <p className="path">{finding.file}</p>}<div className="button-row">{finding.fixes.map(fix => <button key={fix.id} disabled={busy({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })} onClick={() => send({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })}>{fix.label}</button>)}</div>{pending.includes(`fix:${finding.id}`) && <p role="status">Fix requested. Waiting for the engine…</p>}</MotionCard>)}
       {fixed.map(({ finding, summary }) => <MotionCard key={finding.id} title={finding.title} className="finding fixed" lingering><p className="badge online">✓ Fixed · {finding.segmentId}</p><p>{summary}</p><p className="muted">Waiting for Tina to mark the fence green…</p></MotionCard>)}
       </AnimatePresence>
-      <Card title="Launch"><p>{world.phase === 'launched' ? 'Launched. The engine’s access report appears below.' : world.launchUnlocked ? 'The engine has unlocked launch.' : 'Waiting for the engine to unlock launch.'}</p><button disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? 'Launched' : pending.includes('launch') ? 'Launch sent…' : 'Launch'}</button>{world.report && !reportOpen && <button className="secondary report-reopen" onClick={() => setReportOpen(true)}>Show access report</button>}</Card>
+      <Card title="Launch"><p>{world.phase === 'launched' ? 'Launched. The engine’s access report is ready.' : world.launchUnlocked ? 'The engine has unlocked launch.' : 'Waiting for the engine to unlock launch.'}</p>{!world.launchUnlocked && lockReason && <p className="lock-reason" role="status">🔒 {lockReason}</p>}<button disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? 'Launched' : pending.includes('launch') ? 'Launch sent…' : 'Launch'}</button>{world.report && !showReport && <button className="secondary report-reopen" onClick={() => setReportMode('open')}>Show access report</button>}</Card>
       {world.report && <Card title="Access report">{(['allowed', 'blocked', 'narrowed', 'fixed'] as const).map(category => <div key={category}><h3 className="capitalize">{category}</h3>{world.report![category].length ? <ul>{world.report![category].map((line, i) => <li key={i}><strong>{line.what}</strong><br />{line.why}</li>)}</ul> : <p>None reported.</p>}</div>)}<h3>Data leaves to</h3><Lines items={world.report.dataLeavesTo} /></Card>}
     </div><details className="yard-details" open={yard ? undefined : true}><summary>Fence details, crew & event log</summary><div className="stack">
       <Card title="The fence"><div className="legend">{Object.entries(statusLabels).map(([status, label]) => <span key={status} className={`status ${status}`}>{label}</span>)}</div>{world.segments.length ? <div className="segments">{world.segments.map(segment => <article key={segment.id} className={`segment ${segment.status}`}><div className="segment-heading"><h3>{segment.label}</h3><span className={`status ${segment.status}`}>{statusLabels[segment.status]}</span></div><p>{segment.detail}</p></article>)}</div> : <p className="muted">The engine has not proposed a fence yet.</p>}</Card>
@@ -95,7 +98,8 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
     </div></details></div></main>
     <aside className="toasts" aria-label="Blocked attempt notifications" aria-live="polite">{world.blocked.filter(block => !dismissed.includes(block.seq)).slice(-2).map(block => <div className="toast" key={block.seq}><div className="segment-heading"><strong>Access blocked</strong><button className="dismiss" aria-label={`Dismiss notification for ${block.target}`} onClick={() => setDismissed(current => [...current, block.seq])}>×</button></div>{block.simulated && <span className="tag">Simulated attack</span>}<p className="path">{block.target}</p><p>{block.reason}</p></div>)}</aside>
     <AnimatePresence>{raw && <RawView key="raw" events={events} rawLog={world.rawLog} onClose={() => setRaw(false)} />}</AnimatePresence>
-    <AnimatePresence>{world.report && reportOpen && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportOpen(false)} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
+    <AnimatePresence>{world.report && showReport && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportMode('closed')} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
+    <PromptBar world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
     <footer>Engine: localhost:4000 · Last event #{world.seq} · <a href="/?view=dashboard">Dashboard</a></footer>
   </div></MotionConfig>;
 }

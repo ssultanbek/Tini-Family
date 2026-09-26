@@ -13,10 +13,11 @@ let unsubscribe = () => {};
 let resetSent = false;
 let started = false;
 let refreshed = false;
+let refreshedTurn2 = false;
 let refreshing = false;
 let stopped = false;
 const sent = new Set<string>();
-const timeout = setTimeout(() => finish(new Error('Timed out. Start the mock with --speed 3, then retry.')), 55000);
+const timeout = setTimeout(() => finish(new Error('Timed out. Start the mock with --speed 3, then retry.')), 100000);
 function finish(error?: unknown) {
   if (stopped) return;
   stopped = true;
@@ -41,13 +42,20 @@ function check() {
       once('adjust', { type: 'adjust.plan', text: 'Keep access limited to this job.' });
       once('approve', { type: 'approve.plan' });
     }
-    if (world.openEscalation && !refreshed) {
+    const reconnect = () => {
       // A fresh store + fresh connection is the same transport recovery as reload.
       refreshing = true;
       unsubscribe(); client.disconnect();
       store = createStore(); client = connectEngine(store);
-      refreshed = true; refreshing = false;
+      refreshing = false;
       unsubscribe = store.subscribe(() => queueMicrotask(check));
+    };
+    if (world.openEscalation && !refreshed) { refreshed = true; reconnect(); return; }
+    if (world.openEscalation?.source === 'prompt') {
+      if (!refreshedTurn2) { refreshedTurn2 = true; reconnect(); return; }
+      assert.equal(world.turns.length, 2);
+      assert.equal(world.launchUnlocked, false, 'a new turn locks launch');
+      once('escalation-2', { type: 'escalation.choose', escalationId: world.openEscalation.escalationId, optionId: choice });
       return;
     }
     if (world.openEscalation) {
@@ -57,16 +65,26 @@ function check() {
       once('escalation', { type: 'escalation.choose', escalationId: world.openEscalation.escalationId, optionId: choice });
     }
     for (const finding of world.findings) once(finding.id, { type: 'fix.apply', findingId: finding.id, fixId: finding.fixes[0].id });
-    if (world.launchUnlocked) once('launch', { type: 'launch' });
-    if (world.report) {
+    // Turn 1 ends in a launch and a report; then Maria keeps prompting in the same project.
+    if (world.launchUnlocked && world.turns.length <= 1) once('launch', { type: 'launch' });
+    if (world.report && world.phase === 'launched' && world.turns.length === 1) {
       assert.ok(refreshed);
-      assert.equal(world.phase, 'launched');
       assert.equal(world.findings.length, 0);
       assert.equal(world.bricks, 10);
       assert.equal(world.segments.length, choice === 'deny' ? 5 : 6);
       assert.ok(world.segments.every(segment => segment.status === 'green'));
       assert.equal(world.blocked.filter(block => block.simulated).length, 1);
-      console.log(JSON.stringify({ result: 'PASS', choice, reconnectedMidStory: refreshed, phase: world.phase, bricks: world.bricks, blocked: world.blocked.length, segments: world.segments, report: world.report }, null, 2));
+      once('prompt-2', { type: 'prompt', text: 'Add a careers page using the job descriptions in ~/Documents/Rivera-HR' });
+    }
+    const done = (id: number) => world.phase === 'ready' && world.launchUnlocked && world.turns.length === id && !!world.turns[id - 1].summary;
+    if (done(2)) once('prompt-3', { type: 'prompt', text: 'Make the header darker' });
+    if (done(3)) {
+      assert.ok(refreshedTurn2);
+      assert.equal(world.bricks, 16);
+      assert.equal(world.segments.length, (choice === 'deny' ? 5 : 6) + (choice === 'deny' ? 0 : 1));
+      assert.ok(world.segments.every(segment => segment.status === 'green'));
+      assert.ok(world.report, 'the turn 1 report is kept');
+      console.log(JSON.stringify({ result: 'PASS', choice, reconnectedInTurns: [1, 2], turns: world.turns, phase: world.phase, bricks: world.bricks, segments: world.segments.map(segment => segment.id) }, null, 2));
       finish();
     }
   } catch (error) { finish(error); }

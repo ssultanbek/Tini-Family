@@ -22,11 +22,14 @@ test('recorded story folds into the actual store; every intermediate snapshot re
     if (event.type !== 'session.reset') assert.equal(reloaded.event(event), false);
   }
   const final = store.getSnapshot().world;
-  assert.equal(final.phase, 'launched');
-  assert.equal(final.bricks, 10);
+  // The recorded project: launch after turn 1, then two follow-up prompts (turn 2 names a new folder).
+  assert.equal(final.phase, 'ready');
+  assert.deepEqual(final.turns.map(turn => turn.id), [1, 2, 3]);
+  assert.ok(final.turns.every(turn => turn.summary));
+  assert.equal(final.bricks, 16);
   assert.equal(final.blocked.length, 2);
   assert.equal(final.findings.length, 0);
-  assert.equal(final.segments.length, 6);
+  assert.equal(final.segments.length, 7);
   assert.ok(final.segments.every(segment => segment.status === 'green'));
   assert.ok(final.report && final.launchUnlocked);
 });
@@ -75,4 +78,17 @@ test('finding clicks stay pending until engine acknowledgement; Adjust never fak
   assert.equal(store.getSnapshot().world, before);
   store.connection(false);
   assert.equal(store.getSnapshot().synced, false);
+});
+
+test('a follow-up prompt stays pending until the engine starts the turn, which also drops an unanswered Launch', () => {
+  const store = createStore();
+  store.snapshot({ ...initialState(), seq: 10, phase: 'ready', launchUnlocked: true });
+  store.sent({ type: 'launch' });
+  store.sent({ type: 'prompt', text: 'Make the header darker' });
+  assert.deepEqual(store.getSnapshot().pending, ['launch', 'prompt']);
+  store.event({ actor: 'system', type: 'turn.started', turnId: 2, prompt: 'Make the header darker', seq: 11, ts: 0 });
+  store.event({ actor: 'system', type: 'launch.locked', reason: 'New work since the last inspection', seq: 12, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, []);
+  assert.equal(store.getSnapshot().world.launchUnlocked, false);
+  assert.deepEqual(store.getSnapshot().world.turns, [{ id: 2, prompt: 'Make the header darker' }]);
 });

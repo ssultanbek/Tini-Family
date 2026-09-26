@@ -173,3 +173,33 @@ a { color: #205640; }
 .titlebar .raw-toggle { background: #0d1712; border-color: #3d5c4a; }
 .titlebar .raw-toggle.on { background: #7ee2a8; color: #0d1712; }
 .report-panel:focus { outline: none; }
+
+/* v1.1: a long-lived project. Prompt bar always on screen, turn history, launch lock. */
+.app { padding-bottom: calc(var(--page-padding) + 130px); }
+.prompt-bar { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); width: min(1100px, calc(100vw - 24px)); z-index: 22; padding: .5em .8em; background: #fffdf4; border: 3px solid #205640; border-radius: var(--radius); box-shadow: 0 10px 40px #17251e40; display: grid; gap: .3em; font-size: 18px; }
+.prompt-bar label { font-weight: 750; color: #205640; }
+.prompt-bar.working { border-color: #9aa89f; }
+.prompt-bar.working label { color: #52645b; }
+.prompt-row { display: flex; gap: .7em; align-items: stretch; }
+.prompt-row textarea { margin: 0; min-height: 0; height: 2.6em; padding: .45em .7em; resize: none; font-size: 18px; line-height: 1.5; }
+.prompt-row textarea:disabled { background: #eef1ec; color: #52645b; }
+.prompt-row button { min-width: 6.5em; font-size: 19px; }
+.prompt-suggestions { display: flex; gap: .5em; flex-wrap: wrap; }
+.chip { min-height: 0; padding: .25em .75em; font-size: 16px; font-weight: 600; border-radius: 999px; }
+.turns { list-style: none; padding: 0; margin: 0; display: grid; gap: .6em; }
+.turns li { margin: 0; padding: .7em .8em; border-left: 5px solid #548563; background: #f4f8f2; border-radius: calc(var(--radius) / 2); }
+.turn-number { font-size: 15px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #50685a; }
+.turn-prompt { margin-top: .2em; font-weight: 650; }
+.turn-summary { margin-top: .3em; color: #205d34; }
+.turn-summary.working { color: #685000; }
+.lock-reason { padding: .5em .7em; border-radius: calc(var(--radius) / 2); background: #fff3bb; color: #685000; font-weight: 650; }
+.report-screen { padding-bottom: 160px; }
+.report-panel { max-height: calc(100vh - 180px); }
+.raw-view { z-index: 25; }
+/* In the game view the prompt bar docks over the controls column so it never covers the yard. */
+@media (min-width: 1101px) {
+  .game-app .prompt-bar { left: auto; transform: none; right: max(var(--page-padding), calc((100vw - var(--page-width)) / 2 + var(--page-padding))); width: var(--yard-controls-width); }
+  .game-app .prompt-row { flex-direction: column; }
+  .game-app .prompt-row textarea { height: 4.2em; }
+  .game-app .app, .game-app { padding-bottom: calc(var(--page-padding) + 190px); }
+}

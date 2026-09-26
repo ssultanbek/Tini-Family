@@ -28,8 +28,14 @@ test('the overlay renders at every step of the recorded story', async () => {
     if (store.getSnapshot().world.openEscalation) seen.add('escalation');
     if (html.includes('✓ Fixed')) seen.add('fixed-finding');
     if (html.includes('report-screen') && html.includes('Data leaves to') && html.includes('fonts.googleapis.com')) seen.add('report');
+    if (html.includes('Claude is asking for more')) seen.add('agent-escalation');
+    if (html.includes('Your request needs something outside the fence')) seen.add('prompt-escalation');
+    if (html.includes('🔒')) seen.add('launch-locked');
+    if (html.includes('Turn 3')) seen.add('turn-history');
+    if (html.includes('prompt-bar')) seen.add('prompt-bar');
+    if (store.getSnapshot().world.phase === 'building') assert.ok(html.includes('Tini is working'), 'prompt bar is disabled while the crew works');
   }
-  assert.deepEqual([...seen].sort(), ['contract', 'escalation', 'fixed-finding', 'report']);
+  assert.deepEqual([...seen].sort(), ['agent-escalation', 'contract', 'escalation', 'fixed-finding', 'launch-locked', 'prompt-bar', 'prompt-escalation', 'report', 'turn-history']);
 });
 
 test('the raw view renders every channel and pretty JSON for the whole story', async () => {
