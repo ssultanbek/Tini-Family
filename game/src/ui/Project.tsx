@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { GameCommand, WorldState } from '../../../shared/events.ts';
 import { promptCommand } from './promptMode.ts';
 import { STOPPABLE } from '../store.ts';
+import { clampText } from './clampText.ts';
 
 export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
 // Typing helpers only: they fill the box, the engine decides what happens.
@@ -44,7 +45,7 @@ export function TurnHistory({ world }: { world: WorldState }) {
     <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       <span className="turn-number">Turn {turn.id}</span>
       <p className="turn-prompt">{turn.prompt}</p>
-      {turn.summary ? <p className="turn-summary">✓ {turn.summary}</p> : <p className="turn-summary working">⋯ The crew is on it</p>}
+      {turn.summary ? <Summary text={turn.summary} /> : <p className="turn-summary working">⋯ The crew is on it</p>}
     </motion.li>)}</AnimatePresence>
   </ol>;
 }
@@ -60,4 +61,12 @@ function StopButton({ world, send, available, pending }: { world: WorldState; se
     onClick={() => { if (!armed) { setArmed(true); return; } setArmed(false); send({ type: 'stop' }); }}>
     {stopping ? 'Stopping…' : armed ? (setup ? 'Really stop? Setup is cancelled' : 'Really stop? Tina still checks') : '■ Stop'}
   </button>;
+}
+
+/** A turn summary; long ones collapse to a preview with more/less. */
+function Summary({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const preview = clampText(text);
+  return <p className="turn-summary">✓ {open || !preview ? text : preview}
+    {preview && <> <button type="button" className="link-button" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'less' : 'more'}</button></>}</p>;
 }

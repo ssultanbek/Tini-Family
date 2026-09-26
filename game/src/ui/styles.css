@@ -214,3 +214,5 @@ a { color: #205640; }
 .prompt-bar.working { flex-wrap: wrap; }
 .prompt-bar.working > span[role="status"] { flex: 1 1 14em; }
 .game-app .prompt-bar.working .stop-button { flex: 1 1 100%; margin-left: 0; }
+.link-button { display: inline; min-height: 0; padding: 0 .15em; border: none; background: none; color: #205640; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.link-button:hover:not(:disabled) { background: none; color: #163d2c; }

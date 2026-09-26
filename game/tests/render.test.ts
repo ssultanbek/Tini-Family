@@ -71,3 +71,16 @@ test('a v1.2 prompt.suggested pre-fills the prompt bar in both views; sending cl
   store.event({ actor: 'system', type: 'user.prompt', text: 'Make the header darker', seq: 502, ts: 0 });
   assert.equal(store.getSnapshot().world.suggestedPrompt, null);
 });
+
+test('a long turn summary shows a preview with "more"; a short one shows whole', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  const long = 'Added a careers page with three job listings, an apply form that emails the office, and a link in the header; also darkened the header and fixed two broken image paths in the gallery.';
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 700, phase: 'ready', turns: [{ id: 1, prompt: 'Build it', summary: 'Built.' }, { id: 2, prompt: 'Careers', summary: long }] });
+  const html = renderToString(createElement(GameView, { send: () => true }));
+  assert.ok(html.includes('aria-expanded="false"') && html.includes('>more</button>'));
+  assert.ok(!html.includes('fixed two broken image paths'), 'collapsed by default');
+  assert.equal(html.split('>more</button>').length, 2, 'only the long summary gets the link');
+});
