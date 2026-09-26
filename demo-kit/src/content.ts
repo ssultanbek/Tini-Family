@@ -40,7 +40,7 @@ State of Florida Certified General Contractor (sample license number CGC-000000)
 
 ## Photos
 
-The photos in the Photos folder are from our current projects. More job-site photos from this year are in ~/Pictures/Jobsite2024.
+The photos in the Photos folder are from our current projects. This year's project photos (2024 job sites) are in ~/Pictures/Jobsite2024. Please use them for the website gallery.
 `;
 
 export function officeMapMd(): string {
