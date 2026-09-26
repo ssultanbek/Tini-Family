@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import type { EngineEvent } from '../../../shared/events.ts';
 import { splitRawLine } from './rawLine.ts';
 
-const channels = ['hook', 'config', 'sdk', 'scan'] as const;
+const channels = ['hook', 'config', 'sdk', 'scan', 'ai', 'engine'] as const; // v1.2 adds ai (AI ladder) and engine (ignored commands etc.)
 
 /** Pretty JSON with token spans. Text nodes only, so React escapes everything. */
 export function highlightJson(value: unknown): ReactNode[] {

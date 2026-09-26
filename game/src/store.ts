@@ -42,7 +42,8 @@ export function createStore(queues = animationQueues) {
       // A new turn starts new work; an earlier Launch click the engine never answered is dropped.
       if (event.type === 'turn.started') acknowledged.push('launch');
       if (event.type === 'fence.plan.approved') acknowledged.push('approve.plan');
-      if (event.type === 'fence.plan.proposed') acknowledged.push('adjust.plan');
+      // A (re)proposed plan answers Adjust, and frees an Approve the engine ignored while it was re-planning.
+      if (event.type === 'fence.plan.proposed') acknowledged.push('adjust.plan', 'approve.plan');
       if (event.type === 'escalation.resolved') acknowledged.push(`escalation:${event.escalationId}`);
       if (event.type === 'fix.applied') acknowledged.push(`fix:${event.findingId}`);
       if (event.type === 'launch.done') acknowledged.push('launch');

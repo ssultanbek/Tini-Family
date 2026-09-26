@@ -17,6 +17,8 @@ let refreshedTurn2 = false;
 let refreshing = false;
 let stopped = false;
 const sent = new Set<string>();
+const ADJUST_WAIT_MS = 1500;
+let adjustedAt: { seq: number; time: number } | null = null;
 const timeout = setTimeout(() => finish(new Error('Timed out. Start the mock with --speed 3, then retry.')), 100000);
 function finish(error?: unknown) {
   if (stopped) return;
@@ -38,9 +40,16 @@ function check() {
     if (!resetSent) { resetSent = true; once('reset', { type: 'reset' }); return; }
     if (state.pending.includes('reset')) return;
     if (world.phase === 'idle' && !started) { started = true; once('start', { type: 'start', prompt: 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.' }); }
-    if (world.contract) {
-      once('adjust', { type: 'adjust.plan', text: 'Keep access limited to this job.' });
-      once('approve', { type: 'approve.plan' });
+    if (world.contract && world.phase === 'contract') {
+      // Adjust first, then Approve only once the engine has answered: the real engine re-plans and
+      // proposes again (a fresh fence.plan.proposed); the mock never answers, so fall back after a pause.
+      if (!sent.has('adjust')) {
+        once('adjust', { type: 'adjust.plan', text: 'Keep access limited to this job.' });
+        adjustedAt = { seq: world.seq, time: Date.now() };
+        setTimeout(() => queueMicrotask(check), ADJUST_WAIT_MS + 50);
+      }
+      const reproposed = state.events.some(event => event.type === 'fence.plan.proposed' && event.seq > adjustedAt!.seq);
+      if (reproposed || Date.now() - adjustedAt!.time >= ADJUST_WAIT_MS) once('approve', { type: 'approve.plan' });
     }
     const reconnect = () => {
       // A fresh store + fresh connection is the same transport recovery as reload.

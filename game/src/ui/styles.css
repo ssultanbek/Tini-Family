@@ -151,7 +151,7 @@ a { color: #205640; }
 .raw-body { flex: 1; overflow: auto; padding: .6em 1em 2em; }
 .raw-line { display: grid; grid-template-columns: 7ch 1fr; gap: 1ch; padding: .15em 0; border-bottom: 1px solid #16211b; overflow-wrap: anywhere; }
 .raw-channel { font-weight: 700; white-space: pre; }
-.ch-hook { color: #ff7b72; } .ch-config { color: #79c0ff; } .ch-sdk { color: #d2a8ff; } .ch-scan { color: #e3b341; } .ch-other { color: #9fb3a6; }
+.ch-hook { color: #ff7b72; } .ch-config { color: #79c0ff; } .ch-sdk { color: #d2a8ff; } .ch-scan { color: #e3b341; } .ch-ai { color: #56d4dd; } .ch-engine { color: #f0a868; } .ch-other { color: #9fb3a6; }
 .raw-event { padding: .5em 0; border-bottom: 1px solid #1d2c23; }
 .raw-event-head { display: flex; gap: 1ch; }
 .raw-seq { color: #6e8577; } .raw-type { color: #fff; font-weight: 700; }

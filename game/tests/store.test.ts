@@ -92,3 +92,12 @@ test('a follow-up prompt stays pending until the engine starts the turn, which a
   assert.equal(store.getSnapshot().world.launchUnlocked, false);
   assert.deepEqual(store.getSnapshot().world.turns, [{ id: 2, prompt: 'Make the header darker' }]);
 });
+
+test('an Approve the engine ignored while re-planning is freed by the next proposal', () => {
+  const store = createStore();
+  store.snapshot({ ...initialState(), seq: 20, phase: 'planning' });
+  store.sent({ type: 'approve.plan' });
+  assert.deepEqual(store.getSnapshot().pending, ['approve.plan']);
+  store.event({ actor: 'tini', type: 'fence.plan.proposed', segments: [], contract: { title: 'Plan', allowed: [], stripped: [], outside: '' }, seq: 21, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, []);
+});
