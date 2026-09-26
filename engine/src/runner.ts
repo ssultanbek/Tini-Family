@@ -1,0 +1,272 @@
+// The dog: ONE persistent Claude Code session per project (Agent SDK, streaming input).
+// Each turn pushes a message into the open session and resolves at Claude's result.
+// What Claude does becomes events: successful tool calls -> bricks, hook denials ->
+// sparks (and, for a non-sensitive folder, an escalation card), "Operation not permitted"
+// in Bash output -> sparks from the OS layer, Claude's words -> short speech bubbles,
+// the result -> the turn's summary. Stop = the SDK's interrupt().
+//
+// Verified in sdk.d.ts + spike/probe-turns.ts (Sept 26):
+// - maxTurns is PER USER TURN (num_turns resets each turn; 2+2 round-trips passed with maxTurns=3).
+// - maxBudgetUsd and total_cost_usd are PER query() = per project session (cumulative).
+//   So the per-turn cost cap is ours: estimated from each assistant message's usage.
+// - interrupt() resolves at once ({"still_queued":[]}); the stream then yields a synthetic
+//   tool_result rejection, "[Request interrupted by user]", and a result with
+//   subtype "error_during_execution", terminal_reason "aborted_streaming". The session
+//   keeps working for the next message.
+import path from "node:path";
+import { query, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { CrewCtx } from "./crew.ts";
+import { dogOptions } from "./dog.ts";
+import { escalationFolder, pretty, type Fence, type GuardDecision } from "./guard.ts";
+import { Inbox } from "./inbox.ts";
+
+export interface RunnerConfig {
+  fence: Fence;
+  fenceNote: string;           // appended to Claude Code's system prompt
+  rewrite?: (text: string) => string;   // Maria's real paths -> ./assets copies
+  model?: string;              // default "sonnet"
+  maxTurnsPerTurn?: number;    // SDK maxTurns (per user turn)
+  sessionBudgetUsd?: number;   // SDK maxBudgetUsd (whole session)
+  turnBudgetUsd?: number;      // ours, estimated mid-turn
+  speechGapMs?: number;
+}
+
+type Waiter = { resolve: (summary: string) => void; reject: (e: Error) => void; abandoned: boolean; startCost: number };
+
+const PRIVATE_NAMES: [RegExp, string][] = [
+  [/^~\/\.ssh(\/|$)/, "your SSH keys"], [/^~\/\.aws(\/|$)/, "your AWS keys"], [/^~\/\.npmrc$/, "your npm login token"],
+  [/^~\/\.gnupg(\/|$)/, "your encryption keys"], [/(^|\/)\.env/, "a secrets file"], [/^~\/Library\/Keychains/, "your passwords keychain"],
+];
+const friendly = (target: string) => PRIVATE_NAMES.find(([re]) => re.test(target))?.[1] ?? target;
+
+export class DogRunner {
+  private inbox: Inbox | null = null;
+  private q: Query | null = null;
+  private alive = false;
+  private sessions = 0;
+  private waiters: Waiter[] = [];
+  private ctx: CrewCtx | null = null;
+  private escalated = new Set<string>();
+  private blockedThisTurn = new Set<string>();
+  private tools = new Map<string, { name: string; input: Record<string, unknown> }>();
+  private lastSpeech = 0;
+  private sessionCost = 0;
+  private turnEstimate = 0;
+  private seenMsgIds = new Set<string>();
+  private overBudget = false;
+  private price = { in: 3, out: 15 };   // $/MTok, updated from the init message's model
+
+  constructor(private cfg: RunnerConfig) {}
+
+  /** Sends one message and resolves with the turn's summary at Claude's result. */
+  async runTurn(ctx: CrewCtx, message: string): Promise<string> {
+    this.ensureSession(ctx);
+    this.ctx = ctx;
+    this.blockedThisTurn.clear(); this.turnEstimate = 0; this.overBudget = false;
+    const text = this.cfg.rewrite ? this.cfg.rewrite(message) : message;
+    this.log("sdk", `-> Claude: ${text.replace(/\s+/g, " ").slice(0, 300)}`);
+    const waiter: Waiter = { resolve: () => {}, reject: () => {}, abandoned: false, startCost: this.sessionCost };
+    const done = new Promise<string>((resolve, reject) => { waiter.resolve = resolve; waiter.reject = reject; });
+    this.waiters.push(waiter);
+    const onAbort = () => {
+      waiter.abandoned = true;                 // its late "aborted" result is swallowed below
+      this.log("sdk", "Stop: interrupt() sent");
+      this.q?.interrupt().then((r) => this.log("sdk", `interrupt receipt: ${JSON.stringify(r ?? null)}`), (e) => this.log("sdk", `interrupt failed: ${(e as Error).message}`));
+    };
+    ctx.signal.addEventListener("abort", onAbort, { once: true });
+    this.inbox!.push(text);
+    try { return await done; }
+    finally { ctx.signal.removeEventListener("abort", onAbort); }
+  }
+
+  /** Reset: end the session; pending turns are dropped. */
+  close() {
+    for (const w of this.waiters) w.abandoned = true;
+    this.waiters = [];
+    this.inbox?.close();
+    try { this.q?.close(); } catch { /* already gone */ }
+    this.q = null; this.inbox = null; this.alive = false; this.ctx = null;
+    this.escalated.clear();
+  }
+
+  // --- session --------------------------------------------------------------------
+  private ensureSession(ctx: CrewCtx) {
+    if (this.alive) return;
+    const restart = this.sessions++ > 0;
+    this.inbox = new Inbox();
+    const opts = dogOptions(this.cfg.fence, {
+      onDecision: (tool, input, d) => this.onDecision(tool, input, d),
+      onToolDone: (tool, input) => this.onToolDone(tool, input),
+    }, {
+      model: this.cfg.model ?? "sonnet",
+      maxTurns: this.cfg.maxTurnsPerTurn ?? 40,
+      maxBudgetUsd: this.cfg.sessionBudgetUsd ?? 6,
+      systemPrompt: {
+        type: "preset", preset: "claude_code",
+        append: this.cfg.fenceNote + (restart ? "\n\nThis is a new session for a project already in progress: the workspace already contains your earlier work. Look at it before changing things." : ""),
+      },
+      stderr: (s) => this.onStderr(s),
+    });
+    this.q = query({ prompt: this.inbox, options: opts });
+    this.alive = true;
+    ctx.log("config", `dog session ${restart ? "restarted" : "opened"}: model=${opts.model} maxTurns/turn=${opts.maxTurns} sessionBudget=$${opts.maxBudgetUsd} turnBudget=$${this.cfg.turnBudgetUsd ?? 2}`);
+    void this.consume(this.q);
+  }
+
+  private async consume(q: Query) {
+    let why = "session ended";
+    try { for await (const m of q) this.onMessage(m); }
+    catch (e) { why = (e as Error).message; }
+    if (q !== this.q) return;                  // closed by Reset
+    this.alive = false;
+    this.log("sdk", `Claude session closed: ${why}`);
+    for (const w of this.waiters.splice(0)) if (!w.abandoned) w.reject(new Error(`Claude session closed: ${why}`));
+  }
+
+  private onMessage(m: SDKMessage) {
+    switch (m.type) {
+      case "system":
+        if (m.subtype === "init") {
+          if (/sonnet-5|haiku/.test(m.model)) this.price = m.model.includes("haiku") ? { in: 1, out: 5 } : { in: 2, out: 10 };
+          if (this.sessions === 1 && this.turnEstimate === 0) this.log("sdk", `session ${m.session_id} model=${m.model} tools=${m.tools.join(",")}`);
+        }
+        return;
+      case "assistant": {
+        const id = m.message.id;
+        if (id && !this.seenMsgIds.has(id)) {
+          this.seenMsgIds.add(id);
+          const u = m.message.usage;
+          this.turnEstimate += ((u.input_tokens ?? 0) * this.price.in + (u.cache_creation_input_tokens ?? 0) * this.price.in * 1.25
+            + (u.cache_read_input_tokens ?? 0) * this.price.in * 0.1 + (u.output_tokens ?? 0) * this.price.out) / 1e6;
+          const cap = this.cfg.turnBudgetUsd ?? 2;
+          if (this.turnEstimate > cap && !this.overBudget) {
+            this.overBudget = true;
+            this.log("sdk", `turn budget $${cap} reached (est. $${this.turnEstimate.toFixed(2)}): interrupting`);
+            this.q?.interrupt().catch(() => {});
+          }
+        }
+        for (const b of m.message.content) {
+          if (b.type === "text" && b.text.trim()) { this.log("sdk", `Claude: ${b.text.replace(/\s+/g, " ").slice(0, 400)}`); this.speak(b.text); }
+          if (b.type === "tool_use") this.tools.set(b.id, { name: b.name, input: (b.input ?? {}) as Record<string, unknown> });
+        }
+        return;
+      }
+      case "user": {
+        const content = m.message.content;
+        if (!Array.isArray(content)) return;
+        for (const b of content) {
+          if (typeof b !== "object" || b.type !== "tool_result") continue;
+          const tool = this.tools.get(b.tool_use_id);
+          if (tool?.name !== "Bash") continue;
+          const out = typeof b.content === "string" ? b.content : Array.isArray(b.content) ? b.content.map((c) => (c.type === "text" ? c.text : "")).join("\n") : "";
+          if (out.includes("Operation not permitted")) this.osBlocked(out, String(tool.input.command ?? ""));
+        }
+        return;
+      }
+      case "result": {
+        this.sessionCost = m.total_cost_usd;
+        const w = this.waiters.shift();
+        const turnCost = w ? m.total_cost_usd - w.startCost : 0;
+        this.log("sdk", `result ${m.subtype} (${m.terminal_reason ?? "-"}) turns=${m.num_turns} turn cost $${turnCost.toFixed(3)} session $${m.total_cost_usd.toFixed(3)}`);
+        if (!w || w.abandoned) return;          // the interrupted turn finishing late: already reported as "Stopped by you"
+        let summary: string;
+        if (m.subtype === "success") summary = summarize(m.result);
+        else if (this.overBudget) summary = "Stopped: this turn reached its budget";
+        else if (m.subtype === "error_max_turns") summary = "Stopped: this turn reached its step limit";
+        else if (m.subtype === "error_max_budget_usd") summary = "Stopped: the project reached its budget";
+        else summary = "Stopped: Claude hit an error";
+        if (m.subtype === "success") this.log("sdk", `Claude's result: ${m.result.replace(/\s+/g, " ").slice(0, 600)}`);
+        w.resolve(summary);
+        return;
+      }
+    }
+  }
+
+  // --- events -----------------------------------------------------------------------
+  private live() { return this.ctx && !this.ctx.signal.aborted ? this.ctx : null; }
+  private safe(fn: (ctx: CrewCtx) => void) { const c = this.live(); if (!c) return; try { fn(c); } catch { /* stale session */ } }
+  private log(channel: "sdk" | "hook" | "config", text: string) { const c = this.ctx; if (!c) return; try { c.log(channel, text); } catch { /* stale */ } }
+
+  private onDecision(tool: string, input: Record<string, unknown>, d: GuardDecision) {
+    const summary = `${tool} ${JSON.stringify(input).slice(0, 160)}`;
+    if (d.allow) { this.log("hook", `ALLOW ${summary}`); return; }
+    this.log("hook", `DENY  ${summary}  <- ${d.reason}`);
+    const folder = d.kind === "path" ? escalationFolder(d.target) : null;
+    const reason = folder
+      ? `Claude asked for ${folder}, a folder you didn't name. Tini is asking you first.`
+      : d.kind === "network" ? `Claude tried to reach ${d.target}, a website you didn't approve. Tini blocked it.`
+      : d.kind === "tool" ? `Claude tried to use the ${d.target} tool, which isn't part of this job. Tini blocked it.`
+      : `Claude tried to reach ${friendly(d.target)}${friendly(d.target) !== d.target ? ` (${d.target})` : ""}. That's outside the fence, so Tini blocked it.`;
+    const key = `hook:${folder ?? d.target}`;
+    this.safe((ctx) => {
+      if (!this.blockedThisTurn.has(key)) {
+        this.blockedThisTurn.add(key);
+        ctx.emit({ actor: "dog", type: "fence.blocked", target: folder ?? d.target, reason, layer: "hook", tool, simulated: false });
+      }
+      // Ask the owner in the background; the hook has already answered "deny" and Claude keeps working.
+      if (folder && !this.escalated.has(folder)) { this.escalated.add(folder); ctx.escalate(folder, "agent").catch(() => {}); }
+    });
+  }
+
+  private onToolDone(tool: string, input: Record<string, unknown>) {
+    const op = tool === "Write" ? "write" : tool === "Edit" ? "edit" : tool === "Bash" ? "run" : "read";
+    const ws = this.cfg.fence.workspace;
+    const rel = (p: unknown) => { const s = String(p ?? ""); return s.startsWith("/") ? path.relative(ws, s) || "." : s; };
+    const file = tool === "Bash" ? String(input.command ?? "").replace(/\s+/g, " ").slice(0, 80)
+      : tool === "Glob" ? String(input.pattern ?? "")
+      : tool === "Grep" ? `grep ${String(input.pattern ?? "")}`
+      : rel(input.file_path);
+    this.safe((ctx) => ctx.emit({ actor: "dog", type: "dog.brick.placed", op, file, bricks: ctx.state().bricks + 1 }));
+  }
+
+  private osBlocked(output: string, command: string) {
+    const line = output.split("\n").find((l) => l.includes("Operation not permitted")) ?? "";
+    const m = line.match(/([~/][^\s:'"]*)\s*:\s*Operation not permitted/);
+    const target = m ? pretty(m[1]) : command.slice(0, 80);
+    const key = `os:${target}`;
+    this.safe((ctx) => {
+      ctx.log("hook", `OS sandbox: ${line.trim().slice(0, 200)}`);
+      if (this.blockedThisTurn.has(key)) return;
+      this.blockedThisTurn.add(key);
+      ctx.emit({ actor: "dog", type: "fence.blocked", target, tool: "Bash", layer: "os-sandbox", simulated: false,
+        reason: `A command tried to reach ${friendly(target)}. The Mac's own sandbox stopped it: the second layer of the fence.` });
+    });
+  }
+
+  private speak(text: string) {
+    const now = Date.now();
+    if (now - this.lastSpeech < (this.cfg.speechGapMs ?? 3000)) return;
+    const line = shortLine(text, 90);
+    if (!line) return;
+    this.lastSpeech = now;
+    this.safe((ctx) => ctx.say("dog", line));
+  }
+
+  private onStderr(s: string) {
+    for (const line of s.split("\n").map((l) => l.trim()).filter(Boolean)) {
+      if (line.includes("claude.ai connectors are disabled")) continue;
+      this.log("sdk", `[stderr] ${line.slice(0, 300)}`);
+    }
+  }
+}
+
+/** First sentence, markdown stripped, at most `max` characters. */
+export function shortLine(text: string, max: number): string {
+  const plain = text.replace(/```[\s\S]*?```/g, " ").replace(/[#*_`>|-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!plain) return "";
+  const sentence = plain.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? plain;
+  return sentence.length <= max ? sentence : sentence.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+}
+
+/** The turn's one-line result for the timeline: the first paragraph, plus the list it introduces. */
+export function summarize(result: string, max = 160): string {
+  const paras = result.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  if (!paras.length) return "Done.";
+  let text = paras[0];
+  if (/:\s*$/.test(text) && paras[1]) {
+    const items = paras[1].split("\n").map((l) => l.replace(/^\s*(?:[-*+]|\d+[.)])\s*/, "").replace(/\*\*/g, "").split(/\s+[-–—:]\s+/)[0].trim()).filter(Boolean);
+    text = `${text} ${items.join(", ")}`;
+  }
+  const plain = text.replace(/```[\s\S]*?```/g, " ").replace(/[#*_`>|]+/g, "").replace(/\s+/g, " ").trim();
+  return plain.length <= max ? plain : plain.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+}

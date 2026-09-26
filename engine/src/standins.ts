@@ -55,6 +55,9 @@ const folderCard = (requested: string): EscalationCard => ({
   ],
 });
 
+/** Segment id for a folder added by escalation: "~/Pictures/Jobsite2024" -> "jobsite2024". */
+export const folderSlug = (p: string) => (p.split("/").filter(Boolean).pop() ?? "folder").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
 /** Sleeps `ms / speed`, rejecting with AbortError on Stop/Reset. */
 function nap(ms: number, speed: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -75,7 +78,7 @@ export function standinCrew(speed = 1): Crew {
     await nap(ms, speed, ctx.signal);
     ctx.emit({ actor: "dog", type: "dog.brick.placed", op, file, bricks: ctx.state().bricks + 1 });
   };
-  const slug = (p: string) => (p.split("/").filter(Boolean).pop() ?? "folder").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const slug = folderSlug;
 
   return {
     reset() { inspections = 0; narrowed.length = 0; allowedExtra.length = 0; fixed.length = 0; },

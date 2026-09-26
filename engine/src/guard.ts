@@ -40,7 +40,7 @@ export function realish(p: string): string {
   }
 }
 
-function expandHome(p: string): string {
+export function expandHome(p: string): string {
   if (p === "~") return HOME;
   if (p.startsWith("~/")) return path.join(HOME, p.slice(2));
   return p.replace(/^\$\{?HOME\}?/, HOME);
@@ -76,7 +76,7 @@ export function checkBash(command: string, cwd: string, fence: Fence): GuardDeci
   const noUrls = command.replace(/[a-z]+:\/\/[^\s'"]+/gi, "URL");
   for (const m of noUrls.matchAll(PATH_TOKEN)) {
     const token = (m[1] ?? m[0]).trim().replace(/^[\s'"=:(<>]+/, "");
-    if (!token) continue;
+    if (!token || /^\/+$/.test(token)) continue; // bare slashes are sed/regex syntax (s/a/b/, "//"), not a path
     const d = checkPath(token, cwd, fence);
     if (!d.allow) return d;
   }
@@ -110,4 +110,23 @@ export function checkToolCall(tool: string, input: Record<string, unknown>, cwd:
       return checkBash(String(input.command ?? ""), cwd, fence);
   }
   return { allow: true };
+}
+
+// Private places the dog is never offered, even if the owner might say yes: dotfiles and
+// dot-folders anywhere (~/.ssh, ~/.npmrc, .env), macOS Library, keys and credential stores.
+const SENSITIVE = /(^|\/)(\.[^/]+|Library|id_[a-z0-9]+|[^/]+\.(pem|key|p12|pfx|kdbx|keychain(-db)?)|credentials?|keychains?|secrets?)(\/|$)/i;
+
+/**
+ * For a denied path (GuardDecision.target, e.g. "~/Pictures/Jobsite2024/IMG_1.jpg"), the
+ * folder Tini may ask the owner about, or null if it must simply stay blocked.
+ */
+export function escalationFolder(target: string): string | null {
+  if (!target.startsWith("~/")) return null;
+  const rel = target.slice(2).replace(/\/+$/, "");
+  if (!rel || SENSITIVE.test("/" + rel)) return null;
+  const abs = path.join(HOME, rel);
+  let folder = abs;
+  try { if (!fs.statSync(abs).isDirectory()) folder = path.dirname(abs); }
+  catch { if (/\.[a-z0-9]{1,5}$/i.test(abs)) folder = path.dirname(abs); }
+  return folder === HOME ? null : pretty(folder);
 }

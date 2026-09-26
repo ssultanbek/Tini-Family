@@ -1,12 +1,18 @@
 // Builds the Agent SDK options that put the dog (Claude Code) inside Tini's fence.
 // Layer 1 = staging (cwd is a fresh workspace), layer 2 = this PreToolUse hook,
 // layer 3 = Claude Code's OS sandbox for Bash and its child processes.
-import type { HookCallback, Options, PreToolUseHookInput } from "@anthropic-ai/claude-agent-sdk";
+import type { HookCallback, Options, PostToolUseHookInput, PreToolUseHookInput } from "@anthropic-ai/claude-agent-sdk";
 import { ALLOWED_TOOLS, checkToolCall, type Fence, type GuardDecision } from "./guard.ts";
 
 export interface DogHooks {
   onDecision?: (tool: string, input: Record<string, unknown>, d: GuardDecision) => void;
+  /** A tool call that ran successfully (PostToolUse): becomes a brick. */
+  onToolDone?: (tool: string, input: Record<string, unknown>, response: unknown) => void;
 }
+
+// npm's package cache. The OS sandbox may read and write it so `npm install` works inside
+// the yard; ~/.npmrc (auth tokens) and everything else under ~/ stays denied.
+const NPM_CACHE = "~/.npm";
 
 export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Options> = {}): Options {
   const guard: HookCallback = async (raw) => {
@@ -29,6 +35,13 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
     };
   };
 
+  const done: HookCallback = async (raw) => {
+    const input = raw as PostToolUseHookInput;
+    try { hooks.onToolDone?.(input.tool_name, (input.tool_input ?? {}) as Record<string, unknown>, input.tool_response); }
+    catch { /* event mapping never breaks Claude's turn */ }
+    return {};
+  };
+
   return {
     cwd: fence.workspace,
     model: "sonnet",
@@ -37,7 +50,7 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
     permissionMode: "default",
     permissionPrompts: "none",            // anything our hook doesn't explicitly allow is denied, never a hanging prompt
     settingSources: [],                   // ignore the laptop owner's ~/.claude and project settings
-    hooks: { PreToolUse: [{ hooks: [guard] }] },
+    hooks: { PreToolUse: [{ hooks: [guard] }], PostToolUse: [{ hooks: [done] }] },
     sandbox: {
       enabled: true,
       failIfUnavailable: true,
@@ -45,8 +58,8 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
       allowUnsandboxedCommands: false,    // no dangerouslyDisableSandbox retries
       filesystem: {
         denyRead: ["~/"],
-        allowRead: [fence.workspace],
-        allowWrite: [fence.workspace],
+        allowRead: [fence.workspace, NPM_CACHE],
+        allowWrite: [fence.workspace, NPM_CACHE],
       },
       network: { allowedDomains: fence.allowedDomains, strictAllowlist: true },
       credentials: {

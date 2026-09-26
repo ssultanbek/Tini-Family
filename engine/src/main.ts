@@ -1,4 +1,4 @@
-// npm run engine -- --mode standin|replay|live [--recording f] [--speed n] [--port n]
+// npm run engine -- --mode standin|replay|live [--recording f] [--speed n] [--port n] [--turn-budget usd] [--session-budget usd]
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ENGINE_PORT } from "../../shared/events.ts";
@@ -8,6 +8,7 @@ import { Recorder } from "./recorder.ts";
 import { ReplayDriver } from "./replay.ts";
 import { startServer } from "./server.ts";
 import { standinCrew } from "./standins.ts";
+import { liveCrew, type TiniApi } from "./live.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const engineDir = path.resolve(here, "..");
@@ -18,11 +19,7 @@ const mode = arg("mode") ?? "standin";
 const speed = Number(arg("speed") ?? 1);
 const port = Number(arg("port") ?? ENGINE_PORT);
 
-if (mode === "live") {
-  console.log("live crew arrives in Stages 3-4");
-  process.exit(0);
-}
-if (mode !== "standin" && mode !== "replay") {
+if (mode !== "standin" && mode !== "replay" && mode !== "live") {
   console.error(`unknown --mode ${mode} (standin | replay | live)`);
   process.exit(1);
 }
@@ -36,7 +33,18 @@ if (mode === "replay") {
   driver = new ReplayDriver(hub, path.resolve(recording), speed);
 } else {
   const ai = createAiFromEnv((line) => hub.emit({ actor: "system", type: "raw.log", channel: "ai", text: line }));
-  driver = new Project(hub, standinCrew(speed), ai);
+  let crew = standinCrew(speed);
+  if (mode === "live") {
+    if (!process.env.ANTHROPIC_API_KEY) { console.error("live mode needs ANTHROPIC_API_KEY in engine/.env"); process.exit(1); }
+    // Stage 3 (Tini) is loaded at runtime so the engine builds with or without it.
+    const tiniPath = "./tini/index.ts";
+    const tini = await import(tiniPath).catch((e: Error) => {
+      console.error(`live mode needs Stage 3's engine/src/tini (git pull): ${e.message}`);
+      process.exit(1);
+    }) as TiniApi;
+    crew = liveCrew(tini, { speed: 1, turnBudgetUsd: Number(arg("turn-budget") ?? 2), sessionBudgetUsd: Number(arg("session-budget") ?? 6) });
+  }
+  driver = new Project(hub, crew, ai);
 }
 
 hub.on((e) => {
