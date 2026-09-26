@@ -19,7 +19,7 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 | 2. Demo kit | committed (f5e1362, second session) | Generator + verifier in `demo-kit/`; demo world present at ~/Clients/Rivera, ~/Pictures/Jobsite2024 (1,212 files), ~/Documents/Rivera-HR. Report from that session. |
 | 3. Tini: planning, access, staging | committed (43d7cf5, second session) | `tini/{paths,planner,stager,access}.ts`, `tina/preinspect.ts`, `test:tini`. Used by `--mode live`: live run planned 5 segments in 3s, staged ./assets, rewrote paths, prompt card for Rivera-HR. Report from that session. |
 | 4. Dog: persistent session | **done** (Sept 26) | `runner.ts`, `live.ts`, `--mode live`. Live 4-turn run PASS ($1.16), replay of it PASS, guard 32+12, typecheck clean. Checkpoint A: engine live on :4000. |
-| 5. Escalation + attack harness | in progress (second session) | |
+| 5. Escalation + attack harness | committed (81cb55c, second session) | Not yet wired into `live.ts` (still uses the stand-in card + temporary copy). Report from that session. |
 | 6. Tina per-turn inspection | not started | |
 | 7. Fixes, launch/relock, report | not started | Checkpoint B after this stage |
 | 8. Demo hardening | not started | Feature freeze 3:00 AM (revised) |
