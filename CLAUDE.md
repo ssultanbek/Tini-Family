@@ -1,3 +1,10 @@
+## Which role are you?
+
+Two Claude Code sessions build this repo: the engine builder (Sultan) and the game builder
+(teammate, starts inside game/). If your working directory is game/ or you were told you're
+the game builder, follow game/CLAUDE.md only; read everything below for context but never
+edit outside game/. Otherwise you're the engine builder and everything below applies.
+
 # Tini Family (ShellHacks 2026)
 
 A safety crew for AI coding agents: "your agent gets the keys to the room, not the house."
@@ -7,7 +14,7 @@ after every turn; nothing leaves until every fence segment is green. The dog is 
 inside the yard. It's a local desktop app: an engine on the laptop plus a 2D game screen in the browser.
 
 **Goal:** 1st place Best Overall. **Deadline:** Devpost submitted by **Sunday Sept 27, 10:00 AM ET**.
-Feature freeze **Saturday midnight**.
+Feature freeze **3:00 AM Sunday** (revised Sat 6:30 PM; see the schedule in docs/MASTER_PLAN.md).
 
 ## Read before doing anything
 

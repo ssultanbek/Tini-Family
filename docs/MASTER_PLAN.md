@@ -6,6 +6,24 @@ ShellHacks 2026 · Goal: 1st place Best Overall · Submit by Sunday 10 AM
 
 ---
 
+## Revised schedule (Sat 6:30 PM)
+
+| Milestone | Target |
+|---|---|
+| Stage 1 (engine backbone + AI ladder) | by 8:30 PM |
+| Stage 2 (demo kit) | in parallel, second Claude Code session |
+| Checkpoint A | by 10:30 PM |
+| Checkpoint B | by 2:00 AM |
+| Feature freeze | 3:00 AM |
+| Demo hardening | 3 to 5 AM |
+| Sleep | 5 to 7:30 AM |
+| Submit | by 10 AM |
+
+**CUT (pitch-only or fallback):** existing-folder mode, resume after restart, web-address escalations,
+Gemini vision (the metadata fallback keeps Photos red), incremental scanning. These are marked **CUT** below.
+
+---
+
 ## Who does what (execution model)
 
 | Who | Role |
@@ -20,7 +38,7 @@ ShellHacks 2026 · Goal: 1st place Best Overall · Submit by Sunday 10 AM
 ## Confirmed decisions (Saturday, Sept 26)
 
 - **Multi-turn projects.** Maria keeps prompting in the same project, for any task Claude Code can do, not only websites.
-- **Existing-folder mode** matches how Maria will use it: new work gets a fresh folder, work on something she already has gets fenced in place.
+- **CUT (pitch-only):** **Existing-folder mode** matches how Maria will use it: new work gets a fresh folder, work on something she already has gets fenced in place.
 - **No prompting while Claude works.** The prompt bar is disabled during a turn, and a Stop button ends the turn.
 - **No chat window.** The yard is the interface, the prompt bar gives work orders, and the history is a turn timeline. This keeps us eligible for Microsoft's "What's Missing?" challenge, which bans chat-window products.
 
@@ -33,12 +51,12 @@ The product shifted a lot; the build plan shifted moderately. No new stages appe
 | Area | Before (v1) | Now (v2) |
 |---|---|---|
 | Engine lifecycle | One straight line: prompt → fence → build → inspect → launch → end | A long-lived project: set up once, then a loop of turns that can run forever |
-| Claude session | One run per prompt | One Claude session kept alive across all turns, so Claude remembers what it built; can be stopped mid-turn and resumed if the engine restarts |
+| Claude session | One run per prompt | One Claude session kept alive across all turns, so Claude remembers what it built; can be stopped mid-turn (resume after restart: CUT) |
 | Tini | Plans once | Plans the full fence on the first prompt, then checks every later prompt for new access. No new access means no interruption. |
 | Escalation | Only when Claude asks for more | Also when Maria's own prompt names something outside the fence; same card, different header |
 | Tina | Inspects once at the end | Inspects after every turn; untouched segments keep their status |
 | Launch | Final step | Unlocks when all green, locks again when a new turn starts |
-| Workspace | Always a fresh folder | Fresh folder for new work, or her existing project folder when she wants Claude to work on something she already has |
+| Workspace | Always a fresh folder | Fresh folder for new work, or her existing project folder when she wants Claude to work on something she already has (existing mode: CUT) |
 | Report | One run | Cumulative across all turns |
 | Replay | Pauses for clicks | Also pauses for prompts, and pre-fills the prompt bar so the presenter just presses Send |
 
@@ -107,9 +125,9 @@ The product shifted a lot; the build plan shifted moderately. No new stages appe
 8. **Demo files live at `~/Clients/Rivera/...`.** Fake secrets are generated on the laptop and never committed (GitHub push protection would block them).
 9. **Offline-capable demo.** No CDNs anywhere in the game.
 10. **The contract only grows after Checkpoint A.** Additive changes only.
-11. **The workspace has two modes.** New work gets a fresh folder in `~/tini-projects/`. Existing work fences around the folder Maria names. Any other folder she mentions is always copied in cleaned, never opened in place.
-12. **Existing folders get a pre-inspection too.** If Maria's own project folder contains `.env` or key files, the contract card offers to hide them from Claude. Hidden files are added to the fence checker's deny list and the sandbox's read block, so the fence works inside the yard, too.
-13. **Photos red finding.** Gemini vision on the images that will be published (with consent on the contract card) is a Should. If it's cut, the fallback is Tina finding leftover identifying metadata, such as the camera owner's name, in a published photo.
+11. **CUT: existing mode (fresh folder only).** **The workspace has two modes.** New work gets a fresh folder in `~/tini-projects/`. Existing work fences around the folder Maria names. Any other folder she mentions is always copied in cleaned, never opened in place.
+12. **CUT (with existing mode).** **Existing folders get a pre-inspection too.** If Maria's own project folder contains `.env` or key files, the contract card offers to hide them from Claude. Hidden files are added to the fence checker's deny list and the sandbox's read block, so the fence works inside the yard, too.
+13. **Photos red finding.** (Vision CUT: the metadata fallback is the plan.) Gemini vision on the images that will be published (with consent on the contract card) is a Should. If it's cut, the fallback is Tina finding leftover identifying metadata, such as the camera owner's name, in a published photo.
 14. **Launch means "release."** For a website, Launch serves the site. For any other task, it means "the results are cleared to leave the yard," and opens the output folder.
 
 ---
@@ -124,7 +142,7 @@ One local Node.js process in TypeScript, listening only on 127.0.0.1:4000.
 |---|---|
 | `server.ts` | Express + Socket.IO. Snapshot on connect, receives commands, serves the finished game build, serves launched sites on port 5050. |
 | `project.ts` | The project and turn state machine from Part 2, plus the single `emit()`. Rejects commands that don't fit the current phase. |
-| `store.ts` | Saves `project.json` (fence, segments, workspace mode, Claude session id, turn list) after every turn, so a restart can resume. |
+| `store.ts` | Saves `project.json` (fence, segments, workspace mode, Claude session id, turn list) after every turn, so a restart can resume (resume: CUT). |
 | `recorder.ts` | Writes every event and command to a JSONL file. |
 | `replay.ts` | Plays recordings. Pauses at clicks and prompts, and sends the recorded prompt text ahead of time so the game can pre-fill the bar. |
 | `ai.ts` | The AI ladder. |
@@ -137,21 +155,21 @@ One local Node.js process in TypeScript, listening only on 127.0.0.1:4000.
 | `dog.ts` (done) | Claude's settings. Gains the per-file hidden list and the added instructions. |
 | `tini/planner.ts` | The full fence on turn 1. |
 | `tini/access.ts` | The follow-up access check on every later turn. |
-| `tini/stager.ts` | Fresh or existing workspace; copies in cleaned folders. |
+| `tini/stager.ts` | Fresh workspace (existing: CUT); copies in cleaned folders. |
 | `tini/escalation.ts` | One pipeline for both sources: Claude asking, or Maria's prompt naming something new. |
 
 ### Dog
 
 | Module | Job |
 |---|---|
-| `runner.ts` | The persistent Claude session. Turn boundaries, Stop, resume after restart, file actions → bricks, denials → sparks, Claude's text → speech bubbles and turn results. |
+| `runner.ts` | The persistent Claude session. Turn boundaries, Stop, resume after restart (CUT), file actions → bricks, denials → sparks, Claude's text → speech bubbles and turn results. |
 
 ### Tina
 
 | Module | Job |
 |---|---|
 | `tina/scanner.ts` | One scanner for folder inspection and per-turn inspection. |
-| `tina/vision.ts` | Gemini vision on images that will be published. |
+| `tina/vision.ts` | **CUT.** Gemini vision on images that will be published. |
 | `tina/explain.ts` | Explanations, cached per finding type. |
 | `tina/fixes.ts` | Fix templates, each followed by a rescan. |
 
@@ -262,12 +280,12 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
 
 **Turn-1 planning [Must]:**
 - Code finds every path in the prompt. Each one is checked: it must exist, sit inside the home folder, and not be a sensitive location.
-- It decides the workspace mode. A path to a folder with code in it, plus words like "fix," "update" or "my app," means existing mode. Anything else means new mode. The contract card shows which mode was chosen, so Maria can correct it with Adjust.
+- **CUT (always new mode):** It decides the workspace mode. A path to a folder with code in it, plus words like "fix," "update" or "my app," means existing mode. Anything else means new mode. The contract card shows which mode was chosen, so Maria can correct it with Adjust.
 - The AI ladder receives the prompt plus only folder names and file counts. It returns segment labels, their purposes, whether packages or websites are needed, and the plain-English contract lines.
 - Tina pre-inspects:
   - she counts GPS-tagged photos;
   - she flags risky files;
-  - in existing mode, she lists `.env` and key files and offers to hide them.
+  - **CUT:** in existing mode, she lists `.env` and key files and offers to hide them.
 - Adjust re-plans with the extra text added.
 
 **Staging [Must]:**
@@ -286,7 +304,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
 - The four non-website prompts each produce a sensible fence:
   - analyze a CSV and make charts
   - rename photos in a folder
-  - fix the bug in the existing app, with the `.env` hide offer
+  - ~~fix the bug in the existing app, with the `.env` hide offer~~ **CUT**
   - a follow-up needing nothing new, which gets no card
 
 **Side task (15 minutes):** Claim the GoDaddy domain at the MLH table now and point it at a placeholder Vercel page. DNS needs hours.
@@ -315,7 +333,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
 - **Stop** calls the SDK's interrupt.
 - There's a per-turn budget cap and a turn limit.
 
-**Resume after a restart [Should]:**
+**Resume after a restart [Should] — CUT:**
 - The Claude session id is saved in `project.json`.
 - On restart, the engine reopens the same session with the SDK's resume option, and the game gets the rebuilt snapshot.
 - If resume fails, the project continues in a new Claude session, with a short note telling Claude what's already in the workspace.
@@ -349,7 +367,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
   - All copies everything.
   - Deny adds nothing.
 - **Delivery.** For a Claude-sourced request, Claude gets a follow-up message: "approved files are in ./assets/…". For a prompt-sourced one, Maria's held prompt is sent with the new paths, or with a note that the folder was denied.
-- **Web addresses and packages [Should].** Claude reaching a site outside the list becomes a smaller escalation: allow this site, or deny.
+- **CUT: Web addresses and packages [Should].** Claude reaching a site outside the list becomes a smaller escalation: allow this site, or deny.
 - **The harness.** It fires the ~/.ssh read through the real fence checker, labeled simulated. It's triggered from the raw view, or automatically at a fixed point in demo mode.
 
 **Done when:**
@@ -362,7 +380,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
 
 **Why:** This is the "allergic to red" half. Now it happens after every turn, so nothing Claude changes can slip out.
 
-**Build:** `tina/scanner.ts` (final side), `tina/vision.ts`, `tina/explain.ts`.
+**Build:** `tina/scanner.ts` (final side), `tina/explain.ts`. (`tina/vision.ts`: CUT)
 
 **Every turn [Must]:**
 - After each turn, Tina scans the workspace with:
@@ -371,7 +389,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
   - risky file names
   - personal-data patterns
   - the "where data goes" list
-- A demo-sized workspace scans in seconds, so a full scan each turn is fine. Incremental scanning of only changed files is a Could, only needed for big existing repos.
+- A demo-sized workspace scans in seconds, so a full scan each turn is fine. Incremental scanning of only changed files (CUT) is a Could, only needed for big existing repos.
 - **Mapping findings to segments:**
   - A file that came from a staged folder lands on that folder's segment.
   - Scripts and dependencies go to Web packages, or the task's equivalent.
@@ -380,7 +398,7 @@ Each stage lists why it matters, what gets built, how it works, and "done when."
   - Segments that were green and had nothing new stay green.
   - Previously fixed findings that reappear turn red again.
 
-**Vision [Should]:**
+**Vision [Should] — CUT (metadata fallback keeps Photos red):**
 - Only new or changed images that will be published, only with consent.
 - Results are saved, so each image costs one call ever.
 
@@ -495,12 +513,12 @@ Checkpoints A and B put the teammate's game on the real engine twice before the 
 If we're more than 2 hours behind at a checkpoint, cut in this order:
 
 1. Semgrep and npm audit (never started)
-2. Incremental scanning
+2. Incremental scanning (CUT)
 3. "Where data goes"
-4. Web-address escalations
-5. Resume after restart
-6. Vision (the metadata fallback keeps Photos red)
-7. Existing-folder mode (demo still works; pitch it instead)
+4. Web-address escalations (CUT)
+5. Resume after restart (CUT)
+6. Vision (the metadata fallback keeps Photos red) (CUT)
+7. Existing-folder mode (demo still works; pitch it instead) (CUT)
 8. The OS sandbox layer
 
 **Never cut:**

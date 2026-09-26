@@ -2,6 +2,14 @@
 
 Claude Code updates this file at the end of every stage. Keep entries short and factual.
 
+## Revised schedule (Sat 6:30 PM)
+
+Stage 1 by 8:30 PM | Stage 2 in parallel (second session) | Checkpoint A by 10:30 PM | Checkpoint B by 2:00 AM |
+feature freeze 3:00 AM | demo hardening 3-5 AM | sleep 5-7:30 AM | submit by 10 AM.
+
+**CUT (pitch-only or fallback):** existing-folder mode, resume after restart, web-address escalations,
+Gemini vision (metadata fallback keeps Photos red), incremental scanning.
+
 ## Stages
 
 | Stage | Status | Notes |
@@ -14,7 +22,7 @@ Claude Code updates this file at the end of every stage. Keep entries short and 
 | 5. Escalation + attack harness | not started | |
 | 6. Tina per-turn inspection | not started | |
 | 7. Fixes, launch/relock, report | not started | Checkpoint B after this stage |
-| 8. Demo hardening | not started | Feature freeze at midnight |
+| 8. Demo hardening | not started | Feature freeze 3:00 AM (revised) |
 
 ## Contract versions (shared/events.ts)
 
