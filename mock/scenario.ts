@@ -53,6 +53,7 @@ export function riveraScenario(): Step[] {
   brickTotal = 0;
   return [
     s(0, { actor: "system", type: "session.reset" }),
+    s(0, { actor: "system", type: "session.mode", mode: "mock" }),   // v1.4
     s(0, { actor: "system", type: "session.phase", phase: "idle" }),
     s(0, { actor: "dog", type: "dog.state", state: "sleeping" }),
     ...suggest(1),

@@ -14,6 +14,7 @@ export const SOCKET = { event: "event", command: "command", snapshot: "snapshot"
 
 export type Zone = "gate" | "yard" | "house" | "outside";
 export type Actor = "tini" | "tina" | "dog" | "system";
+export type SessionMode = "live" | "replay" | "observe" | "mock";   // v1.4
 export type Phase = "idle" | "planning" | "contract" | "fencing" | "building" | "inspecting" | "ready" | "launched";
 export type SegmentKind = "folder" | "packages" | "workspace" | "network";
 export type SegmentStatus = "planned" | "built" | "inspecting" | "red" | "green";
@@ -70,6 +71,7 @@ interface Base { seq: number; ts: number; actor: Actor }
 export type EngineEvent = Base & (
   | { type: "session.reset" }
   | { type: "session.phase"; phase: Phase }
+  | { type: "session.mode"; mode: SessionMode }                       // v1.4: what is driving the game (after startup and every reset)
   | { type: "user.prompt"; text: string }
   | { type: "turn.started"; turnId: number; prompt: string }          // one per prompt Maria sends; the house keeps growing across turns
   | { type: "turn.finished"; turnId: number; summary: string }        // Claude's short summary of what it did this turn
@@ -129,4 +131,5 @@ export interface WorldState {
   report: AccessReport | null;
   rawLog: string[];               // last 200 lines
   suggestedPrompt?: string | null; // v1.2: pre-filled prompt text (replay); cleared by user.prompt
+  mode?: SessionMode | null;        // v1.4: set by session.mode
 }

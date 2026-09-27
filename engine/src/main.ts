@@ -45,7 +45,7 @@ if (mode === "replay") {
   if (mode === "live") {
     crew = liveCrew({ demo, turnBudgetUsd: Number(arg("turn-budget") ?? 2), sessionBudgetUsd: Number(arg("session-budget") ?? 6) });
   }
-  driver = new Project(hub, crew, ai);
+  driver = new Project(hub, crew, ai, mode === "observe" ? "observe" : mode === "live" ? "live" : "mock");   // standin = mock crew
 }
 
 hub.on((e) => {

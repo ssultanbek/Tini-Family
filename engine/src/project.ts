@@ -3,7 +3,7 @@
 // Commands are checked against the current phase; an invalid one becomes a raw.log
 // line (channel "engine"), never an engine.error. The crew (crew.ts) does the work.
 import os from "node:os";
-import type { EngineEvent, Finding, GameCommand, Phase, WorldState } from "../../shared/events.ts";
+import type { EngineEvent, Finding, GameCommand, Phase, SessionMode, WorldState } from "../../shared/events.ts";
 import { initialState, reduce } from "../../shared/reducer.ts";
 import type { Ask } from "./ai.ts";
 import type { Choice, Crew, CrewCtx, EscalationSource, Ev, FencePlan, OpenEscalation } from "./crew.ts";
@@ -142,7 +142,7 @@ export class Project implements Driver {
   private launching = false;
   private fixing = new Set<string>();
 
-  constructor(private hub: Hub, private crew: Crew, private ai: Ask) {}
+  constructor(private hub: Hub, private crew: Crew, private ai: Ask, private mode: SessionMode = "live") {}
   get state() { return this.hub.state; }
 
   boot() { this.resetSession(); }
@@ -226,6 +226,7 @@ export class Project implements Driver {
     this.crew.reset?.();
     this.hub.recorder?.newSession();
     this.hub.emit({ actor: "system", type: "session.reset" });
+    this.hub.emit({ actor: "system", type: "session.mode", mode: this.mode });   // v1.4
     this.hub.emit({ actor: "system", type: "session.phase", phase: "idle" });
     this.hub.emit({ actor: "dog", type: "dog.state", state: "sleeping" });
   }

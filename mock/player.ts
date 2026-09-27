@@ -1,7 +1,7 @@
 // Plays a scripted scenario or a recorded JSONL session over Socket.IO.
 // Gates pause until the game sends the matching command. Speed scales waits.
 import fs from "node:fs";
-import type { EngineEvent, GameCommand } from "../shared/events.ts";
+import type { EngineEvent, GameCommand, SessionMode } from "../shared/events.ts";
 import type { Step, Ev } from "./scenario.ts";
 
 export interface Emitter { emit(e: EngineEvent): void }
@@ -10,7 +10,8 @@ export class Player {
   private seq = 0;
   private pending: { type: GameCommand["type"]; resolve: (c: GameCommand) => void } | null = null;
   private runId = 0;
-  constructor(private out: Emitter, public speed = 1) {}
+  // v1.4: a recording says what it IS now ("mock" here, "replay" in the engine), never what it was.
+  constructor(private out: Emitter, public speed = 1, public mode: SessionMode = "mock") {}
 
   // Clicks can arrive before the script reaches its gate (e.g. the judge picks an
   // escalation option while the dog is still building). Buffer them briefly.
@@ -64,11 +65,13 @@ export class Player {
         }
         const ev = line.event as EngineEvent;
         if (ev.type === "prompt.suggested") continue; // re-emitted from the commands above
+        if (ev.type === "session.mode") continue;     // the recorded run's mode (e.g. "live") isn't what's playing now
         const gap = lastTs === null ? 0 : Math.min(ev.ts - lastTs, 4000); // cap dead air at 4s
         lastTs = ev.ts;
         await this.sleep(Math.max(0, gap), run);
         const { seq, ts, ...rest } = ev;
         this.send(rest as Ev);
+        if (ev.type === "session.reset") this.send({ actor: "system", type: "session.mode", mode: this.mode });
       }
     } catch (e) { if ((e as Error).message !== "stopped") throw e; }
   }

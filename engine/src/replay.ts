@@ -18,7 +18,7 @@ export class ReplayDriver implements Driver {
         const { seq: _s, ts: _t, ...rest } = e;
         hub.emit(rest as Ev);
       },
-    }, speed);
+    }, speed, "replay");
   }
 
   boot() { void this.player.playRecording(this.file); }

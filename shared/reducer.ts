@@ -17,6 +17,7 @@ export function reduce(s: WorldState, e: EngineEvent): WorldState {
   switch (e.type) {
     case "session.reset": return { ...initialState(), seq: e.seq };
     case "session.phase": n.phase = e.phase; break;
+    case "session.mode": n.mode = e.mode; break;
     case "user.prompt": n.prompt = e.text; n.suggestedPrompt = null; break;
     case "prompt.suggested": n.suggestedPrompt = e.text; break;
     case "turn.started": n.turns = [...s.turns, { id: e.turnId, prompt: e.prompt }]; n.prompt = e.prompt; break;
