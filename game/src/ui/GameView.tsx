@@ -8,6 +8,7 @@ import { RawView } from './RawView.tsx';
 import { PromptBar, TurnTimeline } from './Project.tsx';
 import { reportVisible, type ReportMode } from './promptMode.ts';
 import { gameLayout } from '../layout.ts';
+import { modeBadge } from './modeBadge.ts';
 import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource-variable/instrument-sans';
 import './game.css';
@@ -81,6 +82,7 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
   const latestBlock = world.blocked.at(-1);
   const needsYou = !!world.contract || !!escalation || world.findings.length > 0 || fixed.length > 0;
   const launch: GameCommand = { type: 'launch' };
+  const badge = modeBadge(world, connected, synced);
   // A new decision (plan, request, red finding) brings the Needs-you cards back into view.
   const decisions = [world.contract?.title, escalation?.escalationId, ...world.findings.map(finding => finding.id)].join('|');
   useEffect(() => { if (decisions && analysis.current) analysis.current.scrollTop = 0; }, [decisions]);
@@ -93,7 +95,7 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
       <span className="gv-logo" aria-hidden="true" />
       <div className="gv-brand"><h1>Tini Family</h1><p>Your agent gets the keys to the room, not the house.</p></div>
       <div className="gv-actions">
-        <span role="status" className={`gv-pill ${connected ? 'ok' : 'bad'}`}>{connected ? synced ? '● Connected' : '● Syncing' : '○ Offline'}</span>
+        <span role="status" className={`gv-pill ${badge.tone}`}>{badge.text}</span>
         <button className={`gv-btn ghost raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw</button>
         <a className="gv-link" href="/?view=dashboard">Dashboard</a>
         <button className="gv-btn ghost" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Resetting…' : 'Reset'}</button>
