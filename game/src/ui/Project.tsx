@@ -30,7 +30,7 @@ export function PromptBar({ world, send, available, pending, epoch, compact = fa
   if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">{compact ? 'Tini is working…' : 'Tini is working… you can prompt again when the crew is done.'}</span>
     {STOPPABLE.includes(world.phase) && <StopButton world={world} send={send} available={available} pending={pending} />}</div>;
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
-    <label htmlFor="prompt-input">{compact ? (first ? 'Start a project' : 'Message the crew') : first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
+    <label htmlFor="prompt-input">{compact ? (first ? 'First request' : 'Next request') : first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
     <div className="prompt-row">
       <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder={world.findings.length ? OPEN_FINDINGS_PLACEHOLDER : 'Ask for the next thing…'}
         onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
@@ -74,14 +74,18 @@ export function Summary({ text }: { text: string }) {
 }
 
 /** The game page's chat: each turn is your prompt, then Claude's summary (or a typing indicator). */
-export function ChatHistory({ world }: { world: WorldState }) {
-  // While the crew waits on you, say so instead of showing a typing indicator.
-  const waiting = world.phase === 'contract' && world.contract ? 'Waiting for your OK on the plan' : world.openEscalation ? 'Waiting for your answer' : null;
-  if (!world.turns.length) return <p className="chat-empty">Tell the crew what you need. Tini fences only what the job uses.</p>;
-  return <ol className="chat" aria-label="Conversation">
-    <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="chat-turn">
-      <div className="msg me"><span className="who">You · Turn {turn.id}</span><p>{turn.prompt}</p></div>
-      <div className="msg crew"><span className="who">Claude</span>{turn.summary ? <Summary text={turn.summary} /> : <p className="typing" aria-label="Working">{waiting ?? '⋯'}</p>}</div>
+/** The game page's turn timeline: one card per turn with the request and its result (no chat bubbles). */
+export function TurnTimeline({ world }: { world: WorldState }) {
+  // While the crew waits on you, say so instead of showing progress.
+  const pending = world.phase === 'contract' && world.contract ? 'Waiting for your OK' : world.openEscalation ? 'Waiting for your answer' : 'In progress…';
+  if (!world.turns.length) return <p className="timeline-empty">No requests yet. Tini fences only what each request needs.</p>;
+  return <ol className="timeline" aria-label="Turns">
+    <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`turn-card ${turn.summary ? 'done' : 'open'}`}>
+      <div className="turn-card-head"><span className="turn-number">Turn {turn.id}</span><span className="turn-state">{turn.summary ? '✓ Done' : pending}</span></div>
+      <span className="turn-label">Request</span>
+      <p className="turn-request">{turn.prompt}</p>
+      <span className="turn-label">Result</span>
+      {turn.summary ? <Summary text={turn.summary} /> : <p className="turn-pending">{pending}</p>}
     </motion.li>)}</AnimatePresence>
   </ol>;
 }

@@ -169,3 +169,17 @@ test('grouped findings (engine polish): long titles, counts and per-group fix la
   }
   assert.equal(OPEN_FINDINGS_PLACEHOLDER, 'Fix the red spots before launching, or ask for a change');
 });
+
+test('no chat window: the game page shows a Turns timeline (Request / Result), not chat labels', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 950, phase: 'ready', turns: [{ id: 1, prompt: 'Build the site', summary: 'Built 3 pages.' }, { id: 2, prompt: 'Darker header' }] });
+  const html = renderToString(createElement(GameView, { send: () => true })).replaceAll('<!-- -->', '');
+  assert.ok(html.includes('>Turns</h2>') && !html.includes('>Chat</h2>'));
+  assert.equal(html.split('class="turn-label">Request<').length - 1, 2);
+  assert.equal(html.split('class="turn-label">Result<').length - 1, 2);
+  assert.ok(!/>Claude</.test(html), 'no "Claude" chat label');
+  assert.ok(html.includes('>Next request</label>'));
+});

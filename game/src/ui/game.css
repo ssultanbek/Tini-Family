@@ -172,3 +172,20 @@ body:has(.gv) { background: #f1f3f4; }
 .gv .family-bubble { transform: translate(-50%, calc(-100% - var(--lift, 0px))); }
 /* Upper-yard characters speak downward so the top signs (About, Company Info…) are never covered. */
 .gv .family-bubble.bubble-below { transform: translate(-50%, var(--lift, 0px)); border-radius: 3px 16px 16px 16px; }
+
+/* Turns timeline (no chat bubbles): one card per turn with the request and its result. */
+.gv .timeline { list-style: none; margin: 0; padding: 0 0 0 14px; display: grid; gap: 12px; border-left: 3px solid var(--gv-line); }
+.gv .turn-card { position: relative; margin: 0; padding: 10px 12px; background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: 12px; display: grid; gap: 3px; }
+.gv .turn-card::before { content: ""; position: absolute; left: -22px; top: 14px; width: 11px; height: 11px; border-radius: 50%; background: var(--gv-card); border: 3px solid var(--gv-accent); }
+.gv .turn-card.done::before { background: var(--gv-accent); }
+.gv .turn-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px; }
+.gv .turn-card .turn-number { font: 700 15px/1.2 var(--gv-display); color: var(--gv-ink); text-transform: none; letter-spacing: 0; }
+.gv .turn-state { font-size: 12.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--gv-soft); color: var(--gv-muted); }
+.gv .turn-card.done .turn-state { background: var(--gv-good-bg); color: var(--gv-good); }
+.gv .turn-card.open .turn-state { background: var(--gv-warn-bg); color: var(--gv-warn); }
+.gv .turn-label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gv-muted); margin-top: 4px; }
+.gv .turn-request { margin: 0; font-size: 15.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.gv .turn-card .turn-summary, .gv .turn-pending { margin: 0; font-size: 15.5px; line-height: 1.4; color: var(--gv-ink); overflow-wrap: anywhere; }
+.gv .turn-pending { color: var(--gv-warn); font-weight: 600; }
+.gv .timeline-empty { margin: 0; color: var(--gv-muted); font-size: 16px; }
+.gv .gv-chat-scroll > .timeline, .gv .gv-chat-scroll > .timeline-empty { margin-top: auto; }

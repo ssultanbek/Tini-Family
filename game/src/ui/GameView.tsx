@@ -5,7 +5,7 @@ import { commandKey, store } from '../store.ts';
 import { fixedAwaitingGreen } from './fixedFindings.ts';
 import { ReportScreen } from './Report.tsx';
 import { RawView } from './RawView.tsx';
-import { ChatHistory, PromptBar } from './Project.tsx';
+import { PromptBar, TurnTimeline } from './Project.tsx';
 import { reportVisible, type ReportMode } from './promptMode.ts';
 import { gameLayout } from '../layout.ts';
 import '@fontsource-variable/bricolage-grotesque';
@@ -103,9 +103,9 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
     {state.engineError && <p className="gv-notice bad" role="alert">Engine error: {state.engineError}</p>}
 
     <main className="gv-cols">
-      <aside className="gv-panel gv-chat-panel" aria-label="Chat">
-        <h2>Chat</h2>
-        <div className="gv-chat-scroll" ref={chat}><ChatHistory world={world} /></div>
+      <aside className="gv-panel gv-chat-panel" aria-label="Turns">
+        <h2>Turns</h2>
+        <div className="gv-chat-scroll" ref={chat}><TurnTimeline world={world} /></div>
         <PromptBar compact world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
       </aside>
 
