@@ -12,7 +12,12 @@ export function Yard() {
     let cancelled = false;
     let game: import('phaser').Game | undefined;
     // The emergency dashboard never imports or initializes Phaser.
-    void Promise.all([import('phaser'), import('../scene/YardScene.ts')]).then(([{ default: Phaser }, { YardScene }]) => {
+    // Canvas text only uses a web font that is already loaded, so wait for it (briefly) before drawing.
+    const fonts = Promise.race([
+      Promise.all(yardLayout.type.load.map(font => document.fonts.load(font))).catch(() => undefined),
+      new Promise(resolve => setTimeout(resolve, 1500)),
+    ]);
+    void Promise.all([import('phaser'), import('../scene/YardScene.ts'), fonts]).then(([{ default: Phaser }, { YardScene }]) => {
       if (cancelled || !host.current) return;
       game = new Phaser.Game({
         type: Phaser.AUTO, parent: host.current,
@@ -26,7 +31,7 @@ export function Yard() {
   }, []);
   const description = `Tini in blue, Tina in purple, Dog in amber. Dog is ${world.dog}. ${world.bricks} bricks placed. ${world.segments.map(segment => `${segment.label}: ${segment.status}. ${segment.detail}`).join('. ') || 'No fence proposed yet.'}`;
   return <section className="yard-view" aria-label="The yard">
-    <div className="yard-caption"><strong>THE YARD</strong><span>Only the access your job needs.</span></div>
+    <div className="yard-caption"><strong>The yard</strong><span>Only what the job needs</span><span className={`gv-phase ${['planning', 'fencing', 'building', 'inspecting'].includes(world.phase) ? 'busy' : world.phase === 'launched' ? 'done' : ''}`}>{world.phase}</span></div>
     {error ? <p role="alert">{error} <a href="/?view=dashboard">Dashboard</a></p> : <div className="yard-stage">
       <div className="yard-canvas" ref={host} role="img" aria-label={description} />
       <div className="family-bubbles" aria-live="polite">{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}`} style={{
