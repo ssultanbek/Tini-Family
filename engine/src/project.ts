@@ -28,6 +28,7 @@ function tildeText(ev: Ev): Ev {
     case "speech": return { ...ev, text: tilde(ev.text) };
     case "turn.finished": return { ...ev, summary: tilde(ev.summary) };
     case "engine.error": return { ...ev, message: tilde(ev.message) };
+    case "dog.brick.placed": return { ...ev, file: tilde(ev.file) };
     default: return ev;
   }
 }
