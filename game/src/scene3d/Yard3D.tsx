@@ -53,7 +53,7 @@ function Scene() {
       shadow-camera-left={-s.shadowBox} shadow-camera-right={s.shadowBox} shadow-camera-top={s.shadowBox} shadow-camera-bottom={-s.shadowBox} />
     <Floating>
       <Island />
-      <YardGround />
+      <YardGround built={world.segments.some(segment => segment.status !== 'planned')} epoch={epoch} />
       <Scatter />
       <Decor />
       <Hedges segmentCount={world.segments.length} />

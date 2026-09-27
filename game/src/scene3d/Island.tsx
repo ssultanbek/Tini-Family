@@ -1,9 +1,10 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox, Html } from '@react-three/drei';
 import type { Group } from 'three';
 import { diorama as D, yardLayout as L } from '../layout.ts';
 import { blockBox, decorKind, hedgeSlots, rectBox, toWorld } from './world.ts';
+import { spark } from './Family3D.tsx';
 
 const C = D.colors;
 
@@ -32,11 +33,44 @@ export function Island() {
 }
 
 /** The fenced yard, the sand path out of the gate, and the gate itself. */
-export function YardGround() {
+/** Gate build progress 0..1 (0 = not built yet), shared with the gate doors in Family3D. Decoration only. */
+export const gateBuild = { progress: 0 };
+
+/** Grows `from`→`to` over a window of the gate build (0..1), eased with a small overshoot, so pieces pop in. */
+const pop = (p: number, from: number, to: number) => {
+  const k = Math.min(1, Math.max(0, (p - from) / (to - from)));
+  return k === 0 ? 0 : k === 1 ? 1 : 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2;
+};
+
+/** The yard floor and path; the gate and the fence beside it are built once fencing starts (~3.5s, never replayed). */
+export function YardGround({ built, epoch }: { built: boolean; epoch: number }) {
   const yard = rectBox(L.ground);
   const pathTop = L.path.y, pathBottom = D.block.maxY - 30;
   const path = rectBox({ x: L.path.x, y: pathTop, width: L.path.width, height: pathBottom - pathTop });
   const gate = toWorld(L.gate.x, L.gate.y), gw = L.gate.width * D.unit;
+  const lastP = useRef(1), posts = useRef<(Group | null)[]>([]), bar = useRef<Group>(null), runs = useRef<(Group | null)[]>([]), tag = useRef<Group>(null);
+  // Snapshot/refresh (new epoch) with fencing already underway: built instantly. Built during this epoch: animate.
+  const seen = useRef({ epoch, built });
+  const animate = seen.current.epoch === epoch && built && !seen.current.built;
+  useEffect(() => { seen.current = { epoch, built }; });
+  const start = useRef<number | null>(null);
+  if (!built) { start.current = null; gateBuild.progress = 0; lastP.current = 0; }
+  else if (!animate && start.current === null) gateBuild.progress = 1;
+  useFrame(({ clock }) => {
+    if (built && animate && start.current === null) start.current = clock.elapsedTime;
+    if (built && start.current !== null) gateBuild.progress = Math.min(1, (clock.elapsedTime - start.current) / D.gate.buildSeconds);
+    const p = built ? gateBuild.progress : 0;
+    posts.current.forEach((g, i) => g && g.scale.set(1, Math.max(0.001, pop(p, 0.02 + i * 0.08, 0.3 + i * 0.08)), 1));
+    if (bar.current) { const k = pop(p, 0.35, 0.55); bar.current.visible = k > 0; bar.current.position.y = 1.5 + (1 - Math.min(1, k)) * 1.6; }
+    runs.current.forEach((g, i) => g && g.scale.set(Math.max(0.001, pop(p, 0.45 + i * 0.12, 0.75 + i * 0.12)), Math.max(0.001, pop(p, 0.45 + i * 0.12, 0.7 + i * 0.12)), 1));
+    if (tag.current) tag.current.visible = p >= 1;
+    // A dust puff as each piece lands: posts, crossbar, each side fence, doors.
+    for (const [mark, at] of [[0.3, gate], [0.55, gate], ...fillers.map((run, i) => [0.75 + i * 0.12, { x: (run.from.x + run.to.x) / 2, z: run.from.z }] as const), [0.98, gate]] as const) {
+      if (lastP.current < mark && p >= mark) spark('dust', at, 0.2, 0.8);
+    }
+    lastP.current = p;
+  });
+  const fillers = gateFillers();
   return <group>
     <RoundedBox args={[yard.width, 0.06, yard.depth]} radius={0.03} position={[yard.x, 0.03, yard.z]} receiveShadow>
       <meshStandardMaterial color={C.yard} roughness={0.95} />
@@ -44,15 +78,23 @@ export function YardGround() {
     <RoundedBox args={[path.width, 0.07, path.depth]} radius={0.03} position={[path.x, 0.04, path.z]} receiveShadow>
       <meshStandardMaterial color={C.sand} roughness={1} />
     </RoundedBox>
-    {[-1, 1].map(side => <RoundedBox key={side} args={[0.3, 1.5, 0.3]} radius={0.06} position={[gate.x + side * gw / 2, 0.75, gate.z]} castShadow>
-      <meshStandardMaterial color={C.woodDark} roughness={0.9} />
-    </RoundedBox>)}
-    <RoundedBox args={[gw + 0.5, 0.22, 0.26]} radius={0.06} position={[gate.x, 1.5, gate.z]} castShadow>
-      <meshStandardMaterial color={C.wood} roughness={0.9} />
-    </RoundedBox>
-    {/* Fixed fence runs close the gaps between the gate and the yard corner / next fence slot. */}
-    {gateFillers().map((run, i) => <FenceRun key={i} {...run} />)}
-    <Html position={[gate.x, 1.95, gate.z]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[5, 0]} className="d3-tag">Gate</Html>
+    {[-1, 1].map((side, i) => <group key={side} position={[gate.x + side * gw / 2, 0, gate.z]} ref={g => { posts.current[i] = g; }} scale={[1, 0.001, 1]}>
+      <RoundedBox args={[0.3, 1.5, 0.3]} radius={0.06} position={[0, 0.75, 0]} castShadow><meshStandardMaterial color={C.woodDark} roughness={0.9} /></RoundedBox>
+    </group>)}
+    <group ref={bar} position={[gate.x, 1.5, gate.z]} visible={false}>
+      <RoundedBox args={[gw + 0.5, 0.22, 0.26]} radius={0.06} castShadow><meshStandardMaterial color={C.wood} roughness={0.9} /></RoundedBox>
+    </group>
+    {/* Fence runs close the gaps between the gate and the yard corner / next fence slot; each grows out from the gate side. */}
+    {fillers.map((run, i) => {
+      const fromGate = Math.abs(run.from.x - gate.x) < Math.abs(run.to.x - gate.x);
+      const anchor = fromGate ? run.from.x : run.to.x;
+      return <group key={i} position={[anchor, 0, 0]} ref={g => { runs.current[i] = g; }} scale={[0.001, 0.001, 1]}>
+        <group position={[-anchor, 0, 0]}><FenceRun {...run} /></group>
+      </group>;
+    })}
+    <group ref={tag} visible={false}>
+      <Html position={[gate.x, 1.95, gate.z]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[5, 0]} className="d3-tag">Gate</Html>
+    </group>
   </group>;
 }
 

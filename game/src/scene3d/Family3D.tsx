@@ -7,6 +7,7 @@ import { diorama as D, familyLayout as F, yardLayout as L, segmentPosition } fro
 import { animationQueues, type AnimatedActor, type AnimationOptions } from '../queue.ts';
 import { store } from '../store.ts';
 import { route, toWorld, type XZ } from './world.ts';
+import { gateBuild } from './Island.tsx';
 
 // ---------------------------------------------------------------------------------------------
 // Motion model. Every action starts only from its engine event (via the per-actor queues) and
@@ -28,7 +29,7 @@ const atSegment = (id?: string, distance?: number) => w(segmentPosition(segmentI
 
 let effectId = 0;
 const effects = { list: [] as Effect[], listeners: new Set<() => void>() };
-function spark(kind: Effect['kind'], at: XZ, y: number, duration: number) {
+export function spark(kind: Effect['kind'], at: XZ, y: number, duration: number) {
   effects.list = [...effects.list.filter(e => now() - e.start < e.duration), { id: ++effectId, kind, at, y, start: now(), duration }];
   effects.listeners.forEach(listener => listener());
 }
@@ -390,6 +391,9 @@ function GateDoors({ bodies }: { bodies: Record<AnimatedActor, Body> }) {
     const near = Object.values(bodies).some(b => Math.hypot(b.pos.x - g.x, b.pos.z - g.z) < D.gate.openRadius);
     open.current += ((near ? 1 : 0) - open.current) * Math.min(1, dt * (near ? 6 : 3));
     const angle = open.current * D.gate.swing;
+    // The doors swing in last while the gate is being built (and stay hidden before fencing starts).
+    const hang = Math.min(1, Math.max(0, (gateBuild.progress - 0.82) / 0.18));
+    for (const g of [left.current, right.current]) if (g) { g.visible = hang > 0; g.scale.set(1, Math.max(0.001, hang), 1); }
     if (left.current) left.current.rotation.y = -angle;
     if (right.current) right.current.rotation.y = angle;
   });
