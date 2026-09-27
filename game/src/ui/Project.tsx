@@ -51,7 +51,7 @@ export function TurnHistory({ world }: { world: WorldState }) {
 }
 
 /** v1.2 `stop`: two clicks, so a stray click during the demo can't end a turn. */
-function StopButton({ world, send, available, pending }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[] }) {
+export function StopButton({ world, send, available, pending }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[] }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => { if (!armed) return; const timer = setTimeout(() => setArmed(false), 4000); return () => clearTimeout(timer); }, [armed]);
   // In the first turn's setup the engine drops back to the start; later it ends the turn and Tina still checks.

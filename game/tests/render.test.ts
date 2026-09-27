@@ -82,5 +82,8 @@ test('a long turn summary shows a preview with "more"; a short one shows whole',
   const html = renderToString(createElement(GameView, { send: () => true }));
   assert.ok(html.includes('aria-expanded="false"') && html.includes('>more</button>'));
   assert.ok(!html.includes('fixed two broken image paths'), 'collapsed by default');
-  assert.equal(html.split('>more</button>').length, 2, 'only the long summary gets the link');
+  // In the conversation history, only the long summary gets the link (the short one shows whole).
+  const history = html.slice(html.indexOf('composer-history'), html.indexOf('composer-above'));
+  assert.equal(history.split('>more</button>').length, 2, 'only the long summary gets the link');
+  assert.ok(history.includes('Built.'));
 });

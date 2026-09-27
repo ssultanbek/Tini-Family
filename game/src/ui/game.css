@@ -162,3 +162,50 @@ body:has(.gv) { background: #f1f3f4; }
 /* Messenger behaviour: the chat sits at the bottom and opens scrolled to the newest message. */
 .gv .gv-chat-scroll { display: flex; flex-direction: column-reverse; }
 .gv .prompt-bar.working > span[role="status"] { flex: 1 1 0; }
+
+/* v2: no chat column. The yard takes the width, and the message bar sits under it (like a chat app's composer). */
+.gv .gv-cols { grid-template-columns: minmax(0, 1fr) 360px; }
+.gv .gv-center { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.gv .gv-center > .yard-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.gv .yard-area { flex: 1; min-height: 240px; container-type: size; display: grid; place-items: center; background: var(--gv-card); }
+/* The stage keeps the canvas ratio and fits whichever is tighter, the width or the height left over. */
+.gv .yard-stage { width: min(100cqw, calc(100cqh * var(--yard-ratio))); aspect-ratio: var(--yard-aspect); min-width: 0; }
+.gv .yard-stage .yard-canvas { min-width: 0; }
+.gv .yard-help { padding: .35em 1em; }
+.gv .yard-note { display: none; }
+
+.gv .composer { position: relative; flex: none; display: grid; gap: 6px; }
+.gv .composer-above { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 0; }
+.gv .history-toggle { flex: none; min-height: 34px; padding: .25em .8em; border-radius: 999px; font-size: 14.5px; font-weight: 650; background: var(--gv-card); color: var(--gv-ink); border: 1.5px solid var(--gv-line); }
+.gv .history-toggle:hover:not(:disabled) { background: var(--gv-soft); }
+.gv .composer-last { flex: 1 1 18em; min-width: 0; display: flex; gap: 8px; align-items: baseline; font-size: 15.5px; color: var(--gv-muted); }
+.gv .composer-last > span { font-weight: 700; color: var(--gv-ink); flex: none; }
+.gv .composer-last .turn-summary { margin: 0; color: var(--gv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gv .composer .prompt-suggestions { display: flex; gap: 6px; flex-wrap: wrap; }
+.gv .composer .chip { min-height: 32px; padding: .2em .8em; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--gv-card); color: var(--gv-accent-text); border: 1.5px solid var(--gv-line); }
+.gv .composer .chip:hover:not(:disabled) { border-color: var(--gv-accent); background: #e6f2f1; }
+
+.gv .composer-bar { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 18px; background: var(--gv-card); border: 1.5px solid var(--gv-line); border-radius: 18px; box-shadow: 0 2px 10px #27313a12; }
+.gv .composer-bar:focus-within { border-color: var(--gv-accent); box-shadow: 0 0 0 3px #2d6f7326; }
+.gv .composer-bar.working { background: var(--gv-soft); }
+.gv .composer-bar textarea { flex: 1; min-width: 0; margin: 0; padding: .45em 0; border: none; background: transparent; resize: none; font-family: var(--gv-body); font-size: 18px; line-height: 1.35; overflow-y: auto; color: var(--gv-ink); }
+.gv .composer-bar textarea:focus-visible { outline: none; }
+.gv .composer-bar textarea::placeholder { color: #8a949d; }
+.gv .composer-bar .send { flex: none; width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%; font-size: 22px; font-weight: 800; background: var(--gv-accent); border: none; color: var(--gv-accent-ink); }
+.gv .composer-bar .send:hover:not(:disabled) { background: var(--gv-accent-hover); }
+.gv .composer-bar .send:disabled { background: #b9c7ca; opacity: 1; }
+.gv .composer-bar .stop-button { flex: none; margin: 0; min-height: 40px; padding: .3em 1em; border-radius: 999px; font-size: 15px; background: var(--gv-card); color: #9a2922; border: 1.5px solid #b6372c; }
+.gv .composer-bar .stop-button.armed { background: #b6372c; color: #fff; }
+.gv .composer-bar .working-dot { margin-right: 10px; }
+.gv .composer-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0 6px; font-size: 13.5px; color: var(--gv-muted); }
+.gv .composer-status { font-weight: 650; color: var(--gv-ink); text-transform: capitalize; }
+
+/* History opens as a panel above the bar, over the bottom of the yard. */
+.gv .composer-history { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); max-height: min(60vh, 520px); overflow: auto; padding: 14px; z-index: 6;
+  background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: 16px; box-shadow: 0 18px 50px #27313a33; }
+.gv .composer-history .chat { gap: 12px; }
+.gv .composer-bar textarea { min-height: 0; }
+.gv .composer-bar.prompt-bar.working { flex-wrap: nowrap; }
+.gv .composer-bar.prompt-bar.working .stop-button { flex: none; width: auto; margin: 0; }
+.gv .composer-status { text-transform: none; display: inline-block; }
+.gv .composer-status::first-letter { text-transform: uppercase; }

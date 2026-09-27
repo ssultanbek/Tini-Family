@@ -52,7 +52,7 @@ export const dashboardLayout = {
 export const gameLayout = {
   ...dashboardLayout, '--page-width': '1800px', '--page-padding': '20px',
   '--card-padding': '20px', '--gap': '16px', '--yard-controls-width': '390px',
-  '--yard-min-width': '660px', '--yard-top': '16px', '--yard-aspect': `${canvasWidth} / ${yardLayout.height}`,
+  '--yard-min-width': '660px', '--yard-top': '16px', '--yard-aspect': `${canvasWidth} / ${yardLayout.height}`, '--yard-ratio': String(canvasWidth / yardLayout.height),
 };
 
 export const familyLayout = {
