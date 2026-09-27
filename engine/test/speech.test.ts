@@ -58,7 +58,7 @@ eq("summary snake_case kept", summarize("Updated site_config and main_nav."), "U
 eq("tilde", tilde(`The site is built at ${os.homedir()}/tini-projects/rivera`), "The site is built at ~/tini-projects/rivera");
 eq("tilde home", tilde(`cd ${os.homedir()}`), "cd ~");
 // key-shaped strings are redacted before they're shown or recorded (built at runtime: never a literal key in git)
-const fake = "AIza" + "Y90HgePYnRxiOUtSlWIh8UBHr0cgIIYJufZ";
+const fake = "AIza" + "TestOnlyNotARealKey0000000000000000"; // key-shaped, not the demo kit's key
 eq("redact maps key", tilde(`ALLOW Write {"content":"const KEY = '${fake}';"}`), `ALLOW Write {"content":"const KEY = 'AIza…[redacted]';"}`);
 console.log(fail ? `${fail} failures` : "all speech + summary + tilde + redaction checks pass");
 process.exit(fail ? 1 : 0);
