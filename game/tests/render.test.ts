@@ -132,3 +132,40 @@ test('speech bubbles of characters in the upper yard sit below them, so the top 
   assert.ok(familyLayout.bubble.flipY > 318);
   familyPresentation.set([]);
 });
+
+test('grouped findings (engine polish): long titles, counts and per-group fix labels render whole, one card each', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { Dashboard } = await vite.ssrLoadModule('/src/ui/Dashboard.tsx') as typeof import('../src/ui/Dashboard.tsx');
+  const { OPEN_FINDINGS_PLACEHOLDER } = await vite.ssrLoadModule('/src/ui/Project.tsx') as typeof import('../src/ui/Project.tsx');
+  const { initialState, reduce } = await import('../../shared/reducer.ts');
+  // Shaped like engine/src/tina/findings.ts toFinding() for groups of several files.
+  const grouped = [
+    { id: 'g-gps', segmentId: 'photos', severity: 'medium' as const, title: '1,212 photos still have GPS locations',
+      explanation: 'These photos record where they were taken, which can reveal job sites and homes. Found in 1,212 files, like assets/jobsite/IMG_0001.jpg and assets/jobsite/IMG_0002.jpg (GPS latitude/longitude in EXIF).',
+      file: 'assets/jobsite/IMG_0001.jpg and 1,211 more', fixes: [{ id: 'strip-metadata', label: 'Remove the hidden details' }, { id: 'remove-photo', label: 'Remove these 1,212 photos' }] },
+    { id: 'g-author', segmentId: 'photos', severity: 'low' as const, title: '42 photos still say who took them',
+      explanation: 'The camera wrote the owner\'s name into each photo. Found in 42 files, like assets/team/crew-01.jpg and assets/team/crew-02.jpg (Artist and Copyright tags).',
+      file: 'assets/team/crew-01.jpg and 41 more', fixes: [{ id: 'strip-metadata', label: 'Remove the hidden details' }, { id: 'remove-photo', label: 'Remove these 42 photos' }] },
+    { id: 'g-keys', segmentId: 'web-packages', severity: 'high' as const, title: 'API keys in 3 files of your website',
+      explanation: 'Anyone who opens the site can copy these keys and run up charges on your account. Found in 3 files, like js/main.js and contact.html (Google Maps API key).',
+      file: 'js/main.js and 2 more', fixes: [{ id: 'move-key-to-env', label: 'Move keys out of the website' }] },
+  ];
+  let world = { ...initialState(), seq: 1000, phase: 'ready' as const, segments: [
+    { id: 'photos', label: 'Projects', kind: 'folder' as const, detail: '31 photos', status: 'built' as const },
+    { id: 'web-packages', label: 'Web packages', kind: 'packages' as const, detail: 'npm registry only', status: 'built' as const } ] };
+  world = grouped.reduce((w, finding, i) => reduce(w, { actor: 'tina', type: 'segment.red', segmentId: finding.segmentId, finding, seq: 1001 + i, ts: 0 }), world);
+  store.connection(true);
+  store.snapshot(world);
+  for (const [view, html] of [['game', renderToString(createElement(GameView, { send: () => true }))], ['dashboard', renderToString(createElement(Dashboard, { send: () => true }))]] as const) {
+    const page = html.replaceAll('<!-- -->', '');
+    for (const finding of grouped) {
+      assert.ok(page.includes(`>${finding.title}</h2>`), `${view}: full title "${finding.title}"`);
+      assert.ok(page.includes(finding.explanation.replaceAll("'", '&#x27;')), `${view}: full explanation for ${finding.id}`);
+      for (const fix of finding.fixes) assert.ok(page.includes(`>${fix.label}</button>`), `${view}: fix "${fix.label}"`);
+    }
+    assert.equal(page.split('class="card finding"').length - 1, 3, `${view}: one card per group`);
+    assert.ok(page.includes(`placeholder="${OPEN_FINDINGS_PLACEHOLDER}"`), `${view}: open-findings placeholder`);
+  }
+  assert.equal(OPEN_FINDINGS_PLACEHOLDER, 'Fix the red spots before launching, or ask for a change');
+});
