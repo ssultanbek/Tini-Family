@@ -354,7 +354,9 @@ export function cutWords(s: string, max: number): string {
   return t.slice(0, max).replace(/\s+\S*$/, "").replace(/[\s,;:–—-]+$/, "") + "…";
 }
 
-const stripMarkdown = (s: string) => s.replace(/```[\s\S]*?```/g, " ").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/[#*_>|]+/g, " ").replace(/\s+/g, " ").trim();
+// Headings (#), bold/italics, quotes, tables and inline-code ticks go; a color's "#0b1220" stays.
+const stripMarkdown = (s: string) => s.replace(/```[\s\S]*?```/g, " ").replace(/^\s*#{1,6}\s+/gm, "").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "")
+  .replace(/`/g, "").replace(/\*\*|__|(?<![\w])[*_](?=\w)|(?<=\w)[*_](?![\w])/g, "").replace(/^\s*>\s?/gm, "").replace(/\s*\|\s*/g, " ").replace(/\s+/g, " ").trim();
 // hex colors, rgb()/rgba(), CSS units, backticks, braces/angle brackets, paths, file names, CSS custom properties, calls
 const CODEISH = /#[0-9a-f]{3,8}\b|\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{6}\b|\brgba?\s*\(|\b\d+(?:\.\d+)?(?:px|rem|em|vh|vw|ms)\b|`|[{}<>]|(?:^|[\s("'])[.~]?\/[\w.-]|\b[\w-]+\.(?:html?|css|js|mjs|json|md|jpe?g|png|svg|webp|gif|ts|txt|pdf)\b|(?:^|\s)--[a-z][\w-]*|\b\w+\(\)/i;
 
@@ -408,7 +410,7 @@ export function shortLine(text: string, max: number): string {
 /** The turn's result for the timeline: Claude's final message as plain text, up to `max` characters,
  *  cut at a sentence end when one is near, else at a word boundary. */
 export function summarize(result: string, max = SUMMARY_MAX): string {
-  const plain = stripMarkdown(result.replace(/\n\s*\n/g, "\n").split("\n").map((l) => l.trim().replace(/^(?:[-*+]|\d+[.)])\s+/, "")).filter(Boolean)
+  const plain = stripMarkdown(result.replace(/\n\s*\n/g, "\n").split("\n").map((l) => l.trim().replace(/^(?:[-*+]|\d+[.)])\s+/, "").replace(/^#{1,6}\s+/, "")).filter(Boolean)
     .map((l) => (/[.!?:]$/.test(l) ? l : `${l};`)).join(" ").replace(/;$/, "."));
   if (!plain) return "Done.";
   if (plain.length <= max) return plain;

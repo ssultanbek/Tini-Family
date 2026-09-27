@@ -53,6 +53,10 @@ const cases: [string, any, boolean][] = [
   ["Bash", { command: "sed -i '' 's#</div>#</div>\\n#g' contact.html" }, true],
   ["Bash", { command: "cat > a.html <<'EOF'\n<div class=\"x\">hi</div>\n</section></main>\nEOF" }, true],
   ["Bash", { command: "for f in *.html; do python3 -c \"import sys; t=open('$f').read(); print(t.count('<div'), t.count('</div>'))\"; done" }, true],
+  // sed flags are not paths (live run: a spark on "/g")
+  ["Bash", { command: "sed -i '' 's/--navy)/--navy-dark)/g' css/styles.css && grep -c 'navy-dark' css/styles.css" }, true],
+  ["Bash", { command: "perl -pi -e 's/old/new/gi' index.html" }, true],
+  ["Bash", { command: "ls /etc /var/root" }, false],
   // regex fragments are not paths (live run: a spark on "/(header")
   ["Bash", { command: `grep -c '</\\(header\\|nav\\)' index.html; python3 -c "import re; re.findall(r'</(header|nav)>', open('a.html').read())"` }, true],
   ["Bash", { command: "cat /etc/hosts /Users/x/.ssh/id_rsa" }, false],

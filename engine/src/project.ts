@@ -14,7 +14,14 @@ import type { Recorder } from "./recorder.ts";
 // ---------------------------------------------------------------------------
 const HOME = os.homedir();
 /** "/Users/maria/tini-projects/x" -> "~/tini-projects/x" in everything a person reads. */
-export const tilde = (s: string) => s.split(`${HOME}/`).join("~/").split(HOME).join("~");
+export const tilde = (s: string) => redact(s.split(`${HOME}/`).join("~/").split(HOME).join("~"));
+/** Key-shaped strings never reach the screen or a recording (even the demo's fake ones: GitHub push protection). */
+export const redact = (s: string) => s
+  .replace(/AIza[0-9A-Za-z_-]{20,}/g, "AIza…[redacted]")
+  .replace(/\bsk-(?:ant-)?[A-Za-z0-9_-]{20,}/g, "sk-…[redacted]")
+  .replace(/\bgh[pousr]_[A-Za-z0-9]{20,}/g, "gh…[redacted]")
+  .replace(/\bAKIA[0-9A-Z]{16}\b/g, "AKIA…[redacted]")
+  .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----|$)/g, "[private key redacted]");
 function tildeText(ev: Ev): Ev {
   switch (ev.type) {
     case "raw.log": return { ...ev, text: tilde(ev.text) };

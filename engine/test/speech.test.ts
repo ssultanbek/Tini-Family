@@ -51,8 +51,14 @@ ok("summary <= 400", sum.length <= 400, sum.length);
 ok("summary keeps list", /nav and footer link to Careers; JS filters by department;/.test(sum), sum);
 ok("summary ends cleanly", /[.!?…]$/.test(sum), sum);
 eq("summary short", summarize("All green.\n\nSite complete."), "All green. Site complete.");
+// live-run wart: "`--navy` ( 10233a)" -> keep the color's #, drop the ticks
+eq("summary color", summarize("Changed the header background from `--navy` (#10233a) to `--navy-dark` (#0a1826).\n\n## Notes\n**No** server started."), "Changed the header background from --navy (#10233a) to --navy-dark (#0a1826). Notes; No server started.");
+eq("summary snake_case kept", summarize("Updated site_config and main_nav."), "Updated site_config and main_nav.");
 // ~ instead of the home path
 eq("tilde", tilde(`The site is built at ${os.homedir()}/tini-projects/rivera`), "The site is built at ~/tini-projects/rivera");
 eq("tilde home", tilde(`cd ${os.homedir()}`), "cd ~");
-console.log(fail ? `${fail} failures` : "all speech + summary + tilde checks pass");
+// key-shaped strings are redacted before they're shown or recorded (built at runtime: never a literal key in git)
+const fake = "AIza" + "Y90HgePYnRxiOUtSlWIh8UBHr0cgIIYJufZ";
+eq("redact maps key", tilde(`ALLOW Write {"content":"const KEY = '${fake}';"}`), `ALLOW Write {"content":"const KEY = 'AIza…[redacted]';"}`);
+console.log(fail ? `${fail} failures` : "all speech + summary + tilde + redaction checks pass");
 process.exit(fail ? 1 : 0);

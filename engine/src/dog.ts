@@ -59,6 +59,7 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
     permissionMode: "default",
     permissionPrompts: "none",            // anything our hook doesn't explicitly allow is denied, never a hanging prompt
     settingSources: [],                   // ignore the laptop owner's ~/.claude and project settings
+    settings: { autoMemoryEnabled: false }, // no ~/.claude/projects/<cwd>/memory reads: outside the fence (a live run sparked on it)
     hooks: { PreToolUse: [{ hooks: [guard] }], PostToolUse: [{ hooks: [done] }] },
     sandbox: {
       enabled: true,
