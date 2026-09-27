@@ -69,6 +69,7 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 - Recording hygiene: Hub.emit redacts key-shaped strings (Google/Anthropic/GitHub/AWS keys, private-key blocks) in raw.log, speech, summaries and errors, so a key Claude writes never reaches the screen or a committed recording (GitHub push protection). Every saved recording: 0 key-shaped strings, gitleaks "no leaks found".
 - Dog options: `settings: { autoMemoryEnabled: false }` (SDK Settings): Claude Code no longer reads ~/.claude/projects/<cwd>/memory (it sparked in a live run).
 - Guard: sed/regex flags ("/g", "/gi") are not paths (live false positive "/g"); no real root folder is 1-2 letters. Guard 49+12.
+- Demo day: `scripts/demo.sh [speed] [recording]` builds game/, replays (default mock/recordings/demo-main.jsonl, else candidate-demo-2) through the engine on :4000, opens a Chrome app window (own profile), Ctrl+C stops all. Installs npm packages only when node_modules is missing or older than package-lock. Checked with candidate-demo-2: the page makes requests only to localhost:4000 (plus in-page data:/blob:), engine sockets are 127.0.0.1 only.
 
 ## Open issues
 
