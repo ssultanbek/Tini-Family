@@ -94,7 +94,7 @@ export type EngineEvent = Base & (
   | { type: "tina.inspect.finished"; scope: "folder" | "final"; redCount: number }
   | { type: "launch.unlocked" }
   | { type: "launch.locked"; reason: string }                          // new work since the last inspection; Tina must re-check before anything leaves
-  | { type: "launch.done"; url?: string }
+  | { type: "launch.done"; url?: string; note?: string }             // v1.4 note: e.g. a replay whose site folder isn't on this machine
   | { type: "report.ready"; report: AccessReport }
   | { type: "raw.log"; channel: "hook" | "config" | "sdk" | "scan" | "ai" | "engine"; text: string } // raw-view toggle only; "ai" = AI ladder, "engine" = ignored commands etc. (v1.2)
   | { type: "prompt.suggested"; text: string }                        // v1.2: replay pre-fills the prompt bar; the presenter just presses Send
