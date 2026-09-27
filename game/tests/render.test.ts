@@ -186,3 +186,16 @@ test('no chat window: the game page shows a Turns timeline (Request / Result), n
   assert.ok(!/>Claude</.test(html), 'no "Claude" chat label');
   assert.ok(html.includes('>Next request</label>'));
 });
+
+test('no "Live" label anywhere until the engine says the run is live (v1.4 mode)', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { Dashboard } = await vite.ssrLoadModule('/src/ui/Dashboard.tsx') as typeof import('../src/ui/Dashboard.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 960 });
+  for (const html of [renderToString(createElement(GameView, { send: () => true })), renderToString(createElement(Dashboard, { send: () => true }))]) {
+    assert.ok(!/\bLive\b/.test(html.replaceAll('<!-- -->', '')), 'no "Live" text');
+    assert.ok(html.includes('Connected'));
+  }
+});

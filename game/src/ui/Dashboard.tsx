@@ -76,7 +76,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
   const launch: GameCommand = { type: 'launch' };
 
   return <MotionConfig reducedMotion="user"><div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
-    <header className="topbar titlebar"><div className="brand"><span className="brand-mark" aria-hidden="true">▦</span><div><h1>Tini Family</h1><p className="tagline">Your agent gets the keys to the room, not the house.</p></div><span className="brand-view">{yard ? 'The yard' : 'Live dashboard'} · ShellHacks 2026</span></div>
+    <header className="topbar titlebar"><div className="brand"><span className="brand-mark" aria-hidden="true">▦</span><div><h1>Tini Family</h1><p className="tagline">Your agent gets the keys to the room, not the house.</p></div><span className="brand-view">{yard ? 'The yard' : 'Dashboard'} · ShellHacks 2026</span></div>
       <div className="header-actions"><button className={`raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw view</button><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{connected ? synced ? '● Connected' : '● Connected · syncing' : '○ Disconnected'}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
     </header>
     {!available && <p className="notice" role="status">{state.connectionError || (connected ? 'Waiting for the engine snapshot…' : 'Waiting for the engine at localhost:4000…')}</p>}

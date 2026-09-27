@@ -93,7 +93,7 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
       <span className="gv-logo" aria-hidden="true" />
       <div className="gv-brand"><h1>Tini Family</h1><p>Your agent gets the keys to the room, not the house.</p></div>
       <div className="gv-actions">
-        <span role="status" className={`gv-pill ${connected ? 'ok' : 'bad'}`}>{connected ? synced ? '● Live' : '● Syncing' : '○ Offline'}</span>
+        <span role="status" className={`gv-pill ${connected ? 'ok' : 'bad'}`}>{connected ? synced ? '● Connected' : '● Syncing' : '○ Offline'}</span>
         <button className={`gv-btn ghost raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw</button>
         <a className="gv-link" href="/?view=dashboard">Dashboard</a>
         <button className="gv-btn ghost" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Resetting…' : 'Reset'}</button>

@@ -70,6 +70,6 @@ export function Yard() {
       } as CSSProperties}><strong>{bubble.actor === 'tini' ? 'Tini' : bubble.actor === 'tina' ? 'Tina' : 'Dog'}</strong><p>{bubble.text}</p></div>)}</div>
     </div>}
     <p className="yard-help">○ Planned &nbsp; ▤ Built &nbsp; ◉ Inspecting &nbsp; ⚠ Needs fix &nbsp; ✓ Green</p>
-    <p className="yard-note">Live engine state · Art: Kenney Tiny Town &amp; Tiny Dungeon (CC0)</p>
+    <p className="yard-note">Engine state · Art: Kenney Tiny Town &amp; Tiny Dungeon (CC0)</p>
   </section>;
 }
