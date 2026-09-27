@@ -364,3 +364,13 @@ body:has(.app) {
 /* Wrapped labels keep breathing room; the prompt box fits its longest placeholder at the wider font. */
 .gv .gv-btn, .gv .card button:not(.option):not(.link-button):not(.chip) { padding-block: 8px; line-height: var(--gv-lh-snug); }
 .gv .prompt-row textarea { height: auto; min-height: calc(3 * var(--gv-lh-base) * 1em + 2 * var(--gv-s3) + 2px); }
+
+/* Living status pills: green breathes a calm glow, red pulses (a touch faster). Colour always comes with ✓ / ⚠ text. */
+@keyframes gv-glow-good { 0%, 100% { box-shadow: 0 0 0 0 rgb(35 130 74 / 0); } 50% { box-shadow: 0 0 0 4px rgb(35 130 74 / .18), 0 0 14px 2px rgb(35 130 74 / .35); } }
+@keyframes gv-glow-bad { 0%, 100% { box-shadow: 0 0 0 0 rgb(200 50 47 / 0); } 50% { box-shadow: 0 0 0 4px rgb(200 50 47 / .2), 0 0 16px 3px rgb(200 50 47 / .45); } }
+.gv .gv-status.green, .gv .gv-chip.ok { animation: gv-glow-good 2.4s ease-in-out infinite; }
+.gv .gv-status.red, .gv .gv-chip.bad { animation: gv-glow-bad 1.4s ease-in-out infinite; }
+.gv .gv-fence li:nth-child(2) .gv-status { animation-delay: .2s; } .gv .gv-fence li:nth-child(3) .gv-status { animation-delay: .4s; }
+.gv .gv-fence li:nth-child(4) .gv-status { animation-delay: .6s; } .gv .gv-fence li:nth-child(5) .gv-status { animation-delay: .8s; }
+.gv .gv-fence li:nth-child(6) .gv-status { animation-delay: 1s; } .gv .gv-fence li:nth-child(7) .gv-status { animation-delay: 1.2s; }
+@media (prefers-reduced-motion: reduce) { .gv .gv-status, .gv .gv-chip, .gv .working-dot { animation: none !important; } }

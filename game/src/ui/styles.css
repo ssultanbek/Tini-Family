@@ -358,3 +358,6 @@ body:has(.app:not(.game-app)) .app:not(.game-app) {
 .app:not(.game-app) .chip { background: var(--gv-card); color: var(--gv-accent-text); border: 1px solid var(--gv-line); border-radius: var(--gv-r-pill); box-shadow: none; }
 .app:not(.game-app) .chip:hover:not(:disabled) { background: var(--gv-accent-soft); border-color: var(--gv-accent-line); }
 .app:not(.game-app) .working-dot { background: var(--gv-warn-solid); }
+.app:not(.game-app) .status.green { animation: gv-glow-good 2.4s ease-in-out infinite; }
+.app:not(.game-app) .status.red { animation: gv-glow-bad 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .app:not(.game-app) .status { animation: none !important; } }
