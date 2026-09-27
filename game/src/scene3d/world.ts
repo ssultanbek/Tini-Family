@@ -97,3 +97,19 @@ export function route(a: XZ, b: XZ, margin = 1): XZ[] {
   }
   return best.length ? best : [b];
 }
+
+/** How far the project house is built for a brick count (pure; every brick moves it forward, capped at complete). */
+export function houseStage(bricks: number) {
+  const n = Math.max(0, Math.floor(bricks)), H = D.house;
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  return {
+    courses: Math.min(H.courses, n),                                 // wall courses laid (1 per brick)
+    door: n > H.courses,                                             // brick 9
+    windows: n > H.courses + 1,                                      // brick 10
+    roof: clamp((n - H.courses - 2) / H.roofBricks),                 // bricks 11..18
+    chimney: n >= H.courses + 2 + H.roofBricks + 1,                  // brick 19
+    flowers: n >= H.courses + 2 + H.roofBricks + 3,                  // brick 21
+    lamp: n >= H.courses + 2 + H.roofBricks + 4,                     // brick 22
+    lit: n >= H.courses + 2 + H.roofBricks + 6,                      // brick 24: the house is complete
+  };
+}

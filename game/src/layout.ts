@@ -46,7 +46,8 @@ export const diorama = {
   center: { x: 410, y: 440 },         // yard-pixel point placed at the world origin (Mac strip included)
   block: { minX: -320, maxX: 1115, minY: 10, maxY: 870, radius: 0.9, grass: 0.5, soil: 2.6, stone: 2.2, lip: 0.35 },
   fence: { height: 1.1, post: 0.24, rail: 0.1, railHeights: [0.45, 0.85], posts: 7 },
-  house: { columns: 4, rows: 3, maxLayers: 8, brick: [1.2, 0.42, 1.18] as [number, number, number], gap: 0.1, slab: 0.2 },
+  house: { courses: 8, course: 0.3, wall: 0.28, roofBricks: 8, roofRise: 1.5, overhang: 0.35, doorWidth: 1.0, doorHeight: 1.75,
+    columns: 4, rows: 3, maxLayers: 8, brick: [1.2, 0.42, 1.18] as [number, number, number], gap: 0.1, slab: 0.2 },
   mac: { height: 3.4, roof: 1.6, doorWidth: 1.9, doorHeight: 1.9 },
   sign: { height: 1.6, outward: 1.25, scale: 17, plaque: 14, text: 10, post: 1.85, board: [2.9, 0.95] as [number, number], boardY: 1.35 },  // label sizes are drei Html distanceFactor   // signs sit on their own fence, nudged to its outer side so neighbours don't overlap
   // Three-quarter view from the front-right, far enough back that the whole floating block (and its layered sides) is in frame.

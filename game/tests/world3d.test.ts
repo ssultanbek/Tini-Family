@@ -73,3 +73,17 @@ test('sign labels fit their plank: one big line, or two balanced lines for long 
     assert.ok(Math.max(...lines.map(l => l.length)) * size * 0.56 <= 141 + 1, `${label} fits the width`);
   }
 });
+
+test('the project house grows in stages: walls, door and windows, roof, then details', async () => {
+  const { houseStage } = await import('../src/scene3d/world.ts');
+  assert.deepEqual(houseStage(0), { courses: 0, door: false, windows: false, roof: 0, chimney: false, flowers: false, lamp: false, lit: false });
+  assert.equal(houseStage(5).courses, 5);
+  assert.ok(houseStage(9).door && !houseStage(9).windows);
+  assert.ok(houseStage(10).windows && houseStage(10).roof === 0);
+  assert.equal(houseStage(14).roof, 0.5);
+  assert.equal(houseStage(18).roof, 1);
+  assert.ok(houseStage(19).chimney && !houseStage(19).lit);
+  assert.ok(houseStage(24).lit && houseStage(500).lit);
+  let last = -1;
+  for (let n = 0; n <= 30; n++) { const s = houseStage(n); const score = s.courses + +s.door + +s.windows + s.roof * 8 + +s.chimney + +s.flowers + +s.lamp + +s.lit; assert.ok(score >= last, `never shrinks at ${n}`); last = score; }
+});

@@ -80,7 +80,7 @@ export default function Yard3D() {
   const c = D.camera;
   return <section className="yard-view yard3d" aria-label="The yard in 3D">
     <div className="yard-caption yard3d-caption"><strong>The yard</strong></div>
-    <div className="yard3d-stage" onDoubleClick={() => window.dispatchEvent(new Event('tini:camera-reset'))} title="Drag to turn the island · scroll to zoom · double-click to reset">
+    <div className="yard3d-stage" onDoubleClick={() => window.dispatchEvent(new Event('tini:camera-reset'))} >
       <Canvas shadows="soft" flat dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         camera={{ position: c.position, fov: c.fov, near: 0.5, far: 200 }}>
         <Scene />
