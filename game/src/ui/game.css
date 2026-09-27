@@ -578,3 +578,12 @@ body:has(.gv) { background: #F6F6F7; }
 .gv .card, .gv .turn-card, .gv .gv-stats div { transition: transform var(--gv-t-med) var(--gv-ease), box-shadow var(--gv-t-med) var(--gv-ease), border-color var(--gv-t-med); }
 .gv .card:hover, .gv .gv-stats div:hover { transform: translateY(-1px); box-shadow: var(--gv-shadow-md); }
 @media (prefers-reduced-motion: reduce) { .gv .gv-panel, .gv .card, .gv .turn-card, .gv .gv-stats div { animation: none !important; transition: none !important; transform: none !important; } }
+
+/* Brand purple (the logo's gradient) on the header icon tiles, Send and Launch. */
+.gv { --gv-brand: linear-gradient(135deg, #7B5CE0, #5B3FC4); --gv-brand-hover: linear-gradient(135deg, #6D4DD6, #4E33B3); }
+.gv .gv-panel > h2::before { background: var(--gv-brand); }
+.gv .prompt-row button, .gv .gv-btn.big { background: var(--gv-brand); color: #fff; box-shadow: 0 6px 18px -6px rgb(91 63 196 / .55), inset 0 1px 0 rgb(255 255 255 / .15); }
+.gv .prompt-row button:hover:not(:disabled), .gv .gv-btn.big:hover:not(:disabled) { background: var(--gv-brand-hover); }
+.gv .prompt-row button:active:not(:disabled), .gv .gv-btn.big:active:not(:disabled) { background: #4A30AA; }
+/* Disabled / in-progress (Launching…, Launched, Send while empty): a soft lavender, still clearly purple. */
+.gv .prompt-row button:disabled, .gv .gv-btn.big:disabled { background: #E4DCFB; color: #6B55B8; box-shadow: none; }

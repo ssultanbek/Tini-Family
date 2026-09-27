@@ -157,7 +157,7 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
         <div className="gv-stats"><div><b>{world.bricks}</b><span>Bricks</span></div><div><b>{world.segments.length}</b><span>Fences</span></div><div><b>{world.blocked.length}</b><span>Blocked</span></div></div>
 
         <section className="gv-launch" aria-label="Launch">
-          <button className="gv-btn big" disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? '✓ Launched' : pending.includes('launch') ? 'Launching…' : world.launchUnlocked ? 'Launch' : '🔒 Launch'}</button>
+          <button className="gv-btn big" disabled={!world.launchUnlocked || world.phase === 'launched' || busy(launch)} onClick={() => send(launch)}>{world.phase === 'launched' ? '✓ Launched' : pending.includes('launch') ? 'Launching…' : 'Launch'}</button>
           {!world.launchUnlocked && lockReason && <p className="lock-reason" role="status">🔒 {lockReason}</p>}
           {world.report && !showReport && <button className="gv-btn ghost report-reopen" onClick={() => setReportMode('open')}>Show access report</button>}
         </section>
