@@ -34,7 +34,8 @@ export function Island() {
 
 /** The fenced yard, the sand path out of the gate, and the gate itself. */
 /** Gate build progress 0..1 (0 = not built yet), shared with the gate doors in Family3D. Decoration only. */
-export const gateBuild = { progress: 0 };
+export const gateBuild = { progress: 0, startAt: null as number | null };
+const clockNow = () => performance.now() / 1000;
 
 /** Grows `from`→`to` over a window of the gate build (0..1), eased with a small overshoot, so pieces pop in. */
 const pop = (p: number, from: number, to: number) => {
@@ -53,12 +54,15 @@ export function YardGround({ built, epoch }: { built: boolean; epoch: number }) 
   const seen = useRef({ epoch, built });
   const animate = seen.current.epoch === epoch && built && !seen.current.built;
   useEffect(() => { seen.current = { epoch, built }; });
-  const start = useRef<number | null>(null);
-  if (!built) { start.current = null; gateBuild.progress = 0; lastP.current = 0; }
-  else if (!animate && start.current === null) gateBuild.progress = 1;
-  useFrame(({ clock }) => {
-    if (built && animate && start.current === null) start.current = clock.elapsedTime;
-    if (built && start.current !== null) gateBuild.progress = Math.min(1, (clock.elapsedTime - start.current) / D.gate.buildSeconds);
+  // Live: the gate goes up while Tini hammers at it (he sets startAt on arrival); if he never gets there, it builds anyway.
+  const builtAt = useRef<number | null>(null);
+  if (!built) { builtAt.current = null; gateBuild.progress = 0; gateBuild.startAt = null; lastP.current = 0; }
+  else if (!animate && builtAt.current === null && gateBuild.startAt === null) { gateBuild.progress = 1; gateBuild.startAt = -1; }
+  useFrame(() => {
+    const t = clockNow();
+    if (built && builtAt.current === null) builtAt.current = t;
+    if (built && gateBuild.startAt === null && builtAt.current !== null && t - builtAt.current > D.gate.fallbackSeconds) gateBuild.startAt = t;
+    if (built && gateBuild.startAt !== null && gateBuild.startAt >= 0) gateBuild.progress = Math.min(1, (t - gateBuild.startAt) / D.gate.buildSeconds);
     const p = built ? gateBuild.progress : 0;
     posts.current.forEach((g, i) => g && g.scale.set(1, Math.max(0.001, pop(p, 0.02 + i * 0.08, 0.3 + i * 0.08)), 1));
     if (bar.current) { const k = pop(p, 0.35, 0.55); bar.current.visible = k > 0; bar.current.position.y = 1.5 + (1 - Math.min(1, k)) * 1.6; }

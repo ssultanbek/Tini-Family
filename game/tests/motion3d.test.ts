@@ -20,6 +20,10 @@ test('characters walk continuously and actions play, even when the queue hurries
   const queues = createAnimationQueues();
   queues.attach((event, options) => F.animate(bodies, event, options));
   const actions = new Set<string>();
+  const { yardLayout: L } = await vite.ssrLoadModule('/src/layout.ts') as typeof import('../src/layout.ts');
+  const { toWorld } = await vite.ssrLoadModule('/src/scene3d/world.ts') as typeof import('../src/scene3d/world.ts');
+  const gate = toWorld(L.gate.x, L.gate.y);
+  let gateNear = false;
   let maxJump = 0, walked = 0;
   const frame = 1 / 60;
   const tick = () => {
@@ -29,6 +33,7 @@ test('characters walk continuously and actions play, even when the queue hurries
       const jump = Math.hypot(b.pos.x - before.x, b.pos.z - before.z);
       maxJump = Math.max(maxJump, jump); walked += jump;
       if (b.action) actions.add(`${kind}:${b.action.name}`);
+      if (kind === 'tini' && b.action?.name === 'hammer' && Math.hypot(b.pos.x - gate.x, b.pos.z - gate.z) < 2.5) gateNear = true;
     }
   };
   // Feed the recording fast (bursts, like a replay at speed) while frames keep running in real time.
@@ -45,4 +50,7 @@ test('characters walk continuously and actions play, even when the queue hurries
   assert.ok(maxJump <= D.motion.maxSpeed * frame + 0.03, `no teleport: largest single-frame move ${maxJump.toFixed(3)}`);
   assert.ok(walked > 20, `characters actually walked (${walked.toFixed(1)} units)`);
   for (const a of ['tini:hammer', 'tina:scan']) assert.ok(actions.has(a), `${a} played (saw ${[...actions].join(', ')})`);
+  const { gateBuild } = await vite.ssrLoadModule('/src/scene3d/Island.tsx') as typeof import('../src/scene3d/Island.tsx');
+  assert.ok(gateBuild.startAt !== null && gateBuild.startAt > 0, 'Tini reached the gate and started building it');
+  assert.ok(gateNear, 'Tini stood at the gate while building');
 });

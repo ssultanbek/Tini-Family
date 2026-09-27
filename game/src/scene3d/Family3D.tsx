@@ -96,6 +96,22 @@ function act(body: Body, name: string, seconds: number, options: AnimationOption
   return settle(body, options, duration * 1000);
 }
 
+/** Tini walks to the gate and hammers while it goes up (~3.5s). Only a reset/snapshot ('clear') cuts it short:
+ *  the queue's catch-up abort is ignored here so the build is always seen; later Tini events hurry to catch up. */
+async function buildGate(b: Body, options: AnimationOptions) {
+  const gate = w({ x: L.gate.x, y: L.gate.y - D.gate.workFrom });
+  await walk(b, gate, { ...options, signal: new AbortController().signal, speed: 'normal' });
+  if (options.signal.reason === 'clear') return;
+  b.face = Math.PI; // face the gate
+  gateBuild.startAt = now();
+  const seconds = D.gate.buildSeconds;
+  b.action = { name: 'hammer', start: now(), duration: seconds, data: Math.round(seconds * 2) };
+  await new Promise<void>(resolve => {
+    const timer = setTimeout(resolve, seconds * 1000);
+    options.signal.addEventListener('abort', () => { if (options.signal.reason === 'clear') { clearTimeout(timer); resolve(); } });
+  });
+}
+
 function speechSeconds(text: string) {
   return Math.min(M.speechMax, Math.max(M.speechMin, M.speechBase + text.length * M.speechPerChar));
 }
@@ -114,6 +130,7 @@ export async function animate(bodies: Record<AnimatedActor, Body>, event: Engine
     }
     // Tini ------------------------------------------------------------------------------------
     case 'fence.segment.built':
+      if (gateBuild.startAt === null && gateBuild.progress < 1) await buildGate(b, options);
       await walk(b, atSegment(event.segment.id), options);
       await act(b, 'hammer', M.hammer, options);
       spark('dust', atSegment(event.segment.id, F.bumpApproach), 0.3, 0.8);
@@ -198,7 +215,7 @@ function usePose(body: Body, kind: AnimatedActor, parts: React.MutableRefObject<
     const a = body.action, k = a ? Math.min(1, (t - a.start) / a.duration) : 0;
     if (a && k >= 1) body.action = undefined;
     if (a && k < 1) {
-      if (a.name === 'hammer' && p.armR) p.armR.rotation.x = -1.2 - Math.abs(Math.sin(k * Math.PI * 3)) * 1.4;
+      if (a.name === 'hammer' && p.armR) p.armR.rotation.x = -1.2 - Math.abs(Math.sin(k * Math.PI * (a.data ?? 3))) * 1.4;
       if (a.name === 'lift' && p.armL && p.armR) { p.armL.rotation.x = p.armR.rotation.x = -1.2 * k; }
       if (a.name === 'setdown' && p.armL && p.armR) { p.armL.rotation.x = p.armR.rotation.x = -1.2 * (1 - k); p.body.rotation.x = Math.sin(k * Math.PI) * 0.3; }
       if (a.name === 'scan' && p.armR) { p.armR.rotation.x = -1.6; p.armR.rotation.z = Math.sin(k * Math.PI * 4) * 0.35; if (p.head) p.head.rotation.y = Math.sin(k * Math.PI * 4) * 0.4; }
@@ -383,19 +400,14 @@ function EffectView({ e }: { e: Effect }) {
   </group>;
 }
 
-/** Two wooden gate doors hinged on the gate posts. They swing open while anyone is near, and close after. */
-function GateDoors({ bodies }: { bodies: Record<AnimatedActor, Body> }) {
-  const left = useRef<Group>(null), right = useRef<Group>(null), open = useRef(0);
+/** Two wooden gate doors hinged on the gate posts. The gate stays closed; the doors appear as Tini finishes it. */
+function GateDoors() {
+  const left = useRef<Group>(null), right = useRef<Group>(null);
   const g = w({ x: L.gate.x, y: L.gate.y }), half = (L.gate.width * D.unit) / 2;
-  useFrame((_, dt) => {
-    const near = Object.values(bodies).some(b => Math.hypot(b.pos.x - g.x, b.pos.z - g.z) < D.gate.openRadius);
-    open.current += ((near ? 1 : 0) - open.current) * Math.min(1, dt * (near ? 6 : 3));
-    const angle = open.current * D.gate.swing;
-    // The doors swing in last while the gate is being built (and stay hidden before fencing starts).
+  useFrame(() => {
+    // Hidden before fencing starts; the doors go in during the last part of the build.
     const hang = Math.min(1, Math.max(0, (gateBuild.progress - 0.82) / 0.18));
-    for (const g of [left.current, right.current]) if (g) { g.visible = hang > 0; g.scale.set(1, Math.max(0.001, hang), 1); }
-    if (left.current) left.current.rotation.y = -angle;
-    if (right.current) right.current.rotation.y = angle;
+    for (const door of [left.current, right.current]) if (door) { door.visible = hang > 0; door.scale.set(1, Math.max(0.001, hang), 1); }
   });
   const door = (side: -1 | 1, ref: React.RefObject<Group | null>) => <group ref={ref} position={[g.x + side * half, 0, g.z]}>
     {/* The door extends from its hinge toward the gate's middle: two rails and three slats. */}
@@ -434,7 +446,7 @@ export function Family3D() {
       </group>
     </Person>
     <Dog body={bodies.dog} world={world} />
-    <GateDoors bodies={bodies} />
+    <GateDoors />
     <Effects />
   </>;
 }
