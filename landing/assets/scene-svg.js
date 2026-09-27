@@ -194,8 +194,8 @@
     items.push({ y: 234, svg: house(st) });
     items = items.concat(fence(st));
 
-    var dogX = 424, dogY = 262;
-    items.push({ y: dogY, svg: character("ch-dog", dogX, dogY, 78, 60) + (st.dogBrick ? '<rect x="' + (dogX + 26) + '" y="' + (dogY - 44) + '" width="16" height="9" rx="2" fill="' + C.brick2 + '" stroke="' + C.mortar + '"/>' : "") });
+    var agX = 424, agY = 266;
+    items.push({ y: agY, svg: character("ch-agent", agX, agY, 48, 72) + (st.agentBrick ? '<rect x="' + (agX - 10) + '" y="' + (agY - 36) + '" width="20" height="11" rx="2" fill="' + C.brick2 + '" stroke="' + C.mortar + '"/>' : "") });
 
     items.push({ y: 342, svg: character("ch-tini", 150, 346, 62, 93) });
     var tx = st.tina === "inspect" ? 470 : 548, ty = st.tina === "inspect" ? 352 : 312;
@@ -222,7 +222,7 @@
   var GREEN = ["green", "green", "green", "green", "green"];
   var RED4 = ["wood", "wood", "wood", "wood", "red"];
   function S(o) {
-    var base = { fence: "built", risen: 5, seg: ALL, bricks: 0, roof: false, plane: null, tina: "home", sneeze: false, dogBrick: false, flag: false };
+    var base = { fence: "built", risen: 5, seg: ALL, bricks: 0, roof: false, plane: null, tina: "home", sneeze: false, agentBrick: false, flag: false };
     for (var k in o) base[k] = o[k];
     return base;
   }
@@ -235,12 +235,12 @@
     [S({ risen: 3 }), ["wood", "Tini is building the fence"], 450],
     [S({ risen: 4 }), ["wood", "Tini is building the fence"], 450],
     [S({ risen: 5 }), ["wood", "The fence is up"], 900],
-    [S({ bricks: 5, dogBrick: true }), ["sky", "The dog is building"], 650],
-    [S({ bricks: 10, dogBrick: true }), ["sky", "The dog is building"], 650],
-    [S({ bricks: 15, dogBrick: true, plane: "fly" }), ["sky", "The dog is building"], 900],
+    [S({ bricks: 5, agentBrick: true }), ["sky", "The Agent is building"], 650],
+    [S({ bricks: 10, agentBrick: true }), ["sky", "The Agent is building"], 650],
+    [S({ bricks: 15, agentBrick: true, plane: "fly" }), ["sky", "The Agent is building"], 900],
     [S({ bricks: 15, plane: "spark" }), ["bad", "Blocked: ~/.ssh/id_rsa"], 2000],
-    [S({ bricks: 20, dogBrick: true }), ["sky", "The dog is building"], 650],
-    [S({ bricks: 25, dogBrick: true }), ["sky", "The dog is building"], 650],
+    [S({ bricks: 20, agentBrick: true }), ["sky", "The Agent is building"], 650],
+    [S({ bricks: 25, agentBrick: true }), ["sky", "The Agent is building"], 650],
     [S({ bricks: 30, roof: true }), ["sky", "The house is done"], 1000],
     [S({ bricks: 30, roof: true, tina: "inspect" }), ["warn", "Tina is inspecting"], 1400],
     [S({ bricks: 30, roof: true, tina: "inspect", seg: RED4, sneeze: true }), ["bad", "Map key visible in the code"], 2000],
@@ -252,9 +252,9 @@
     1: [[S({ fence: "none" }), ["plan", "Waiting for your prompt"], 0]],
     2: [[S({ fence: "plan" }), ["plan", "Tini’s plan: 5 fence segments"], 0]],
     3: [
-      [S({ bricks: 15, dogBrick: true, plane: "fly" }), ["sky", "The dog is building"], 1200],
+      [S({ bricks: 15, agentBrick: true, plane: "fly" }), ["sky", "The Agent is building"], 1200],
       [S({ bricks: 15, plane: "spark" }), ["bad", "Blocked: ~/.ssh/id_rsa"], 2600],
-      [S({ bricks: 20, dogBrick: true }), ["sky", "The dog is building"], 1400]
+      [S({ bricks: 20, agentBrick: true }), ["sky", "The Agent is building"], 1400]
     ],
     4: [
       [S({ bricks: 30, roof: true, tina: "inspect" }), ["warn", "Tina is inspecting"], 1300],

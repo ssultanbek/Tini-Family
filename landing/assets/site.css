@@ -306,7 +306,7 @@ img, svg { display: block; max-width: 100%; }
 .stage-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .stage-legend b { color: var(--gv-ink); font-weight: var(--gv-fw-bold); }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.dot.wood { background: #B97A45; } .dot.cream { background: #EAD5B2; box-shadow: inset 0 0 0 1px #C9AE85; } .dot.sky { background: #7FB4DB; }
+.dot.wood { background: #B97A45; } .dot.agent { background: #3F6FD8; } .dot.sky { background: #7FB4DB; }
 
 /* ---------- Problem ---------- */
 .problem .illo { background: var(--gv-sunken); border: 1px solid var(--gv-line); border-radius: var(--gv-r-sm); margin-bottom: 20px; padding: 10px; }
@@ -319,7 +319,6 @@ img, svg { display: block; max-width: 100%; }
 .portrait.wood { background: var(--gv-wood-bg); }
 .portrait.sky { background: var(--gv-sky-bg); }
 .portrait.grass { background: #E6F2DC; }
-.portrait.grass svg { width: 88%; height: auto; }
 .person h3 { font-size: var(--gv-fs-lg); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .person .role { font-size: var(--gv-fs-sm); font-weight: var(--gv-fw-semi); color: var(--gv-muted); letter-spacing: 0; }
 .js .person .portrait svg { transition: transform 400ms var(--gv-ease); }
@@ -448,7 +447,7 @@ img, svg { display: block; max-width: 100%; }
 /* ---------- Footer ---------- */
 .footer { padding: 56px 0 64px; border-top: 1px solid var(--gv-line); background: rgb(255 255 255 / .55); }
 .footer-in { display: grid; gap: 8px; justify-items: center; text-align: center; }
-.footer-dog { width: 84px; margin-bottom: 6px; }
+.footer-agent { width: 46px; margin-bottom: 6px; }
 .footer .muted { font-size: var(--gv-fs-sm); max-width: 44em; }
 
 /* ---------- Problem: stats, reach illustration, people, measure ---------- */
@@ -596,13 +595,13 @@ img, svg { display: block; max-width: 100%; }
 @keyframes ans-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .video-ph .play { transition: transform 260ms var(--gv-ease), box-shadow 260ms var(--gv-ease); }
 .video-ph:hover .play { transform: scale(1.06); box-shadow: var(--gv-shadow-lg); }
-.footer-dog svg { transition: transform 400ms var(--gv-ease); transform-origin: 50% 90%; }
-.footer-dog:hover svg { transform: rotate(-6deg) translateY(-2px); }
-.footer-dog { pointer-events: auto; }
+.footer-agent svg { transition: transform 400ms var(--gv-ease); transform-origin: 50% 90%; }
+.footer-agent:hover svg { transform: rotate(-6deg) translateY(-2px); }
+.footer-agent { pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) {
   .lrow.is-on { transform: none; }
   .card.problem:hover, .card.layer:hover, .card.priv:hover, .card.person:hover { transform: none; }
-  .card.problem:hover .illo svg, .brand:hover .logo, .video-ph:hover .play, .footer-dog:hover svg { transform: none; }
+  .card.problem:hover .illo svg, .brand:hover .logo, .video-ph:hover .play, .footer-agent:hover svg { transform: none; }
 }
 
 /* ---------- Reveal on scroll (only when JS and motion are available) ---------- */

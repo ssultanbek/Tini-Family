@@ -1,5 +1,5 @@
 /* The yard in 3D. Everything here is built from simple shapes in code: the island, the fence,
-   the brick house, Tini, Tina, the dog, the paper plane and the sparks.
+   the brick house, Tini, Tina, the Agent, the paper plane and the sparks.
    It plugs into site.js as a renderer: set(state) gives it a target state (the same one the SVG
    uses) and the scene animates toward it. Falls back to the SVG when WebGL is missing or the
    visitor prefers reduced motion. */
@@ -22,7 +22,7 @@ const COL = {
   plan: 0x9A97A6, brick: 0xEBDCC4, brick2: 0xE0CCAE, roof: 0x9C6A43, roofDark: 0x7E5234, door: 0x6B3F1F,
   glass: 0xB3D5EC, white: 0xFFFFFF, ink: 0x1B1A24, navy: 0x3E3C58, skin: 0xF2CAA8, blush: 0xEFA394,
   cream: 0xF4EEE4, vest: 0xB97A45, cap: 0x2E6590, coat: 0x7FB4DB, hair: 0x4A2E1E, boot: 0x5A3A22,
-  dog: 0xEAD5B2, dogLight: 0xF6EBDA, dogEar: 0x8A5A36, collar: 0x1D5A85, tag: 0xDDC3A7, metal: 0x6E6A7E,
+  fur: 0x3F6FD8, furDark: 0x3560C2, face: 0x6F95EA, eye: 0x0F1733, mark: 0xF1E6CC, collar: 0x1D5A85, tag: 0xDDC3A7, metal: 0x6E6A7E,
   tree: 0x8CC47A, tree2: 0x76B566, trunk: 0x8A5A36, spark: 0xD39A00, path: 0xE9DCC6, stone: 0xD8D2C4,
 };
 
@@ -187,42 +187,54 @@ function makeTina() {
   return { g, legs, armL, armR, head: headG, glass: glassPivot };
 }
 
-function makeDog() {
+/* Gives a smooth geometry a soft, fuzzy surface (small bumps along the normals). */
+function fuzz(geo, amount) {
+  const p = geo.attributes.position, n = geo.attributes.normal;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const k = (Math.sin(x * 41.3 + y * 17.9) * Math.cos(z * 33.7 - y * 12.1) + Math.sin((x + z) * 57.1 + y * 23.3)) * 0.5;
+    p.setXYZ(i, x + n.getX(i) * k * amount, y + n.getY(i) * k * amount, z + n.getZ(i) * k * amount);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* THE AGENT (Claude Code): our own fuzzy character, same as in the app. Soft blue capsule body,
+   face window, stubby arms and legs, a terminal-prompt mark on the chest. */
+function makeAgent() {
   const g = new THREE.Group();
-  const body = new THREE.Group(); g.add(body);
-  const torso = mesh(new THREE.CapsuleGeometry(0.27, 0.45, 6, 14), mat(COL.dog));
-  torso.rotation.x = Math.PI / 2; torso.position.y = 0.5; body.add(torso);
-  const belly = mesh(new THREE.CapsuleGeometry(0.2, 0.35, 4, 10), mat(COL.dogLight), false);
-  belly.rotation.x = Math.PI / 2; belly.position.set(0, 0.4, 0.02); body.add(belly);
-  const patch = mesh(new THREE.SphereGeometry(0.2, 14, 10), mat(0x9C6A43), false);
-  patch.scale.set(1.05, 0.45, 1.3); patch.position.set(0.04, 0.7, -0.12); body.add(patch);
+  const rig = new THREE.Group(); rig.scale.setScalar(1.15); g.add(rig);
+  const fur = mat(COL.fur, { roughness: 1 }), furDark = mat(COL.furDark, { roughness: 1 });
   const legs = [];
-  for (const [x, z] of [[-0.15, 0.25], [0.15, 0.25], [-0.15, -0.25], [0.15, -0.25]]) {
-    const leg = limb(0.075, 0.18, COL.dog, new THREE.Vector3(x, 0.4, z));
-    const paw = mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(COL.dogLight)); paw.scale.set(1, 0.6, 1.25); paw.position.set(0, -0.33, 0.03);
-    leg.add(paw);
-    g.add(leg); legs.push(leg);
+  for (const x of [-0.17, 0.17]) {
+    const leg = new THREE.Group(); leg.position.set(x, 0.28, 0);
+    const m = mesh(fuzz(new THREE.CapsuleGeometry(0.11, 0.1, 4, 12), 0.012), furDark); m.position.y = -0.12; leg.add(m);
+    rig.add(leg); legs.push(leg);
   }
-  const headG = new THREE.Group(); headG.position.set(0, 0.84, 0.44); body.add(headG);
-  headG.add(mesh(new THREE.SphereGeometry(0.27, 20, 16), mat(COL.dog)));
-  const snout = mesh(new THREE.SphereGeometry(0.16, 16, 12), mat(COL.dogLight)); snout.scale.set(1.05, 0.8, 1.05); snout.position.set(0, -0.07, 0.22); headG.add(snout);
-  const nose = mesh(new THREE.SphereGeometry(0.06, 12, 10), mat(COL.ink, { roughness: 0.4 }), false); nose.scale.set(1.2, 0.9, 1); nose.position.set(0, -0.02, 0.37); headG.add(nose);
-  for (const s of [-1, 1]) {
-    const eye = mesh(new THREE.SphereGeometry(0.042, 10, 8), mat(COL.ink, { roughness: 0.3 }), false); eye.position.set(0.11 * s, 0.07, 0.22); headG.add(eye);
-    const glint = mesh(new THREE.SphereGeometry(0.013, 6, 5), mat(COL.white), false); glint.position.set(0.11 * s + 0.012, 0.085, 0.258); headG.add(glint);
+  const torso = mesh(fuzz(new THREE.CapsuleGeometry(0.36, 0.5, 10, 28), 0.018), fur);
+  torso.position.y = 0.72; torso.scale.z = 0.88; rig.add(torso);
+  const arms = [];
+  for (const x of [-0.4, 0.4]) {
+    const arm = new THREE.Group(); arm.position.set(x, 0.86, 0);
+    const m = mesh(fuzz(new THREE.CapsuleGeometry(0.1, 0.24, 4, 12), 0.012), furDark); m.position.y = -0.2; m.rotation.z = x < 0 ? -0.12 : 0.12; arm.add(m);
+    rig.add(arm); arms.push(arm);
   }
-  const ears = [];
-  for (const s of [-1, 1]) {
-    const pivot = new THREE.Group(); pivot.position.set(0.21 * s, 0.14, -0.02);
-    const ear = mesh(new THREE.SphereGeometry(0.1, 12, 10), mat(COL.dogEar)); ear.scale.set(0.55, 1.6, 1.05); ear.position.set(0.03 * s, -0.14, 0);
-    pivot.add(ear); pivot.rotation.z = 0.25 * s; headG.add(pivot); ears.push(pivot);
+  const head = new THREE.Group(); head.position.set(0, 1.02, 0.25); rig.add(head);
+  const win = mesh(new THREE.SphereGeometry(0.24, 24, 16), mat(COL.face, { roughness: 0.8 }), false); win.scale.set(1, 0.72, 0.4); head.add(win);
+  for (const x of [-0.08, 0.08]) {
+    const eye = mesh(new THREE.SphereGeometry(0.03, 12, 10), mat(COL.eye, { roughness: 0.35 }), false); eye.position.set(x, 0.02, 0.085); head.add(eye);
+    const glint = mesh(new THREE.SphereGeometry(0.009, 6, 5), mat(COL.white), false); glint.position.set(x + 0.01, 0.032, 0.11); head.add(glint);
   }
-  const collar = mesh(new THREE.TorusGeometry(0.19, 0.04, 8, 22), mat(COL.collar)); collar.position.set(0, 0.7, 0.32); collar.rotation.x = Math.PI / 2 - 0.5; body.add(collar);
-  const tag = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.02, 12), mat(COL.tag, { roughness: 0.4, metalness: 0.3 }), false); tag.rotation.x = Math.PI / 2 - 0.3; tag.position.set(0, 0.54, 0.47); body.add(tag);
-  const tail = new THREE.Group(); tail.position.set(0, 0.62, -0.46);
-  const tailM = mesh(new THREE.CapsuleGeometry(0.05, 0.24, 3, 8), mat(COL.dog)); tailM.position.y = 0.14; tail.add(tailM); tail.rotation.x = -0.7; body.add(tail);
-  const brick = mesh(new THREE.BoxGeometry(0.34, 0.16, 0.2), mat(COL.brick2)); brick.position.set(0, -0.16, 0.32); headG.add(brick);
-  return { g, body, legs, head: headG, ears, tail, brick };
+  const smile = mesh(new THREE.TorusGeometry(0.035, 0.009, 6, 14, Math.PI), mat(COL.eye), false);
+  smile.rotation.z = Math.PI; smile.position.set(0, -0.05, 0.09); head.add(smile);
+  const mark = new THREE.Group(); mark.position.set(0, 0.6, 0.325); rig.add(mark);
+  const cream = mat(COL.mark, { roughness: 0.7 });
+  const c1 = mesh(new THREE.BoxGeometry(0.1, 0.035, 0.02), cream, false); c1.position.set(-0.07, 0.03, 0); c1.rotation.z = -0.7;
+  const c2 = mesh(new THREE.BoxGeometry(0.1, 0.035, 0.02), cream, false); c2.position.set(-0.07, -0.03, 0); c2.rotation.z = 0.7;
+  const c3 = mesh(new THREE.BoxGeometry(0.12, 0.035, 0.02), cream, false); c3.position.set(0.07, -0.06, 0);
+  mark.add(c1, c2, c3);
+  const brick = mesh(new THREE.BoxGeometry(0.36, 0.17, 0.2), mat(COL.brick2)); brick.position.set(0, 0.62, 0.52); rig.add(brick);
+  return { g, body: rig, legs, arms, head, brick };
 }
 
 /* Speech bubble drawn on a canvas, used for Tina's sneeze. */
@@ -468,7 +480,7 @@ function buildWorld(scene) {
     roof.visible = false;
     scene.add(roof);
 
-    // the brick pile the dog carries from
+    // the brick pile the Agent carries from
     const pile = new THREE.Group();
     const pileGeo = new THREE.BoxGeometry(0.36, 0.17, 0.2);
     for (let i = 0; i < 7; i++) {
@@ -484,13 +496,13 @@ function buildWorld(scene) {
   }
 
   /* Characters */
-  W.tini = makeTini(); W.tina = makeTina(); W.dog = makeDog();
-  scene.add(W.tini.g, W.tina.g, W.dog.g);
-  W.tini.g.scale.setScalar(CH); W.tina.g.scale.setScalar(CH); W.dog.g.scale.setScalar(CH);
+  W.tini = makeTini(); W.tina = makeTina(); W.agent = makeAgent();
+  scene.add(W.tini.g, W.tina.g, W.agent.g);
+  W.tini.g.scale.setScalar(CH); W.tina.g.scale.setScalar(CH); W.agent.g.scale.setScalar(CH);
   W.tini.angle = -0.28; W.tini.g.position.copy(onRing(7.35, W.tini.angle));
   W.tina.angle = 1.3; W.tina.g.position.copy(onRing(7.45, W.tina.angle));
-  W.dog.g.position.set(2.4, 0, 1.6);
-  W.dog.leg = "toWall"; W.dog.dest = new THREE.Vector3(2.4, 0, 1.6); W.dog.slot = 0;
+  W.agent.g.position.set(2.4, 0, 1.6);
+  W.agent.leg = "toWall"; W.agent.dest = new THREE.Vector3(2.4, 0, 1.6); W.agent.slot = 0;
   W.bubble = makeBubble("Achoo!", "#A3262A", "#F3BDB7");
   W.bubble.visible = false;
   scene.add(W.bubble);
@@ -732,7 +744,7 @@ function create3D(artEl, kind) {
     const cp = H.cloth.geometry.attributes.position;
     for (let i = 0; i < cp.count; i++) { const x = cp.getX(i); cp.setZ(i, Math.sin(x * 7 - t * 5) * 0.05 * x); }
     cp.needsUpdate = true;
-    H.pile.visible = H.cur < total - 0.5 || target.dogBrick;
+    H.pile.visible = H.cur < total - 0.5 || target.agentBrick;
 
     // Tini: hammers while the fence goes up, near the gate
     {
@@ -787,16 +799,16 @@ function create3D(artEl, kind) {
       }
     }
 
-    // The dog: carries bricks from the pile to the wall while building, wags otherwise
+    // The Agent: carries bricks from the pile to the wall while building, sways otherwise
     {
-      const D = W.dog;
-      const building = H.cur < H.target - 0.5 || (target.dogBrick && H.cur < total - 0.5);
+      const D = W.agent;
+      const building = H.cur < H.target - 0.5 || (target.agentBrick && H.cur < total - 0.5);
       let dest;
       if (building) {
         if (D.leg === "toWall") {
           const s = H.slots[Math.min(total - 1, Math.floor(H.cur))];
           if (!D.wallPt || D.wallSlot !== D.slot) {
-            // deliver to the visible faces only (front or right), so the dog never walks through the house
+            // deliver to the visible faces only (front or right), so the Agent never walks through the house
             const onRight = s.face === "right" || s.face === "back";
             D.wallPt = onRight ? new THREE.Vector3(HOUSE.x + HOUSE.w / 2 + 0.55, 0, HOUSE.z + (Math.random() - 0.5) * 1.6)
                                : new THREE.Vector3(HOUSE.x + (Math.random() - 0.2) * 2.6, 0, HOUSE.z + HOUSE.d / 2 + 0.6);
@@ -808,7 +820,7 @@ function create3D(artEl, kind) {
       const dx = dest.x - D.g.position.x, dz = dest.z - D.g.position.z, dist = Math.hypot(dx, dz);
       const moving = dist > 0.06;
       if (moving) {
-        const sp = Math.min(dist, dt * 3.4);
+        const sp = Math.min(dist, dt * 3.0);
         D.g.position.x += (dx / dist) * sp; D.g.position.z += (dz / dist) * sp;
         faceTo(D.g, dx, dz, dt, 10);
       } else if (building) {
@@ -816,13 +828,18 @@ function create3D(artEl, kind) {
       } else {
         faceTo(D.g, 0.8, 1, dt, 3);
       }
-      walk(D, 16, t, moving);
-      D.body.position.y = moving ? Math.abs(Math.sin(t * 16)) * 0.05 : Math.sin(t * 2) * 0.01;
-      D.brick.visible = building && D.leg === "toWall";
-      D.tail.rotation.z = Math.sin(t * (building ? 14 : 9)) * 0.5;
-      D.ears.forEach((e, i) => { e.rotation.x = (moving ? Math.sin(t * 16 + i) * 0.25 : 0) + 0.05; });
-      D.head.rotation.x = damp(D.head.rotation.x, moving ? 0.05 : -0.08 + Math.sin(t * 1.7) * 0.05, 5, dt);
-      D.head.rotation.z = !moving && !building ? Math.sin(t * 0.9) * 0.14 : 0;
+      walk(D, 12, t, moving);
+      const carrying = building && D.leg === "toWall";
+      D.body.position.y = moving ? Math.abs(Math.sin(t * 12)) * 0.05 : Math.sin(t * 2) * 0.012;
+      D.body.rotation.z = moving ? Math.sin(t * 12) * 0.05 : Math.sin(t * 1.3) * 0.03;
+      D.brick.visible = carrying;
+      D.arms.forEach((a, i) => {
+        const swing = moving ? Math.sin(t * 12 + (i ? 0 : Math.PI)) * 0.5 : Math.sin(t * 1.6 + i) * 0.06;
+        a.rotation.x = damp(a.rotation.x, carrying ? -1.15 : swing, 12, dt);
+        a.rotation.z = damp(a.rotation.z, carrying ? (i ? 0.25 : -0.25) : 0, 10, dt);
+      });
+      D.head.rotation.x = damp(D.head.rotation.x, moving ? 0.04 : Math.sin(t * 1.7) * 0.04, 5, dt);
+      D.head.rotation.z = !moving && !building ? Math.sin(t * 0.9) * 0.08 : 0;
     }
 
     // Paper plane and sparks
