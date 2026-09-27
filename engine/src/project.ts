@@ -339,7 +339,10 @@ export class Project implements Driver {
     } catch (e) {
       if (e instanceof StaleError || gen !== this.gen) throw new StaleError();
       if (ctl.signal.aborted && this.stopRequested) summary = "Stopped by you";
-      else {
+      else if (e instanceof Error && e.name === "LostConnection") {
+        this.hub.emit({ actor: "system", type: "engine.error", message: e.message });   // exactly: "Lost connection to Claude. Switch to the recorded run."
+        summary = "Stopped: lost connection to Claude";
+      } else {
         this.hub.emit({ actor: "system", type: "engine.error", message: `Turn ${id} failed: ${msg(e)}` });
         summary = "Stopped: something went wrong";
       }

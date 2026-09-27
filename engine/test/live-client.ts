@@ -4,6 +4,8 @@
 //   npx tsx test/live-client.ts --save <file.json>       (against --mode live)
 //   npx tsx test/live-client.ts --replay --compare <file.json>   (against --mode replay)
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { io } from "socket.io-client";
 import { ENGINE_PORT, SOCKET, type EngineEvent, type GameCommand, type WorldState } from "../../shared/events.ts";
 import { reduce } from "../../shared/reducer.ts";
@@ -83,6 +85,29 @@ function narrate(e: EngineEvent, turns: number) {
   }
 }
 
+/** T2: the approved photos show up in the site's own files (not assets/). Falls back to T2's bricks if the workspace isn't on this machine. */
+function galleryCheck(): { ok: boolean; detail: string } {
+  const s = state!;
+  const wsLine = s.rawLog.map((l) => l.match(/^\[config\] workspace (\S+);/)?.[1]).find(Boolean);
+  const ws = wsLine ? wsLine.replace(/^~(?=\/|$)/, os.homedir()) : null;
+  const t2 = events.slice(events.findIndex((e) => e.type === "turn.started" && e.turnId === 2));
+  const seg = t2.find((e): e is Extract<EngineEvent, { type: "fence.segment.built" }> => e.type === "fence.segment.built")?.segment.id;
+  if (!ws || !seg || !fs.existsSync(path.join(ws, "assets", seg))) {
+    const touched = t2.some((e) => e.type === "dog.brick.placed" && (e.op === "write" || e.op === "edit") && /gallery|main\.js|\.html$/i.test(e.file));
+    return { ok: touched, detail: `workspace not on disk; T2 ${touched ? "edited" : "didn't edit"} site files` };
+  }
+  const photos = fs.readdirSync(path.join(ws, "assets", seg)).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
+  const site: string[] = [];
+  const walk = (d: string) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    const p = path.join(d, e.name); const rel = path.relative(ws, p);
+    if (e.name.startsWith(".") || rel === "assets" || rel.startsWith("assets/")) continue;
+    if (e.isDirectory()) walk(p); else if (/\.(html?|js|css|json)$/i.test(e.name)) site.push(fs.readFileSync(p, "utf8"));
+  } };
+  walk(ws);
+  const used = photos.filter((f) => site.some((t) => t.includes(f)));
+  return { ok: photos.length > 0 && used.length === photos.length, detail: `${used.length}/${photos.length} approved photos referenced by the site` };
+}
+
 function finish() {
   const s = state!;
   const blocked = events.filter((e): e is Extract<EngineEvent, { type: "fence.blocked" }> => e.type === "fence.blocked");
@@ -125,7 +150,7 @@ function finish() {
         return !!c && c.inspection.totalFiles === 1212 && n(/job|construction|project/i) === 12 && n(/personal/i) === 1199 && n(/licen/i) === 1 && n(/GPS/i) === 903
           && ev("escalation.resolved").some((r) => r.escalationId === c.escalationId && r.choice === "narrow");
       })()],
-    ["T2 gallery updated", inTurn(2, (e) => e.type === "dog.brick.placed" && (e.op === "write" || e.op === "edit") && /gallery/i.test(e.file))],
+    [`T2 gallery updated (${galleryCheck().detail})`, galleryCheck().ok],
     [`report shows narrowed + fixed lines (${s.report?.narrowed.length ?? 0} narrowed, ${s.report?.fixed.length ?? 0} fixed)`, (s.report?.narrowed.length ?? 0) >= 1 && (s.report?.fixed.length ?? 0) >= 2],
     ["turn 3 no card; relock -> re-inspect -> unlock", !inTurn(3, (e) => e.type === "escalation.opened") && inTurn(3, (e) => e.type === "launch.locked") && inTurn(3, (e) => e.type === "tina.inspect.finished") && inTurn(3, (e) => e.type === "launch.unlocked")],
     ["no Stop", !s.turns.some((t) => t.summary === "Stopped by you")],

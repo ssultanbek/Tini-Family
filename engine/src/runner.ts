@@ -47,6 +47,10 @@ const REQUEST_DESCRIPTION =
   "and private locations are refused automatically. Give the path and a one-line reason. Approved copies appear in ./assets/ and you get " +
   "a message when they are there. This call returns immediately: keep working with what you have meanwhile.";
 
+/** The one message the table sees if Claude can't be reached (internet down, API down). */
+export const LOST_CONNECTION = "Lost connection to Claude. Switch to the recorded run.";
+export class LostConnectionError extends Error { constructor(detail: string) { super(LOST_CONNECTION); this.name = "LostConnection"; this.detail = detail; } detail: string; }
+
 type Waiter = { resolve: (summary: string) => void; reject: (e: Error) => void; abandoned: boolean; startCost: number };
 
 const PRIVATE_NAMES: [RegExp, string][] = [
@@ -97,6 +101,16 @@ export class DogRunner {
     this.inbox!.push(text);
     try { return await done; }
     finally { ctx.signal.removeEventListener("abort", onAbort); }
+  }
+
+  /** Claude can't be reached: stop the turn now (instead of retrying for minutes) and say so. */
+  private lostConnection(detail: string) {
+    const w = this.waiters.find((x) => !x.abandoned);
+    if (!w) return;
+    w.abandoned = true;                      // its late result is swallowed
+    this.log("sdk", `lost connection: ${detail}; interrupting`);
+    this.q?.interrupt().catch(() => {});
+    w.reject(new LostConnectionError(detail));
   }
 
   /** Reset: end the session; pending turns are dropped. */
@@ -156,6 +170,12 @@ export class DogRunner {
   private onMessage(m: SDKMessage) {
     switch (m.type) {
       case "system":
+        if (m.subtype === "api_retry") {
+          // The CLI retries API calls for minutes by default; at the table that looks like a hang. Give up at the 2nd retry.
+          this.log("sdk", `API retry ${m.attempt}/${m.max_retries} in ${m.retry_delay_ms}ms: ${m.error_status ?? "no response"} ${String(m.error ?? "")}`.trim());
+          if (m.attempt >= 2) this.lostConnection(`API unreachable after ${m.attempt} tries (${m.error_status ?? "no response"})`);
+          return;
+        }
         if (m.subtype === "init") {
           if (/sonnet-5|haiku/.test(m.model)) this.price = m.model.includes("haiku") ? { in: 1, out: 5 } : { in: 2, out: 10 };
           if (this.sessions === 1 && this.turnEstimate === 0) this.log("sdk", `session ${m.session_id} model=${m.model} tools=${m.tools.join(",")}`);
@@ -207,6 +227,10 @@ export class DogRunner {
         const turnCost = w ? m.total_cost_usd - w.startCost : 0;
         this.log("sdk", `result ${m.subtype} (${m.terminal_reason ?? "-"}) turns=${m.num_turns} turn cost $${turnCost.toFixed(3)} session $${m.total_cost_usd.toFixed(3)}`);
         if (!w || w.abandoned) return;          // the interrupted turn finishing late: already reported as "Stopped by you"
+        if (m.subtype !== "success" && (m.terminal_reason === "api_error" || (m as { api_error_status?: number | null }).api_error_status)) {
+          w.reject(new LostConnectionError(`turn ended with an API error (${m.terminal_reason ?? m.subtype})`));
+          return;
+        }
         let summary: string;
         if (m.subtype === "success") summary = summarize(m.result, SUMMARY_MAX);
         else if (this.overBudget) summary = "Stopped: this turn reached its budget";

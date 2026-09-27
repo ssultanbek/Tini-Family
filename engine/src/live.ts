@@ -14,6 +14,8 @@ import { applyFix } from "./tina/fixes.ts";
 import { checkAccess, createEscalation, planFence, rewritePrompt, stageFence, type Plan, type Staged } from "./tini/index.ts";
 
 const STATIC_SITE = "Keep it a simple static site: HTML, CSS and JavaScript, no build tools. Don't start a local server or open a browser to preview it: Tini launches the site after Tina's check.";
+// --demo (the live table demo): one page fewer, so turn 1 finishes sooner in front of judges.
+const DEMO_PAGES = "Keep it to 4 pages: a home page that includes the services, a gallery page, an about page and a contact page.";
 
 // The request door, replacing Stage 3's "say so in one sentence" line in the fence note.
 export const REQUEST_LINE = "Everything you were given is in ./assets. If you need a file or folder outside this workspace, don't try to open it: call request_access with the path and a one-line reason, then keep working.";
@@ -109,7 +111,8 @@ export function liveCrew(opts: LiveOptions = {}): LiveCrew {
 
     async runTurn(ctx, message, info) {
       if (!runner) throw new Error("the dog has no fence yet (stage() didn't run)");
-      const text = website && !info.followUp ? `${message}\n\n${STATIC_SITE}` : message;
+      const hint = opts.demo && info.turnId === 1 ? `${STATIC_SITE} ${DEMO_PAGES}` : STATIC_SITE;
+      const text = website && !info.followUp ? `${message}\n\n${hint}` : message;
       return runner.runTurn(ctx, text);
     },
 
