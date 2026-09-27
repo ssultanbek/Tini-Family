@@ -15,7 +15,7 @@ body:has(.app), .gv {
   --gv-sky: #1D5A85; --gv-sky-bg: #E2F0F9; --gv-sky-line: #B3D5EC;
   --gv-display: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gv-body: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --gv-serif: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --gv-serif: var(--font-austera);
   --font-austera: "Austera Text", "Manrope Variable", "Manrope", sans-serif;
   --gv-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gv-fs-xs: 14px; --gv-fs-sm: 15.5px; --gv-fs-base: 17px; --gv-fs-md: 19px; --gv-fs-lg: 22px; --gv-fs-xl: 28px; --gv-fs-stat: 34px; --gv-fs-hero: 40px;
@@ -335,7 +335,7 @@ body:has(.app) {
 .gv .gv-fence { gap: 0; }
 .gv .gv-fence li { padding: var(--gv-s3) 0; font-size: var(--gv-fs-base); font-weight: var(--gv-fw-medium); }
 .gv .gv-fence li + li { border-top: 1px solid var(--gv-line); }
-.gv .gv-quiet { font-family: var(--gv-serif); font-size: 18px; color: var(--gv-muted); text-align: center; font-variation-settings: "SOFT" 100, "WONK" 0; }
+.gv .gv-quiet { font-family: var(--font-austera); font-size: 18px; color: var(--gv-muted); text-align: center; }
 
 /* Contract, escalation and finding cards */
 .gv .action-card ul li { font-family: var(--gv-mono); font-size: 15px; color: var(--gv-ink); }
