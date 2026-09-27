@@ -374,3 +374,24 @@ body:has(.app) {
 .gv .gv-fence li:nth-child(4) .gv-status { animation-delay: .6s; } .gv .gv-fence li:nth-child(5) .gv-status { animation-delay: .8s; }
 .gv .gv-fence li:nth-child(6) .gv-status { animation-delay: 1s; } .gv .gv-fence li:nth-child(7) .gv-status { animation-delay: 1.2s; }
 @media (prefers-reduced-motion: reduce) { .gv .gv-status, .gv .gv-chip, .gv .working-dot { animation: none !important; } }
+
+/* Turns rail: each turn's dot is joined to the next by a line that carries a travelling light.
+   Done = green, in progress = amber; colours cross-fade when a turn finishes. */
+.gv .timeline { border-left: none; }
+.gv .turn-card::after {
+  content: ""; position: absolute; left: -17px; top: 26px; bottom: -32px; width: 3px; border-radius: 3px;
+  background-color: var(--gv-accent-line);
+  background-image: linear-gradient(to bottom, transparent 0%, rgb(255 255 255 / .95) 50%, transparent 100%);
+  background-size: 100% 46px; background-repeat: no-repeat;
+  animation: gv-rail-light 2.2s linear infinite;
+  transition: background-color .6s var(--gv-ease), box-shadow .6s var(--gv-ease);
+}
+.gv .turn-card:last-child::after { display: none; }
+.gv .turn-card.done::after { background-color: var(--gv-good-solid); box-shadow: 0 0 8px rgb(35 130 74 / .45); }
+.gv .turn-card.open::after { background-color: var(--gv-warn-solid); box-shadow: 0 0 8px rgb(211 154 0 / .45); }
+@keyframes gv-rail-light { from { background-position: 0 -46px; } to { background-position: 0 calc(100% + 46px); } }
+.gv .turn-card::before { z-index: 1; transition: background .6s var(--gv-ease), border-color .6s var(--gv-ease), box-shadow .6s var(--gv-ease); }
+.gv .turn-card.done::before { box-shadow: 0 0 0 3px rgb(35 130 74 / .18); }
+.gv .turn-card.open::before { animation: gv-dot-pulse 1.4s ease-in-out infinite; }
+@keyframes gv-dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(211 154 0 / .5); } 50% { box-shadow: 0 0 0 6px rgb(211 154 0 / 0); } }
+@media (prefers-reduced-motion: reduce) { .gv .turn-card::after, .gv .turn-card::before { animation: none !important; transition: none !important; } }
