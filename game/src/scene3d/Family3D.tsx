@@ -6,7 +6,7 @@ import type { EngineEvent, WorldState } from '../../../shared/events.ts';
 import { diorama as D, familyLayout as F, yardLayout as L, segmentPosition } from '../layout.ts';
 import { animationQueues, type AnimatedActor, type AnimationOptions } from '../queue.ts';
 import { store } from '../store.ts';
-import { route, toWorld, type XZ } from './world.ts';
+import { houseWork, route, toWorld, type XZ } from './world.ts';
 import { gateBuild } from './Island.tsx';
 
 // ---------------------------------------------------------------------------------------------
@@ -26,6 +26,12 @@ const w = (p: { x: number; y: number }) => toWorld(p.x, p.y);
 const home = (actor: AnimatedActor, world: WorldState) => w(actor === 'dog' && world.dog !== 'sleeping' ? F.zones.house : F.homes[actor]);
 const segmentIndex = (id?: string) => store.getSnapshot().world.segments.findIndex(segment => segment.id === id);
 const atSegment = (id?: string, distance?: number) => w(segmentPosition(segmentIndex(id), distance));
+/** A spot at a fence, shifted along it so Tini (one end) and Tina (other end) never stand on the same point. */
+const workAt = (actor: AnimatedActor, id?: string, distance?: number) => {
+  const p = atSegment(id, distance), slot = L.slots[segmentIndex(id)];
+  const shift = (actor === 'tini' ? -1 : actor === 'tina' ? 1 : 0) * D.crowd.lateral;
+  return !slot ? p : slot.vertical ? { x: p.x, z: p.z + shift } : { x: p.x + shift, z: p.z };
+};
 
 let effectId = 0;
 const effects = { list: [] as Effect[], listeners: new Set<() => void>() };
@@ -131,7 +137,7 @@ export async function animate(bodies: Record<AnimatedActor, Body>, event: Engine
     // Tini ------------------------------------------------------------------------------------
     case 'fence.segment.built':
       if (gateBuild.startAt === null && gateBuild.progress < 1) await buildGate(b, options);
-      await walk(b, atSegment(event.segment.id), options);
+      await walk(b, workAt('tini', event.segment.id), options);
       await act(b, 'hammer', M.hammer, options);
       spark('dust', atSegment(event.segment.id, F.bumpApproach), 0.3, 0.8);
       return;
@@ -139,15 +145,20 @@ export async function animate(bodies: Record<AnimatedActor, Body>, event: Engine
       await walk(b, w(F.zones.gate), options);
       b.carrying = event.fileCount;
       await act(b, 'lift', 0.3, options);
-      await walk(b, atSegment(event.segmentId), options, 0.8);
+      await walk(b, workAt('tini', event.segmentId), options, 0.8);
       await act(b, 'setdown', 0.35, options);
       b.carrying = undefined;
       spark('cards', atSegment(event.segmentId, F.bumpApproach * 0.4), 0.4, 1.1);
       return;
     // Dog ---------------------------------------------------------------------------------------
     case 'dog.brick.placed':
-      await walk(b, w(F.zones.house), options, 1.3);
-      await act(b, event.op, event.op === 'read' ? 0.55 : 0.4, options);
+      {
+        // Work around the house: stand outside the wall where this brick lands, face it, then place it.
+        const spot = houseWork(event.bricks);
+        await walk(b, spot.stand, options, 1.3);
+        b.face = spot.face;
+        await act(b, event.op, event.op === 'read' ? 0.55 : 0.45, options);
+      }
       if (event.op === 'run') spark('ring', b.pos, 0.8, 0.7);
       return;
     case 'fence.blocked': {
@@ -163,11 +174,11 @@ export async function animate(bodies: Record<AnimatedActor, Body>, event: Engine
       return;
     // Tina --------------------------------------------------------------------------------------
     case 'tina.inspect.started': case 'tina.inspect.segment':
-      await walk(b, event.segmentId ? atSegment(event.segmentId) : w(F.zones.yard), options);
+      await walk(b, event.segmentId ? workAt('tina', event.segmentId) : w(F.zones.yard), options);
       await act(b, 'scan', M.scan, options);
       return;
     case 'segment.red':
-      await walk(b, atSegment(event.segmentId), options);
+      await walk(b, workAt('tina', event.segmentId), options);
       spark('achoo', b.pos, 1.9, 0.8);
       await act(b, 'sneeze', 0.9, options);
       return;
@@ -223,7 +234,8 @@ function usePose(body: Body, kind: AnimatedActor, parts: React.MutableRefObject<
       if (a.name === 'thumbs' && p.armR) { p.armR.rotation.x = -2.6 * Math.sin(k * Math.PI); p.body.position.y += Math.sin(k * Math.PI) * 0.12; }
       if (a.name === 'nod' && p.head) p.head.rotation.x = Math.sin(k * Math.PI * 2) * 0.35;
       if (a.name === 'talk' && p.head) p.head.rotation.x = Math.sin(t * 14) * 0.06;
-      if (a.name === 'write') p.body.position.y += Math.sin(k * Math.PI) * 0.25;
+      if (a.name === 'write') { p.body.position.y += Math.sin(k * Math.PI) * 0.2; if (p.armL && p.armR) p.armL.rotation.x = p.armR.rotation.x = -2.2 * Math.sin(k * Math.PI); }
+      if (a.name === 'edit' && p.armR) p.armR.rotation.x = -1.4 * Math.sin(k * Math.PI * 2);
       if (a.name === 'edit') p.body.position.z = Math.sin(k * Math.PI) * 0.3;
       if (a.name === 'read' && p.head) { p.head.rotation.x = 0.5 * Math.sin(k * Math.PI); p.head.position.y += 0; }
       if (a.name === 'run' && p.head) p.head.rotation.x = -0.3 * Math.sin(k * Math.PI * 3);
@@ -421,11 +433,26 @@ function GateDoors() {
   return <>{door(-1, left)}{door(1, right)}</>;
 }
 
+/** Personal space: when two characters get closer than `personal`, both ease apart a little each frame. Exported for tests. */
+export function keepApart(bodies: Record<AnimatedActor, Body>, dt: number) {
+  const list = Object.values(bodies), min = D.crowd.personal;
+  for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    const a = list[i], b = list[j];
+    let dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, d = Math.hypot(dx, dz);
+    if (d >= min) continue;
+    if (d < 1e-3) { dx = 1; dz = 0; d = 1; }
+    const push = Math.min((min - d) / 2, 2.5 * Math.min(dt, 0.05));
+    a.pos = { x: a.pos.x - dx / d * push, z: a.pos.z - dz / d * push };
+    b.pos = { x: b.pos.x + dx / d * push, z: b.pos.z + dz / d * push };
+  }
+}
+
 /** The family: attaches to the per-actor animation queues (only one yard view is mounted at a time). */
 export function Family3D() {
   const bodies = useFamily();
   const { world, epoch } = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   useEffect(() => animationQueues.attach((event, options) => animate(bodies, event, options)), [bodies]);
+  useFrame((_, dt) => keepApart(bodies, dt));
   // Snapshot or reset: no history is replayed; everyone stands at their staging point.
   useEffect(() => {
     const w0 = store.getSnapshot().world;

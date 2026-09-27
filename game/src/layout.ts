@@ -46,7 +46,7 @@ export const diorama = {
   center: { x: 410, y: 440 },         // yard-pixel point placed at the world origin (Mac strip included)
   block: { minX: -320, maxX: 1115, minY: 10, maxY: 870, radius: 0.9, grass: 0.5, soil: 2.6, stone: 2.2, lip: 0.35 },
   fence: { height: 1.1, post: 0.24, rail: 0.1, railHeights: [0.45, 0.85], posts: 7 },
-  house: { courses: 8, course: 0.3, wall: 0.28, roofBricks: 8, roofRise: 1.5, overhang: 0.35, doorWidth: 1.0, doorHeight: 1.75,
+  house: { standOff: 1.05, courses: 8, course: 0.3, wall: 0.28, roofBricks: 8, roofRise: 1.5, overhang: 0.35, doorWidth: 1.0, doorHeight: 1.75,
     columns: 4, rows: 3, maxLayers: 8, brick: [1.2, 0.42, 1.18] as [number, number, number], gap: 0.1, slab: 0.2 },
   mac: { height: 3.4, roof: 1.6, doorWidth: 1.9, doorHeight: 1.9 },
   sign: { height: 1.6, outward: 1.25, scale: 17, plaque: 14, text: 10, post: 1.85, board: [2.9, 0.95] as [number, number], boardY: 1.35 },  // label sizes are drei Html distanceFactor   // signs sit on their own fence, nudged to its outer side so neighbours don't overlap
@@ -54,6 +54,8 @@ export const diorama = {
   camera: { position: [20, 27, 44] as [number, number, number], target: [0.2, -2.6, 0.4] as [number, number, number], fov: 30 },
   // Character pace and action lengths (seconds). The queue's 'fast' mode multiplies by fastFactor; 'instant' skips.
   motion: { walk: 3.2, maxSpeed: 16, budget: { walk: 1.0, fast: 0.55, instant: 0.35, actInstant: 0.3 }, fastFactor: 0.45, hammer: 0.6, scan: 0.6, speechMin: 2.6, speechMax: 7, speechBase: 1.8, speechPerChar: 0.05 },
+  // Tini and Tina work at opposite ends of a fence; anyone closer than `personal` steps aside.
+  crowd: { lateral: 1.0, personal: 0.95 },
   gate: { buildSeconds: 3.5, fallbackSeconds: 6, workFrom: 45 },   // Tini hammers the gate from inside the yard   // doors open while a character is this close (world units)
   orbit: { minDistance: 24, maxDistance: 85, minPolar: 0.25, maxPolar: 1.32 },
   sun: { position: [-16, 26, 12] as [number, number, number], intensity: 2.4, shadowMap: 2048, shadowMapLow: 1024, shadowBox: 24 },

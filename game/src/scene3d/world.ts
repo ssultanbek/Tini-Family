@@ -113,3 +113,17 @@ export function houseStage(bricks: number) {
     lit: n >= H.courses + 2 + H.roofBricks + 6,                      // brick 24: the house is complete
   };
 }
+
+/** Where brick number `bricks` lands on the house (the side cycles front, right, back, left) and where the
+ *  builder stands outside that wall, facing it. Shared by the house (landing brick) and the Agent (work spot). */
+export function houseWork(bricks: number) {
+  const r = rectBox(L.house), t = D.house.wall, k = ((Math.floor(bricks) % 4) + 4) % 4;
+  const sides = [
+    { x: r.x - r.width * 0.2, z: r.z + r.depth / 2 - t / 2, nx: 0, nz: 1 },
+    { x: r.x + r.width / 2 - t / 2, z: r.z + r.depth * 0.15, nx: 1, nz: 0 },
+    { x: r.x + r.width * 0.2, z: r.z - r.depth / 2 + t / 2, nx: 0, nz: -1 },
+    { x: r.x - r.width / 2 + t / 2, z: r.z - r.depth * 0.15, nx: -1, nz: 0 },
+  ];
+  const s = sides[k], out = t / 2 + D.house.standOff;
+  return { landing: { x: s.x, z: s.z }, stand: { x: s.x + s.nx * out, z: s.z + s.nz * out }, face: Math.atan2(-s.nx, -s.nz) };
+}

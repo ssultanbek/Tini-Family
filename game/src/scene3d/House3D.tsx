@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html, RoundedBox } from '@react-three/drei';
 import { Shape, type Group, type Mesh, type MeshStandardMaterial } from 'three';
 import { diorama as D, yardLayout as L } from '../layout.ts';
-import { houseStage, rectBox } from './world.ts';
+import { houseStage, houseWork, rectBox } from './world.ts';
 
 const C = D.colors;
 const H = D.house;
@@ -65,8 +65,7 @@ export function House({ bricks, epoch }: { bricks: number; epoch: number }) {
   const seen = useRef({ epoch, bricks });
   const landed = seen.current.epoch === epoch && bricks > seen.current.bricks;
   useEffect(() => { seen.current = { epoch, bricks }; });
-  const k = bricks % 4;
-  const landing = [{ x: r.x - w * 0.2, z: r.z + d / 2 - t / 2 }, { x: r.x + w / 2 - t / 2, z: r.z + d * 0.15 }, { x: r.x + w * 0.2, z: r.z - d / 2 + t / 2 }, { x: r.x - w / 2 + t / 2, z: r.z - d * 0.15 }][k];
+  const landing = houseWork(bricks).landing;
 
   // The front wall (facing +z, toward the demo camera) keeps a gap for the door; the others are solid.
   const dw = H.doorWidth, side = (w - dw) / 2, doorCourses = Math.ceil(H.doorHeight / H.course);

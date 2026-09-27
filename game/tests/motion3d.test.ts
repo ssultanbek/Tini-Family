@@ -24,8 +24,10 @@ test('characters walk continuously and actions play, even when the queue hurries
   const { toWorld } = await vite.ssrLoadModule('/src/scene3d/world.ts') as typeof import('../src/scene3d/world.ts');
   const gate = toWorld(L.gate.x, L.gate.y);
   let gateNear = false;
+  const agentSpots = new Set<string>();
   let maxJump = 0, walked = 0;
   const frame = 1 / 60;
+  let closest = Infinity;
   const tick = () => {
     for (const [kind, b] of Object.entries(bodies)) {
       const before = { ...b.pos };
@@ -33,6 +35,12 @@ test('characters walk continuously and actions play, even when the queue hurries
       const jump = Math.hypot(b.pos.x - before.x, b.pos.z - before.z);
       maxJump = Math.max(maxJump, jump); walked += jump;
       if (b.action) actions.add(`${kind}:${b.action.name}`);
+    }
+    F.keepApart(bodies, frame);
+    const all = Object.values(bodies);
+    for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (!all[i].moving && !all[j].moving) closest = Math.min(closest, Math.hypot(all[i].pos.x - all[j].pos.x, all[i].pos.z - all[j].pos.z));
+    for (const [kind, b] of Object.entries(bodies)) {
+      if (kind === 'dog' && b.action && ['write', 'edit', 'read', 'run'].includes(b.action.name)) agentSpots.add(`${Math.round(b.pos.x)},${Math.round(b.pos.z)}`);
       if (kind === 'tini' && b.action?.name === 'hammer' && Math.hypot(b.pos.x - gate.x, b.pos.z - gate.z) < 2.5) gateNear = true;
     }
   };
@@ -53,4 +61,6 @@ test('characters walk continuously and actions play, even when the queue hurries
   const { gateBuild } = await vite.ssrLoadModule('/src/scene3d/Island.tsx') as typeof import('../src/scene3d/Island.tsx');
   assert.ok(gateBuild.startAt !== null && gateBuild.startAt > 0, 'Tini reached the gate and started building it');
   assert.ok(gateNear, 'Tini stood at the gate while building');
+  assert.ok(closest > 0.6, `standing characters never overlap (closest ${closest.toFixed(2)})`);
+  assert.ok(agentSpots.size >= 3, `the Agent worked from ${agentSpots.size} sides of the house`);
 });
