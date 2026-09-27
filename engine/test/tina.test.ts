@@ -11,6 +11,7 @@ import type { EngineEvent, WorldState } from "../../shared/events.ts";
 import { initialState, reduce } from "../../shared/reducer.ts";
 import { planFence, stageFence, type Staged } from "../src/tini/index.ts";
 import { runInspection } from "../src/tina/findings.ts";
+import { scanWorkspace } from "../src/tina/scan.ts";
 import { applyFix } from "../src/tina/fixes.ts";
 import { resetExplanations } from "../src/tina/explain.ts";
 import { identifyingTags } from "../src/tina/exif.ts";
@@ -172,6 +173,15 @@ if (live) {
   for (const k of ["allowed", "blocked", "narrowed", "fixed"] as const) for (const l of lr[k]) console.log(`        ${k.padEnd(8)} ${l.what}  —  ${l.why}`);
   ok(lr.allowed.length >= 3 && lr.narrowed.some((l) => /turn 2/.test(l.why)), "live report: lines across turns 1 and 2");
 }
+
+// --- 6. a key in a script URL followed by "&" (gitleaks' default rule misses it) ---------------
+console.log("\n(6) Maps key in <script src=\"...?key=KEY&callback=initMap\">:");
+const ws6 = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "tini-amp-")));
+fs.writeFileSync(path.join(ws6, "contact.html"), `<div id="map"></div>\n<script src="https://maps.googleapis.com/maps/api/js?key=${KEY}&callback=initMap" async defer></script>\n`);
+const s6 = await scanWorkspace({ fence: { workspace: ws6, allowedDomains: [] }, workspace: ws6, pathMap: {}, fenceNote: "" });
+console.log(`        engine ${s6.secretEngine}: ${JSON.stringify(s6.findings.map((f) => [f.type, f.file, f.snippet]))}`);
+ok(s6.findings.some((f) => f.type === "api-key" && f.file === "contact.html") && !JSON.stringify(s6.findings.map((f) => f.snippet)).includes(KEY), "key found (with gitleaks on) and redacted in the snippet");
+fs.rmSync(ws6, { recursive: true, force: true });
 
 fs.rmSync(process.env.TINI_PROJECTS_DIR!, { recursive: true, force: true });
 await exiftool.end();
