@@ -217,3 +217,54 @@ a { color: #205640; }
 .link-button { display: inline; min-height: 0; padding: 0 .15em; border: none; background: none; color: #205640; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .link-button:hover:not(:disabled) { background: none; color: #163d2c; }
 .report-note { margin-top: .4em; padding: .4em .7em; border-radius: 8px; background: #fff3cc; color: #6b4e00; font-size: 16px; }
+
+/* ======================================================================================
+   "Iris & Fog" overrides for the game page only (docs/STYLE_GUIDE.md). Scoped to body:has(.gv),
+   so the dashboard (/?view=dashboard) keeps its look. The yard column is pinned in game.css.
+   ====================================================================================== */
+body:has(.gv) textarea { border-color: var(--gv-line-strong); }
+body:has(.gv) :is(button, a, input, textarea):focus-visible { outline: none; box-shadow: var(--gv-focus); }
+body:has(.gv) .link-button { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; text-underline-offset: 3px; }
+body:has(.gv) .link-button:hover:not(:disabled) { color: var(--gv-accent-hover); text-decoration: underline; }
+body:has(.gv) .toast { border: 1px solid var(--gv-bad-line); box-shadow: var(--gv-shadow-md); border-radius: var(--gv-r-md); }
+
+/* Access report modal. A plain dark overlay, no backdrop blur: blurring over the live 3D canvas
+   would re-blur every frame and can make the yard stutter. */
+body:has(.gv) .report-screen { background: rgb(27 26 36 / .55); }
+body:has(.gv) .report-panel { background: var(--gv-card); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); padding: var(--gv-s8); font-family: var(--gv-body); font-size: var(--gv-fs-base); color: var(--gv-ink); }
+body:has(.gv) .report-header .eyebrow { font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); letter-spacing: var(--gv-track-label); color: var(--gv-muted); }
+body:has(.gv) .report-header h2 { font-family: var(--gv-display); font-size: var(--gv-fs-hero); font-weight: var(--gv-fw-black); letter-spacing: var(--gv-track-tight); line-height: var(--gv-lh-tight); }
+body:has(.gv) .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gv-s4); }
+@media (max-width: 760px) { body:has(.gv) .report-grid { grid-template-columns: minmax(0, 1fr); } }
+body:has(.gv) .report-section, body:has(.gv) .report-leaves { background: var(--gv-card); border: 1px solid var(--gv-line); border-top: 4px solid var(--rs); border-radius: var(--gv-r-md); padding: var(--gv-s5); color: var(--gv-ink); }
+body:has(.gv) .report-section h3, body:has(.gv) .report-leaves h3 { font-size: var(--gv-fs-md); font-weight: var(--gv-fw-bold); color: var(--gv-ink); }
+body:has(.gv) .report-icon { width: 36px; height: 36px; border-radius: var(--gv-r-sm); border: none; background: var(--rs-bg); color: var(--rs-ink); font-size: 18px; }
+body:has(.gv) .report-count { background: var(--rs-bg); color: var(--rs-ink); border: 1px solid var(--rs-line); font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 2px 10px; }
+body:has(.gv) .report-section li { border-top-color: var(--gv-line); }
+body:has(.gv) .report-section li strong { color: var(--gv-ink); }
+body:has(.gv) .report-section li span { color: var(--gv-muted); }
+body:has(.gv) .report-allowed { --rs: var(--gv-good-solid); --rs-bg: var(--gv-good-bg); --rs-ink: var(--gv-good); --rs-line: var(--gv-good-line); }
+body:has(.gv) .report-blocked { --rs: var(--gv-bad-solid); --rs-bg: var(--gv-bad-bg); --rs-ink: var(--gv-bad); --rs-line: var(--gv-bad-line); }
+body:has(.gv) .report-narrowed { --rs: var(--gv-warn-solid); --rs-bg: var(--gv-warn-bg); --rs-ink: var(--gv-warn); --rs-line: var(--gv-warn-line); }
+body:has(.gv) .report-fixed { --rs: var(--gv-accent); --rs-bg: var(--gv-accent-soft); --rs-ink: var(--gv-accent-text); --rs-line: var(--gv-accent-line); }
+body:has(.gv) .report-leaves { --rs: var(--gv-sky); --rs-bg: var(--gv-sky-bg); --rs-ink: var(--gv-sky); --rs-line: var(--gv-sky-line); margin-top: var(--gv-s4); }
+body:has(.gv) .report-leaves li { background: var(--gv-sky-bg); color: var(--gv-sky); border: 1px solid var(--gv-sky-line); font-family: var(--gv-mono); }
+body:has(.gv) .report-note { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); }
+body:has(.gv) .report-actions { gap: var(--gv-s2); }
+
+/* Raw view drawer: the one dark surface, violet-black. */
+body:has(.gv) .raw-view { background: #15141C; color: #E4E2EE; font-family: var(--gv-mono); font-size: 15px; line-height: 1.55; border-radius: var(--gv-r-lg) 0 0 var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); }
+body:has(.gv) .raw-head, body:has(.gv) .raw-filters { border-bottom-color: #2A2835; }
+body:has(.gv) .raw-head > strong { color: #A897FF; }
+body:has(.gv) .raw-tabs button, body:has(.gv) .raw-close { color: #9D99AD; border-color: #2A2835; background: transparent; font-family: var(--gv-mono); box-shadow: none; }
+body:has(.gv) .raw-tabs button[aria-selected="true"] { background: #211F2B; color: #E4E2EE; border-color: #A897FF; }
+body:has(.gv) .raw-tabs button:hover:not(:disabled), body:has(.gv) .raw-close:hover:not(:disabled) { background: #211F2B; }
+body:has(.gv) .raw-chip { background: transparent; border: 1px solid #2A2835; }
+body:has(.gv) .raw-chip:has(input:checked) { background: color-mix(in srgb, currentColor 16%, transparent); }
+body:has(.gv) .raw-line { border-bottom-color: #211F2B; }
+body:has(.gv) .raw-event { border-bottom-color: #2A2835; }
+body:has(.gv) .raw-event pre { background: #1C1A25; color: #E4E2EE; }
+body:has(.gv) .raw-seq, body:has(.gv) .raw-empty { color: #9D99AD; }
+body:has(.gv) .ch-hook { color: #FF8A80; } body:has(.gv) .ch-config { color: #8CC8FF; } body:has(.gv) .ch-sdk { color: #C9B2FF; }
+body:has(.gv) .ch-scan { color: #F2C45A; } body:has(.gv) .ch-ai { color: #6ADBD9; } body:has(.gv) .ch-engine { color: #F5A874; } body:has(.gv) .ch-other { color: #9D99AD; }
+body:has(.gv) .actor-tini { color: #8CC8FF; } body:has(.gv) .actor-tina { color: #C9B2FF; } body:has(.gv) .actor-dog { color: #F2C45A; } body:has(.gv) .actor-system { color: #9D99AD; }

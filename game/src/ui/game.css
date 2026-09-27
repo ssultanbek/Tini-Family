@@ -1,6 +1,51 @@
-/* Game page (`/`) only: Harbor Slate colours, Bricolage Grotesque + Instrument Sans, chat | yard | analysis.
+/* Game page (`/`) only: "Iris & Fog" chrome (docs/STYLE_GUIDE.md) around an unchanged yard; chat | yard | analysis.
    Everything is scoped under .gv so the dashboard (the frozen fallback) never changes. */
+/* ===== "Iris & Fog" tokens (docs/STYLE_GUIDE.md). On body:has(.gv) too, so overlays can read them. ===== */
+body:has(.gv), .gv {
+  --gv-page: #F6F5F9; --gv-card: #FFFFFF; --gv-soft: #EFEDF4; --gv-sunken: #F9F8FB;
+  --gv-line: #E3E1EA; --gv-line-strong: #8F8B9E; --gv-ink: #1B1A24; --gv-muted: #5A5766; --gv-faint: #8F8B9E;
+  --gv-head: #FFFFFF; --gv-head-ink: #1B1A24;
+  --gv-accent: #5B45D6; --gv-accent-hover: #4A36BC; --gv-accent-press: #3E2DA3; --gv-accent-ink: #FFFFFF;
+  --gv-accent-text: #4431B0; --gv-accent-soft: #ECE8FC; --gv-accent-line: #C9BFF5; --gv-accent-ring: rgb(91 69 214 / .28);
+  --gv-good: #1C6B3A; --gv-good-bg: #E3F4E8; --gv-good-line: #B4DEC1; --gv-good-solid: #23824A;
+  --gv-bad: #A3262A; --gv-bad-bg: #FDE8E6; --gv-bad-line: #F3BDB7; --gv-bad-solid: #C8322F;
+  --gv-warn: #6B4B00; --gv-warn-bg: #FFF2C4; --gv-warn-line: #EDCB6B; --gv-warn-solid: #D39A00;
+  --gv-plan: #53505C; --gv-plan-bg: #EFEEF2; --gv-plan-line: #D8D6DF; --gv-plan-solid: #9A97A6;
+  --gv-wood: #6B3F1F; --gv-wood-bg: #F4E7DA; --gv-wood-line: #DDC3A7;
+  --gv-sky: #1D5A85; --gv-sky-bg: #E2F0F9; --gv-sky-line: #B3D5EC;
+  --gv-display: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --gv-body: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --gv-serif: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --gv-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --gv-fs-xs: 14px; --gv-fs-sm: 15.5px; --gv-fs-base: 17px; --gv-fs-md: 19px; --gv-fs-lg: 22px; --gv-fs-xl: 28px; --gv-fs-stat: 34px; --gv-fs-hero: 40px;
+  --gv-fw-regular: 450; --gv-fw-medium: 550; --gv-fw-semi: 650; --gv-fw-bold: 750; --gv-fw-black: 800;
+  --gv-lh-tight: 1.12; --gv-lh-snug: 1.3; --gv-lh-base: 1.5; --gv-track-tight: -0.02em; --gv-track-label: 0.06em;
+  --gv-r-xs: 6px; --gv-r-sm: 10px; --gv-r-md: 14px; --gv-r-lg: 20px; --gv-r-pill: 999px; --gv-radius: var(--gv-r-lg);
+  --gv-s1: 4px; --gv-s2: 8px; --gv-s3: 12px; --gv-s4: 16px; --gv-s5: 20px; --gv-s6: 24px; --gv-s8: 32px; --gv-s10: 40px;
+  --gv-shadow-xs: 0 1px 2px rgb(27 26 36 / .05);
+  --gv-shadow-sm: 0 1px 2px rgb(27 26 36 / .04), 0 4px 12px -4px rgb(27 26 36 / .08);
+  --gv-shadow-md: 0 1px 2px rgb(27 26 36 / .04), 0 12px 28px -10px rgb(27 26 36 / .16);
+  --gv-shadow-lg: 0 2px 4px rgb(27 26 36 / .06), 0 32px 72px -16px rgb(27 26 36 / .32);
+  --gv-shadow-accent: 0 8px 22px -8px rgb(91 69 214 / .45);
+  --gv-focus: 0 0 0 3px var(--gv-card), 0 0 0 5px var(--gv-accent);
+  --gv-ease: cubic-bezier(.2, .7, .2, 1); --gv-t-fast: 120ms; --gv-t-med: 200ms;
+}
 .gv {
+  --gv-gap: 14px; /* kept at today's value so the column grid and the yard stay exactly the same size */
+  max-width: 1880px; padding: 14px 18px 18px;
+  font-family: var(--gv-body); font-size: var(--gv-fs-base); font-weight: var(--gv-fw-regular); line-height: var(--gv-lh-base);
+  color: var(--gv-ink); font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased;
+}
+body:has(.gv) {
+  background-color: var(--gv-page);
+  background-image: radial-gradient(rgb(27 26 36 / .055) 1px, transparent 1.2px); background-size: 28px 28px;
+}
+.gv :where(h1, h2, h3) { font-family: var(--gv-display); letter-spacing: var(--gv-track-tight); line-height: var(--gv-lh-snug); }
+.gv :where(.gv-stats b) { font-variant-numeric: tabular-nums; }
+
+/* ===== The yard column keeps today's look, pixel for pixel: old tokens and fonts pinned here. =====
+   (Covers the 3D stage and its HTML labels, the 2D Phaser yard and its bubbles, and the frame around them.) */
+.gv .gv-center {
   --gv-page: #f1f3f4; --gv-head: #27313a; --gv-head-ink: #f5f7f8; --gv-card: #ffffff; --gv-soft: #eef1f3;
   --gv-ink: #1b2228; --gv-muted: #5b6670; --gv-line: #d7dde2;
   --gv-accent: #2d6f73; --gv-accent-hover: #245b5e; --gv-accent-ink: #ffffff; --gv-accent-text: #28666a; --gv-accent-soft: #bfe0de;
@@ -8,10 +53,11 @@
   --gv-display: "Bricolage Grotesque Variable", "Instrument Sans Variable", system-ui, sans-serif;
   --gv-body: "Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gv-radius: 14px; --gv-gap: 14px;
-  max-width: 1880px; padding: 14px 18px 18px; font-family: var(--gv-body); font-size: 17px; line-height: 1.45; color: var(--gv-ink);
+  font-family: var(--gv-body); font-size: 17px; font-weight: normal; line-height: 1.45; color: var(--gv-ink);
+  font-feature-settings: normal; -webkit-font-smoothing: auto; letter-spacing: normal;
 }
-body:has(.gv) { background: #f1f3f4; }
-.gv h1, .gv h2, .gv h3 { font-family: var(--gv-display); letter-spacing: -.01em; }
+.gv .gv-center :where(h1, h2, h3) { letter-spacing: -.01em; line-height: normal; }
+
 .gv .muted, .gv .gv-small { color: var(--gv-muted); }
 .gv .gv-small { font-size: 15px; margin: 0; }
 .gv .gv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -191,3 +237,129 @@ body:has(.gv) { background: #f1f3f4; }
 .gv .gv-chat-scroll > .timeline, .gv .gv-chat-scroll > .timeline-empty { margin-top: auto; }
 .gv .report-header .path a { color: var(--gv-accent-text); font-weight: 700; text-underline-offset: 3px; }
 .gv .gv-pill.info { background: #33404b; color: #d6dee6; }
+
+/* ======================================================================================
+   "Iris & Fog" component rules (docs/STYLE_GUIDE.md §2). CSS only; the yard column is pinned above.
+   ====================================================================================== */
+
+/* Panels and cards */
+.gv .gv-panel { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); padding: var(--gv-s5); box-shadow: var(--gv-shadow-xs); gap: var(--gv-s3); }
+.gv .gv-panel > h2 { font-size: var(--gv-fs-lg); font-weight: var(--gv-fw-bold); color: var(--gv-ink); margin-bottom: var(--gv-s1); }
+.gv .card { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-md); padding: var(--gv-s4) var(--gv-s5); box-shadow: var(--gv-shadow-sm); font-size: var(--gv-fs-base); }
+.gv .card > h2 { font-size: var(--gv-fs-md); font-weight: var(--gv-fw-bold); }
+.gv .gv-needs { gap: var(--gv-s3); }
+.gv .card.action-card { background: var(--gv-accent-soft); border: 1.5px solid var(--gv-accent); box-shadow: var(--gv-shadow-md); }
+.gv .gv-label { font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); letter-spacing: var(--gv-track-label); text-transform: uppercase; color: var(--gv-muted); }
+.gv .action-card .gv-label { color: var(--gv-accent-text); }
+.gv .path { font-family: var(--gv-mono); font-size: 15px; }
+.gv .muted, .gv .gv-small { color: var(--gv-muted); }
+
+/* Header bar */
+.gv .gv-top { background: var(--gv-head); color: var(--gv-head-ink); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); padding: var(--gv-s3) var(--gv-s5); box-shadow: var(--gv-shadow-xs); }
+.gv .gv-logo { width: 40px; height: 40px; border-radius: 12px; box-shadow: none;
+  background: linear-gradient(#fff, #fff) center / 14px 14px no-repeat, var(--gv-accent); }
+.gv .gv-brand h1 { font-size: var(--gv-fs-xl); font-weight: var(--gv-fw-black); color: var(--gv-ink); letter-spacing: var(--gv-track-tight); }
+.gv .gv-brand p { font-family: var(--gv-serif); font-size: 17px; font-style: normal; color: var(--gv-muted); font-variation-settings: "SOFT" 100, "WONK" 0; }
+.gv .gv-link { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; text-underline-offset: 3px; }
+.gv .gv-link:hover { text-decoration: underline; }
+
+/* Mode badge */
+.gv .gv-pill { display: inline-flex; align-items: center; gap: 6px; font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 6px 12px; border-radius: var(--gv-r-pill); border: 1px solid transparent; }
+.gv .gv-pill.ok { background: var(--gv-good-bg); color: var(--gv-good); border-color: var(--gv-good-line); }
+.gv .gv-pill.info { background: var(--gv-accent-soft); color: var(--gv-accent-text); border-color: var(--gv-accent-line); }
+.gv .gv-pill.bad { background: var(--gv-bad-bg); color: var(--gv-bad); border-color: var(--gv-bad-line); }
+
+/* Buttons */
+.gv button { font-family: var(--gv-body); }
+.gv .gv-btn, .gv .card button:not(.option):not(.link-button):not(.chip), .gv .prompt-row button, .gv .report-actions button {
+  font-family: var(--gv-body); font-weight: var(--gv-fw-semi); font-size: var(--gv-fs-base); min-height: 44px; padding: 0 var(--gv-s5);
+  border-radius: var(--gv-r-sm); background: var(--gv-accent); color: var(--gv-accent-ink); border: none; box-shadow: var(--gv-shadow-accent);
+  transition: background var(--gv-t-fast) var(--gv-ease), box-shadow var(--gv-t-fast), transform var(--gv-t-fast); }
+.gv .gv-btn:hover:not(:disabled), .gv .card button:not(.option):not(.link-button):not(.chip):hover:not(:disabled), .gv .prompt-row button:hover:not(:disabled), .gv .report-actions button:hover:not(:disabled) { background: var(--gv-accent-hover); border-color: transparent; }
+.gv .gv-btn:active:not(:disabled), .gv .card button:not(.option):not(.link-button):not(.chip):active:not(:disabled), .gv .prompt-row button:active:not(:disabled) { transform: translateY(1px); background: var(--gv-accent-press); }
+.gv .gv-btn:disabled, .gv .card button:not(.option):not(.link-button):not(.chip):disabled, .gv .prompt-row button:disabled, .gv .report-actions button:disabled { background: var(--gv-soft); color: var(--gv-faint); box-shadow: none; opacity: 1; cursor: not-allowed; }
+.gv .gv-btn.big { width: 100%; min-height: 56px; font-size: var(--gv-fs-md); font-weight: var(--gv-fw-bold); font-family: var(--gv-body); }
+.gv .gv-btn.ghost, .gv .gv-actions .gv-btn.ghost, .gv .report-actions button.secondary {
+  background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-xs); min-height: 40px; }
+.gv .gv-btn.ghost:hover:not(:disabled), .gv .gv-actions .gv-btn.ghost:hover:not(:disabled), .gv .report-actions button.secondary:hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-line-strong); }
+.gv .gv-actions .raw-toggle { font-family: var(--gv-mono); font-size: 15px; }
+.gv .gv-actions .raw-toggle.on { background: var(--gv-accent-soft); color: var(--gv-accent-text); border-color: var(--gv-accent-line); }
+.gv .stop-button { background: var(--gv-card); color: var(--gv-bad); border: 1px solid var(--gv-bad-line); border-radius: var(--gv-r-sm); font-weight: var(--gv-fw-semi); }
+.gv .stop-button:hover:not(:disabled) { background: var(--gv-bad-bg); }
+.gv .stop-button.armed { background: var(--gv-bad-solid); color: #fff; border-color: transparent; }
+.gv .stop-button.armed:hover:not(:disabled) { background: #B02B28; }
+.gv .link-button { color: var(--gv-accent-text); text-decoration: none; text-underline-offset: 3px; }
+.gv .link-button:hover:not(:disabled) { color: var(--gv-accent-hover); text-decoration: underline; }
+.gv button:focus-visible, .gv a:focus-visible, .gv textarea:focus-visible, .gv summary:focus-visible { outline: none; box-shadow: var(--gv-focus); }
+
+/* Badges and chips: tint fill, 1px darker border, dark text, pill */
+.gv .gv-chip, .gv .gv-status, .gv .turn-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 4px 10px; border-radius: var(--gv-r-pill); border: 1px solid transparent; }
+.gv .gv-chip.ok, .gv .gv-status.green, .gv .turn-card.done .turn-state { background: var(--gv-good-bg); color: var(--gv-good); border-color: var(--gv-good-line); }
+.gv .gv-chip.bad, .gv .gv-status.red { background: var(--gv-bad-bg); color: var(--gv-bad); border-color: var(--gv-bad-line); }
+.gv .gv-status.inspecting, .gv .turn-card.open .turn-state { background: var(--gv-warn-bg); color: var(--gv-warn); border-color: var(--gv-warn-line); }
+.gv .gv-status.planned, .gv .turn-state { background: var(--gv-plan-bg); color: var(--gv-plan); border-color: var(--gv-plan-line); }
+.gv .gv-status.built { background: var(--gv-wood-bg); color: var(--gv-wood); border-color: var(--gv-wood-line); }
+.gv .prompt-bar .chip { background: var(--gv-card); color: var(--gv-accent-text); border: 1px solid var(--gv-line); border-radius: var(--gv-r-pill); font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); }
+.gv .prompt-bar .chip:hover:not(:disabled) { background: var(--gv-accent-soft); border-color: var(--gv-accent-line); }
+.gv .tag { font-family: var(--gv-mono); font-size: 13.5px; background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-xs); padding: 2px 8px; }
+
+/* Turns */
+.gv .timeline { border-left: 2px solid var(--gv-line); }
+.gv .turn-card { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-md); box-shadow: var(--gv-shadow-sm); padding: var(--gv-s3) var(--gv-s4); }
+.gv .turn-card::before { width: 12px; height: 12px; left: -22px; background: var(--gv-card); border: 2px solid var(--gv-accent); }
+.gv .turn-card.done::before { background: var(--gv-good-solid); border-color: var(--gv-good-solid); }
+.gv .turn-card.open::before { background: var(--gv-warn-solid); border-color: var(--gv-warn-solid); }
+.gv .turn-card .turn-number { font: var(--gv-fw-bold) var(--gv-fs-sm)/1.2 var(--gv-body); color: var(--gv-muted); font-variant-numeric: tabular-nums; }
+.gv .turn-label { font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); letter-spacing: var(--gv-track-label); color: var(--gv-muted); }
+.gv .turn-request { font-size: var(--gv-fs-base); color: var(--gv-ink); }
+.gv .turn-card .turn-summary { font-size: var(--gv-fs-base); color: var(--gv-muted); }
+.gv .turn-pending { font-size: var(--gv-fs-base); color: var(--gv-warn); font-weight: var(--gv-fw-semi); }
+.gv .timeline-empty { color: var(--gv-muted); }
+
+/* Prompt bar */
+.gv .prompt-bar { background: var(--gv-sunken); border: 1px solid var(--gv-line); border-radius: var(--gv-r-md); padding: var(--gv-s3); }
+.gv .prompt-row textarea { background: var(--gv-card); border: 1px solid var(--gv-line-strong); border-radius: var(--gv-r-sm); font-size: var(--gv-fs-base); padding: var(--gv-s3); font-family: var(--gv-body); color: var(--gv-ink); }
+.gv .prompt-row textarea::placeholder { color: var(--gv-faint); }
+.gv .prompt-row textarea:focus-visible { outline: none; box-shadow: var(--gv-focus); }
+.gv .prompt-bar.working { background: var(--gv-soft); color: var(--gv-muted); }
+.gv .working-dot { background: var(--gv-warn-solid); animation: gv-pulse 1.4s ease-in-out infinite; }
+@keyframes gv-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* Analysis */
+.gv .gv-stats { gap: var(--gv-s2); }
+.gv .gv-stats div { background: var(--gv-soft); border: none; border-radius: var(--gv-r-sm); padding: var(--gv-s3) var(--gv-s4); }
+.gv .gv-stats b { font-family: var(--gv-display); font-size: var(--gv-fs-stat); font-weight: var(--gv-fw-black); line-height: var(--gv-lh-tight); color: var(--gv-ink); }
+.gv .gv-stats span { font-size: var(--gv-fs-sm); color: var(--gv-muted); }
+.gv .gv-launch .lock-reason { background: var(--gv-warn-bg); border: 1px solid var(--gv-warn-line); color: var(--gv-warn); border-radius: var(--gv-r-sm); font-size: var(--gv-fs-sm); padding: var(--gv-s2) var(--gv-s3); }
+.gv .gv-fence { gap: 0; }
+.gv .gv-fence li { padding: var(--gv-s3) 0; font-size: var(--gv-fs-base); font-weight: var(--gv-fw-medium); }
+.gv .gv-fence li + li { border-top: 1px solid var(--gv-line); }
+.gv .gv-quiet { font-family: var(--gv-serif); font-size: 18px; color: var(--gv-muted); text-align: center; font-variation-settings: "SOFT" 100, "WONK" 0; }
+
+/* Contract, escalation and finding cards */
+.gv .action-card ul li { font-family: var(--gv-mono); font-size: 15px; color: var(--gv-ink); }
+.gv .gv-adjust summary { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); }
+.gv .gv-adjust textarea { background: var(--gv-card); border: 1px solid var(--gv-line-strong); border-radius: var(--gv-r-sm); }
+.gv .gv-counts strong { font-weight: var(--gv-fw-bold); }
+.gv .option { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-sm); padding: var(--gv-s3) var(--gv-s4); font-size: var(--gv-fs-base); color: var(--gv-ink); }
+.gv .option:hover:not(:disabled) { border-color: var(--gv-line-strong); background: var(--gv-sunken); }
+.gv .option.recommended { background: var(--gv-card); border: 1.5px solid var(--gv-accent); box-shadow: var(--gv-shadow-sm); }
+.gv .option .recommend-label { justify-self: start; background: var(--gv-accent); color: #fff; font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 2px 10px; border-radius: var(--gv-r-pill); }
+.gv .card.finding { border-left: 4px solid var(--gv-bad-solid); }
+.gv .card.finding:has(.gv-chip.bad) { border-left-color: var(--gv-bad-solid); }
+.gv .card.finding.fixed { border-left-color: var(--gv-good-solid); background: var(--gv-good-bg); }
+.gv .card.finding.fixed .button-row { display: none; }
+.gv .card.finding .button-row button:not(.option):not(.link-button):not(.chip) + button:not(.option):not(.link-button):not(.chip) { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-xs); }
+.gv .card.finding .button-row button:not(.option):not(.link-button):not(.chip) + button:not(.option):not(.link-button):not(.chip):hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-line-strong); }
+.gv .gv-block { background: var(--gv-bad-bg); border: 1px solid var(--gv-bad-line); border-radius: var(--gv-r-md); padding: var(--gv-s4); }
+.gv .gv-block .path { font-family: var(--gv-mono); font-size: 15.5px; color: var(--gv-bad); font-weight: var(--gv-fw-semi); overflow-wrap: anywhere; }
+.gv .gv-notice { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); padding: var(--gv-s3) var(--gv-s4); }
+.gv .gv-notice.bad { background: var(--gv-bad-bg); color: var(--gv-bad); border-color: var(--gv-bad-line); }
+.gv .gv-log summary { font-size: var(--gv-fs-sm); color: var(--gv-muted); }
+.gv .gv-log .event-log { font-family: var(--gv-mono); font-size: 14px; }
+.gv .gv-log .event { border-bottom-color: var(--gv-line); }
+.gv .gv-log .event-meta { color: var(--gv-muted); }
+
+/* Wrapped labels keep breathing room; the prompt box fits its longest placeholder at the wider font. */
+.gv .gv-btn, .gv .card button:not(.option):not(.link-button):not(.chip) { padding-block: 8px; line-height: var(--gv-lh-snug); }
+.gv .prompt-row textarea { height: auto; min-height: calc(3 * var(--gv-lh-base) * 1em + 2 * var(--gv-s3) + 2px); }

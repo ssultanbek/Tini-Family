@@ -11,6 +11,9 @@ import { gameLayout } from '../layout.ts';
 import { modeBadge } from './modeBadge.ts';
 import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource-variable/instrument-sans';
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/jetbrains-mono';
 import './game.css';
 import { Yard } from './Yard.tsx';
 
