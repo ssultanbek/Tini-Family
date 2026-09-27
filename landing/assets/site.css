@@ -272,8 +272,8 @@ img, svg { display: block; max-width: 100%; }
 .hero { padding: 40px 0 56px; }
 .hero-grid { display: grid; gap: 36px; align-items: center; }
 .hero-copy { display: grid; gap: 20px; justify-items: start; }
-.hero h1 { font-size: clamp(36px, 4.7vw, 60px); font-weight: var(--gv-fw-black); line-height: 1.05; letter-spacing: -0.03em; max-width: 14em; text-wrap: balance; }
-.hero .tagline { font-size: clamp(20px, 1.9vw, 24px); color: var(--gv-ink); margin-top: -6px; }
+.hero h1 { font-size: clamp(34px, 4.3vw, 54px); font-weight: var(--gv-fw-black); line-height: 1.05; letter-spacing: -0.03em; max-width: 14em; text-wrap: balance; }
+.hero .tagline { font-size: clamp(17px, 1.45vw, 19px); color: var(--gv-muted); margin-top: -4px; }
 .hero .lead { font-size: clamp(17px, 1.4vw, 19px); max-width: 34em; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
 .hero .warm { margin-top: 6px; }
@@ -441,7 +441,8 @@ img, svg { display: block; max-width: 100%; }
 /* ---------- Team ---------- */
 .team { display: grid; gap: var(--gv-s4); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 760px; }
 .member { display: flex; align-items: center; gap: 16px; }
-.member h3 { margin: 0; }
+.member h3 { margin: 0; font-size: var(--gv-fs-base); }
+.member p { font-size: var(--gv-fs-sm); }
 .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--gv-soft); border: 1px solid var(--gv-line); flex: none; }
 
 /* ---------- Footer ---------- */
