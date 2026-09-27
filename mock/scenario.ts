@@ -39,7 +39,7 @@ let brickTotal = 0; // the house keeps growing across turns
 
 // v1.2: replay pre-fills the prompt bar before each prompt gate (turn id -> text).
 export const SUGGESTED: Record<number, string> = {
-  1: "Build a modern, serious-looking website for Rivera Construction. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.",
+  1: "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.",
   2: "Add a careers page using the job descriptions in ~/Documents/Rivera-HR",
   3: "Make the header darker",
 };
