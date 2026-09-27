@@ -48,9 +48,12 @@ export const diorama = {
   fence: { height: 1.1, post: 0.24, rail: 0.1, railHeights: [0.45, 0.85], posts: 7 },
   house: { columns: 4, rows: 3, maxLayers: 8, brick: [1.2, 0.42, 1.18] as [number, number, number], gap: 0.1, slab: 0.2 },
   mac: { height: 3.4, roof: 1.6, doorWidth: 1.9, doorHeight: 1.9 },
-  sign: { height: 1.6, outward: 0.9, scale: 17, plaque: 14 },  // label size in world terms (drei Html distanceFactor)   // signs sit on their own fence, nudged to its outer side so neighbours don't overlap
+  sign: { height: 1.6, outward: 1.25, scale: 17, plaque: 14, text: 10, post: 1.85, board: [2.9, 0.95] as [number, number], boardY: 1.35 },  // label sizes are drei Html distanceFactor   // signs sit on their own fence, nudged to its outer side so neighbours don't overlap
   // Three-quarter view from the front-right, far enough back that the whole floating block (and its layered sides) is in frame.
   camera: { position: [20, 27, 44] as [number, number, number], target: [0.2, -2.6, 0.4] as [number, number, number], fov: 30 },
+  // Character pace and action lengths (seconds). The queue's 'fast' mode multiplies by fastFactor; 'instant' skips.
+  motion: { walk: 3.4, fastFactor: 0.25, hammer: 0.9, scan: 0.8, speechMin: 2.6, speechMax: 7, speechBase: 1.8, speechPerChar: 0.05 },
+  orbit: { minDistance: 24, maxDistance: 85, minPolar: 0.25, maxPolar: 1.32 },
   sun: { position: [-16, 26, 12] as [number, number, number], intensity: 2.4, shadowMap: 2048, shadowMapLow: 1024, shadowBox: 24 },
   colors: {
     grass: '#a8c98a', grassDark: '#93b877', yard: '#b9d69c', soil: '#b98b62', soilDark: '#a07651', stone: '#9aa1a8', stoneDark: '#858c94',

@@ -40,3 +40,23 @@ test('hedges fill only unfenced left slots, like the 2D yard', () => {
   assert.deepEqual(hedgeSlots(6).map(h => h.index), [6]);
   assert.deepEqual(hedgeSlots(7), []);
 });
+
+test('walking routes go around the house, never through it', async () => {
+  const { route } = await import('../src/scene3d/world.ts');
+  const house = rectBox(L.house);
+  const left = { x: house.x - house.width, z: house.z }, right = { x: house.x + house.width, z: house.z };
+  const path = route(left, right);
+  assert.ok(path.length >= 2, 'detours via a corner');
+  assert.deepEqual(path.at(-1), right);
+  // every leg stays outside the house footprint (sampled)
+  let from = left;
+  for (const to of path) {
+    for (let i = 0; i <= 20; i++) {
+      const p = { x: from.x + (to.x - from.x) * i / 20, z: from.z + (to.z - from.z) * i / 20 };
+      assert.ok(!(Math.abs(p.x - house.x) < house.width / 2 && Math.abs(p.z - house.z) < house.depth / 2), 'inside the house');
+    }
+    from = to;
+  }
+  const a = { x: house.x - house.width, z: house.z + house.depth * 2 }, b = { x: house.x + house.width, z: house.z + house.depth * 2 };
+  assert.deepEqual(route(a, b), [b], 'clear line: walk straight');
+});

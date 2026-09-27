@@ -40,7 +40,7 @@ export function House({ bricks, epoch }: { bricks: number; epoch: number }) {
       <meshStandardMaterial color={C.slab} roughness={0.95} />
     </RoundedBox>
     {cells.map((cell, i) => <Brick key={`${epoch}-${i}`} {...cell} drop={i >= animateFrom} />)}
-    <Html position={[house.x, top + 1.7, house.z - house.depth / 2]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[8, 0]} className="d3-tag house">
+    <Html position={[house.x, 0.55, house.z + house.depth / 2 + 0.75]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[8, 0]} className="d3-tag house">
       House · the project<span>{bricks} {bricks === 1 ? 'brick' : 'bricks'}</span>
     </Html>
   </group>;

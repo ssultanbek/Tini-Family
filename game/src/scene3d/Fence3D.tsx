@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, RoundedBox } from '@react-three/drei';
-import type { Group } from 'three';
+import type { Group, Mesh, MeshStandardMaterial } from 'three';
 import type { Segment, SegmentStatus } from '../../../shared/events.ts';
 import { diorama as D, yardLayout as L } from '../layout.ts';
 import { fencePosts, fenceSpan, toWorld } from './world.ts';
@@ -48,10 +48,38 @@ function FenceSegment({ segment, index, reducedMotion }: { segment: Segment; ind
         <boxGeometry args={[span.length, f.rail, f.rail]} />{material(`r${h}`)}
       </mesh>)}
     </group>
-    {/* One-line sign on its own fence: name + status (icon and word). Details live in the Analysis fence list. */}
-    <Html position={[span.x + out.x, D.sign.height, span.z + out.z]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[10, 0]}>
-      <div className={`d3-sign ${segment.status}`} title={segment.detail}>
-        <strong>{segment.label}</strong> <span className="d3-sign-status">{look.icon} {look.word}</span>
+    <Signpost segment={segment} x={span.x + out.x} z={span.z + out.z} look={look} />
+  </group>;
+}
+
+/** A wooden signpost beside the fence: a real board on a post with a status lantern on top.
+ *  The board faces the demo camera; its text is mounted flat on the board (bundled fonts, crisp). */
+function Signpost({ segment, x, z, look }: { segment: Segment; x: number; z: number; look: (typeof statusLook)[SegmentStatus] }) {
+  const lantern = useRef<Mesh>(null);
+  const planned = segment.status === 'planned';
+  const yaw = Math.atan2(D.camera.position[0] - x, D.camera.position[2] - z);
+  const glow = segment.status === 'built' ? '#f6d9a8' : planned ? '#d8d2c4' : look.color;
+  useFrame(({ clock }) => {
+    if (!lantern.current) return;
+    const material = lantern.current.material as MeshStandardMaterial;
+    material.emissiveIntensity = segment.status === 'red' ? 1.4 + Math.sin(clock.elapsedTime * 6) * 0.6 : segment.status === 'inspecting' ? 1 + Math.sin(clock.elapsedTime * 4) * 0.5 : planned ? 0.1 : 0.9;
+  });
+  const s = D.sign;
+  return <group position={[x, 0, z]} rotation={[0, yaw, 0]}>
+    <mesh position={[0, s.post / 2, -0.05]} castShadow><cylinderGeometry args={[0.07, 0.09, s.post, 6]} /><meshStandardMaterial color={C.woodDark} flatShading transparent={planned} opacity={planned ? 0.5 : 1} /></mesh>
+    <RoundedBox args={[s.board[0], s.board[1], 0.1]} radius={0.05} smoothness={2} position={[0, s.boardY, 0]} castShadow>
+      <meshStandardMaterial color={planned ? '#cfc6b3' : '#b98652'} roughness={0.9} transparent={planned} opacity={planned ? 0.7 : 1} />
+    </RoundedBox>
+    <RoundedBox args={[s.board[0] + 0.08, 0.1, 0.13]} radius={0.04} position={[0, s.boardY + s.board[1] / 2, 0]} castShadow>
+      <meshStandardMaterial color={planned ? '#cfc8b8' : C.woodDark} roughness={0.9} />
+    </RoundedBox>
+    <mesh ref={lantern} position={[0, s.post + 0.2, -0.05]} castShadow>
+      <icosahedronGeometry args={[0.22, 1]} /><meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={0.9} roughness={0.3} toneMapped={false} />
+    </mesh>
+    <Html position={[0, s.boardY, 0.06]} transform distanceFactor={s.text} zIndexRange={[10, 0]}>
+      <div className={`d3-board st-${segment.status}`} title={segment.detail}>
+        <strong>{segment.label}</strong>
+        <span>{look.icon} {look.word}</span>
       </div>
     </Html>
   </group>;

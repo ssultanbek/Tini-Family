@@ -62,3 +62,38 @@ export function decorKind(frame: number): 'tree' | 'autumn' | 'bush' | 'mushroom
   if (frame === 17) return 'sprout';
   return 'tree';
 }
+
+/** Does the segment a→b cross the rectangle (centre x/z, half sizes)? Slab test. */
+function crosses(a: XZ, b: XZ, r: { x: number; z: number; hx: number; hz: number }) {
+  let t0 = 0, t1 = 1;
+  const d = { x: b.x - a.x, z: b.z - a.z };
+  for (const [p, dp, lo, hi] of [[a.x, d.x, r.x - r.hx, r.x + r.hx], [a.z, d.z, r.z - r.hz, r.z + r.hz]] as const) {
+    if (Math.abs(dp) < 1e-9) { if (p < lo || p > hi) return false; continue; }
+    let u0 = (lo - p) / dp, u1 = (hi - p) / dp;
+    if (u0 > u1) [u0, u1] = [u1, u0];
+    t0 = Math.max(t0, u0); t1 = Math.min(t1, u1);
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+const dist = (a: XZ, b: XZ) => Math.hypot(a.x - b.x, a.z - b.z);
+
+/** Walking route from a to b that goes around the house (never through it): 0, 1 or 2 corner waypoints. */
+export function route(a: XZ, b: XZ, margin = 1): XZ[] {
+  const h = rectBox(L.house);
+  const r = { x: h.x, z: h.z, hx: h.width / 2 + margin, hz: h.depth / 2 + margin };
+  if (!crosses(a, b, { ...r, hx: r.hx - 0.05, hz: r.hz - 0.05 })) return [b];
+  const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => ({ x: r.x + sx * (r.hx + 0.05), z: r.z + sz * (r.hz + 0.05) }));
+  const inner = { ...r, hx: r.hx - 0.1, hz: r.hz - 0.1 };
+  let best: XZ[] = [], bestLength = Infinity;
+  for (const c of corners) {
+    if (!crosses(a, c, inner) && !crosses(c, b, inner) && dist(a, c) + dist(c, b) < bestLength) { best = [c, b]; bestLength = dist(a, c) + dist(c, b); }
+    for (const d of corners) {
+      if (d === c || crosses(a, c, inner) || crosses(c, d, inner) || crosses(d, b, inner)) continue;
+      const length = dist(a, c) + dist(c, d) + dist(d, b);
+      if (length < bestLength) { best = [c, d, b]; bestLength = length; }
+    }
+  }
+  return best.length ? best : [b];
+}

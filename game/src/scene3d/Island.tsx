@@ -1,4 +1,7 @@
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { RoundedBox, Html } from '@react-three/drei';
+import type { Group } from 'three';
 import { diorama as D, yardLayout as L } from '../layout.ts';
 import { blockBox, decorKind, hedgeSlots, rectBox, toWorld } from './world.ts';
 
@@ -52,7 +55,10 @@ export function YardGround() {
 }
 
 function Tree({ x, z, autumn = false, scale = 1 }: { x: number; z: number; autumn?: boolean; scale?: number }) {
-  return <group position={[x, 0, z]} scale={scale}>
+  // A gentle breeze: each tree sways on its own phase.
+  const crown = useRef<Group>(null);
+  useFrame(({ clock }) => { if (crown.current) crown.current.rotation.z = Math.sin(clock.elapsedTime * 1.1 + x * 0.7 + z) * 0.035; });
+  return <group ref={crown} position={[x, 0, z]} scale={scale}>
     <mesh position={[0, 0.35, 0]} castShadow><cylinderGeometry args={[0.12, 0.16, 0.7, 6]} /><meshStandardMaterial color={C.trunk} flatShading /></mesh>
     <mesh position={[0, 1.2, 0]} castShadow><coneGeometry args={[0.7, 1.4, 7]} /><meshStandardMaterial color={autumn ? C.autumn : C.leaf} flatShading /></mesh>
     <mesh position={[0, 1.85, 0]} castShadow><coneGeometry args={[0.5, 1.0, 7]} /><meshStandardMaterial color={autumn ? C.autumn : C.leafDark} flatShading /></mesh>
