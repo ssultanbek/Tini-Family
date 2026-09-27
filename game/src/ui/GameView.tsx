@@ -5,7 +5,7 @@ import { commandKey, store } from '../store.ts';
 import { fixedAwaitingGreen } from './fixedFindings.ts';
 import { ReportScreen } from './Report.tsx';
 import { RawView } from './RawView.tsx';
-import { Composer } from './Composer.tsx';
+import { ChatHistory, PromptBar } from './Project.tsx';
 import { reportVisible, type ReportMode } from './promptMode.ts';
 import { gameLayout } from '../layout.ts';
 import '@fontsource-variable/bricolage-grotesque';
@@ -56,7 +56,7 @@ function describe(event: EngineEvent): string {
   }
 }
 
-/** The game view at `/`: yard with a message bar under it | analysis. Split from Dashboard.tsx so it can be redesigned while the dashboard stays frozen. */
+/** The game view at `/`: chat | yard | analysis. Split from Dashboard.tsx so it can be redesigned while the dashboard stays frozen. */
 export function GameView({ send }: { send: (command: GameCommand) => boolean }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { world, events, pending, connected, synced } = state;
@@ -94,10 +94,13 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
     {state.engineError && <p className="gv-notice bad" role="alert">Engine error: {state.engineError}</p>}
 
     <main className="gv-cols">
-      <section className="gv-center" aria-label="The yard">
-        <Yard />
-        <Composer world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
-      </section>
+      <aside className="gv-panel gv-chat-panel" aria-label="Chat">
+        <h2>Chat</h2>
+        <div className="gv-chat-scroll"><ChatHistory world={world} /></div>
+        <PromptBar compact world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
+      </aside>
+
+      <section className="gv-center" aria-label="The yard"><Yard /></section>
 
       <aside className="gv-panel gv-analysis" aria-label="Analysis">
         <h2>Analysis</h2>
