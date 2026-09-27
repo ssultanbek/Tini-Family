@@ -47,6 +47,12 @@ const cases: [string, any, boolean][] = [
   // HTML closing tags are not paths (live run: a spark on "/div" from grep "</div"); input redirects still are
   ["Bash", { command: `grep -c "</div>" index.html && grep -n '</section' about.html` }, true],
   ["Bash", { command: "cat </etc/passwd" }, false],
+  // teammate report: "</div" in a command became a /div block. Every shape Claude uses:
+  ["Bash", { command: "grep -c '</div' index.html gallery.html" }, true],
+  ["Bash", { command: "echo '</div>' >> about.html" }, true],
+  ["Bash", { command: "sed -i '' 's#</div>#</div>\\n#g' contact.html" }, true],
+  ["Bash", { command: "cat > a.html <<'EOF'\n<div class=\"x\">hi</div>\n</section></main>\nEOF" }, true],
+  ["Bash", { command: "for f in *.html; do python3 -c \"import sys; t=open('$f').read(); print(t.count('<div'), t.count('</div>'))\"; done" }, true],
   // regex fragments are not paths (live run: a spark on "/(header")
   ["Bash", { command: `grep -c '</\\(header\\|nav\\)' index.html; python3 -c "import re; re.findall(r'</(header|nav)>', open('a.html').read())"` }, true],
   ["Bash", { command: "cat /etc/hosts /Users/x/.ssh/id_rsa" }, false],

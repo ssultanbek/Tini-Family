@@ -91,7 +91,7 @@ Claude Code already ships enforcement machinery: permission rules, hooks, and an
 Demo persona: **Maria, a business student doing a freelance website for Rivera Construction.**
 
 1. **Setup:** she opens the Tini Family app on her Mac. An empty yard, Tini, Tina, the dog napping. Nothing is scanned yet: Tini only looks where she points.
-2. **Request:** "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services."
+2. **Request:** "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects and a map of our office on the Contact page. Use our Google Maps key from the About folder so our custom pin shows. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services." (then T2: "Add this year's job-site photos from ~/Pictures/Jobsite2024 to the gallery." and T3: "Make the header darker.")
 3. **Plan:** Tini works out the fence: 3 folders, npm packages, the project workspace. Tina pre-inspects those folders.
 4. **Contract:** one plain-English card: what Claude can use, what's stripped (e.g., "31 photos contain GPS locations, removed before Claude sees them"), and "everything else on your Mac stays outside." **One Approve replaces forty unread "Yes" clicks.**
 5. **Fence:** Tini walks the yard placing labeled fence segments (Photos, About, Services, Web packages, Workspace) and carries copies of approved files into the yard. Real folders stay untouched.

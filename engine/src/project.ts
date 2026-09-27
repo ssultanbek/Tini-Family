@@ -2,6 +2,7 @@
 // Every engine event goes through Hub.emit(): numbered, reduced, recorded, broadcast.
 // Commands are checked against the current phase; an invalid one becomes a raw.log
 // line (channel "engine"), never an engine.error. The crew (crew.ts) does the work.
+import os from "node:os";
 import type { EngineEvent, Finding, GameCommand, Phase, WorldState } from "../../shared/events.ts";
 import { initialState, reduce } from "../../shared/reducer.ts";
 import type { Ask } from "./ai.ts";
@@ -11,6 +12,19 @@ import type { Recorder } from "./recorder.ts";
 // ---------------------------------------------------------------------------
 // Hub: the one emit() path
 // ---------------------------------------------------------------------------
+const HOME = os.homedir();
+/** "/Users/maria/tini-projects/x" -> "~/tini-projects/x" in everything a person reads. */
+export const tilde = (s: string) => s.split(`${HOME}/`).join("~/").split(HOME).join("~");
+function tildeText(ev: Ev): Ev {
+  switch (ev.type) {
+    case "raw.log": return { ...ev, text: tilde(ev.text) };
+    case "speech": return { ...ev, text: tilde(ev.text) };
+    case "turn.finished": return { ...ev, summary: tilde(ev.summary) };
+    case "engine.error": return { ...ev, message: tilde(ev.message) };
+    default: return ev;
+  }
+}
+
 export class Hub {
   private seq = 0;
   state: WorldState = initialState();
@@ -20,7 +34,7 @@ export class Hub {
   constructor(public recorder: Recorder | null = null) {}
 
   emit(ev: Ev): EngineEvent {
-    const e = { ...ev, seq: ++this.seq, ts: Date.now() } as EngineEvent;
+    const e = { ...tildeText(ev), seq: ++this.seq, ts: Date.now() } as EngineEvent;
     this.state = reduce(this.state, e);
     if (e.type === "session.reset") this.events = [];
     this.events.push(e);

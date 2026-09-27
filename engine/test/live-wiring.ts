@@ -21,7 +21,7 @@ const hub = new Hub(null);
 const events: EngineEvent[] = [];
 hub.on((e) => events.push(e));
 
-const workspace = () => hub.state.rawLog.map((l) => l.match(/^\[config\] workspace (\S+);/)?.[1]).find(Boolean)!;
+const workspace = () => hub.state.rawLog.map((l) => l.match(/^\[config\] workspace (\S+);/)?.[1]).find(Boolean)!.replace(/^~(?=\/)/, os.homedir());
 const scripted = async (ctx: CrewCtx, _msg: string, info: { turnId: number }) => {
   const ws = workspace();
   const brick = (op: "read" | "write" | "edit", file: string) => ctx.emit({ actor: "dog", type: "dog.brick.placed", op, file, bricks: ctx.state().bricks + 1 });

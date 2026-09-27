@@ -66,6 +66,9 @@ export class DogRunner {
   private blockedThisTurn = new Set<string>();
   private tools = new Map<string, { name: string; input: Record<string, unknown> }>();
   private lastSpeech = 0;
+  private speechBuf: string[] = [];
+  private speechTimer: NodeJS.Timeout | null = null;
+  private wantActivity = false;   // Claude's last words were code-ish: say what it's doing at its next tool call
   private sessionCost = 0;
   private turnEstimate = 0;
   private seenMsgIds = new Set<string>();
@@ -173,8 +176,16 @@ export class DogRunner {
           }
         }
         for (const b of m.message.content) {
-          if (b.type === "text" && b.text.trim()) { this.log("sdk", `Claude: ${b.text.replace(/\s+/g, " ").slice(0, 400)}`); this.speak(b.text); }
-          if (b.type === "tool_use") this.tools.set(b.id, { name: b.name, input: (b.input ?? {}) as Record<string, unknown> });
+          if (b.type === "text" && b.text.trim()) {
+            this.log("sdk", `Claude: ${b.text.replace(/\s+/g, " ").slice(0, 400)}`);
+            const line = speechLine(b.text);
+            if (line) { this.wantActivity = false; this.speak(line); } else this.wantActivity = true;
+          }
+          if (b.type === "tool_use") {
+            const input = (b.input ?? {}) as Record<string, unknown>;
+            this.tools.set(b.id, { name: b.name, input });
+            if (this.wantActivity) { this.wantActivity = false; this.speak(activityLine(b.name, input)); }
+          }
         }
         return;
       }
@@ -197,7 +208,7 @@ export class DogRunner {
         this.log("sdk", `result ${m.subtype} (${m.terminal_reason ?? "-"}) turns=${m.num_turns} turn cost $${turnCost.toFixed(3)} session $${m.total_cost_usd.toFixed(3)}`);
         if (!w || w.abandoned) return;          // the interrupted turn finishing late: already reported as "Stopped by you"
         let summary: string;
-        if (m.subtype === "success") summary = summarize(m.result);
+        if (m.subtype === "success") summary = summarize(m.result, SUMMARY_MAX);
         else if (this.overBudget) summary = "Stopped: this turn reached its budget";
         else if (m.subtype === "error_max_turns") summary = "Stopped: this turn reached its step limit";
         else if (m.subtype === "error_max_budget_usd") summary = "Stopped: the project reached its budget";
@@ -254,7 +265,7 @@ export class DogRunner {
     this.escalated.add(folder!); this.escalated.add(display);
     this.reasons.set(display, why);
     this.safe((c) => {
-      c.say("dog", shortLine(`Can I have ${display}? ${why}`, 90));
+      this.speak(cutWords(`Can I have ${display}? ${why}`, SPEECH_MAX));
       c.escalate(display, "agent").catch(() => {});
     });
     return "The owner is reviewing this. Keep working; approved files will appear in ./assets/ and you'll get a message when they're there.";
@@ -293,12 +304,21 @@ export class DogRunner {
     });
   }
 
-  private speak(text: string) {
-    const now = Date.now();
-    if (now - this.lastSpeech < (this.cfg.speechGapMs ?? 3000)) return;
-    const line = shortLine(text, 90);
+  /** One plain line per bubble; lines less than 2s apart are merged into the next bubble. */
+  private speak(line: string) {
     if (!line) return;
-    this.lastSpeech = now;
+    const gap = this.cfg.speechGapMs ?? 2000;
+    const now = Date.now();
+    if (!this.speechTimer && now - this.lastSpeech >= gap) { this.emitSpeech(line); return; }
+    if (!this.speechBuf.includes(line)) this.speechBuf.push(line);
+    if (!this.speechTimer) this.speechTimer = setTimeout(() => {
+      this.speechTimer = null;
+      const lines = this.speechBuf.splice(0);
+      if (lines.length) this.emitSpeech(mergeLines(lines));
+    }, Math.max(0, gap - (now - this.lastSpeech)));
+  }
+  private emitSpeech(line: string) {
+    this.lastSpeech = Date.now();
     this.safe((ctx) => ctx.say("dog", line));
   }
 
@@ -324,23 +344,75 @@ export function classifyRequest(raw: string, workspace: string): { kind: "privat
   return { kind: "ask", display, folder };
 }
 
-/** First sentence, markdown stripped, at most `max` characters. */
-export function shortLine(text: string, max: number): string {
-  const plain = text.replace(/```[\s\S]*?```/g, " ").replace(/[#*_`>|-]+/g, " ").replace(/\s+/g, " ").trim();
-  if (!plain) return "";
-  const sentence = plain.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? plain;
-  return sentence.length <= max ? sentence : sentence.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+export const SPEECH_MAX = 80;
+export const SUMMARY_MAX = 400;
+
+/** Cuts at a word boundary, never mid-word. */
+export function cutWords(s: string, max: number): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return t.slice(0, max).replace(/\s+\S*$/, "").replace(/[\s,;:–—-]+$/, "") + "…";
 }
 
-/** The turn's one-line result for the timeline: the first paragraph, plus the list it introduces. */
-export function summarize(result: string, max = 160): string {
-  const paras = result.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  if (!paras.length) return "Done.";
-  let text = paras[0];
-  if (/:\s*$/.test(text) && paras[1]) {
-    const items = paras[1].split("\n").map((l) => l.replace(/^\s*(?:[-*+]|\d+[.)])\s*/, "").replace(/\*\*/g, "").split(/\s+[-–—:]\s+/)[0].trim()).filter(Boolean);
-    text = `${text} ${items.join(", ")}`;
+const stripMarkdown = (s: string) => s.replace(/```[\s\S]*?```/g, " ").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/[#*_>|]+/g, " ").replace(/\s+/g, " ").trim();
+// hex colors, rgb()/rgba(), CSS units, backticks, braces/angle brackets, paths, file names, CSS custom properties, calls
+const CODEISH = /#[0-9a-f]{3,8}\b|\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{6}\b|\brgba?\s*\(|\b\d+(?:\.\d+)?(?:px|rem|em|vh|vw|ms)\b|`|[{}<>]|(?:^|[\s("'])[.~]?\/[\w.-]|\b[\w-]+\.(?:html?|css|js|mjs|json|md|jpe?g|png|svg|webp|gif|ts|txt|pdf)\b|(?:^|\s)--[a-z][\w-]*|\b\w+\(\)/i;
+
+/** Claude's first clean sentence as a bubble, or null if it's empty or code-ish. */
+export function speechLine(text: string, max = SPEECH_MAX): string | null {
+  const raw = text.replace(/```[\s\S]*?```/g, " ").replace(/\*\*|__/g, "").trim();
+  const first = (raw.match(/^[\s\S]+?[.!?](?=\s|$)/)?.[0] ?? raw.split("\n")[0]).trim();
+  if (!first || CODEISH.test(first)) return null;
+  const clean = stripMarkdown(first).replace(/:$/, ".");
+  return clean ? cutWords(clean, max) : null;
+}
+
+/** What the dog is doing, in plain words, from its tool call. */
+export function activityLine(tool: string, input: Record<string, unknown>): string {
+  const file = String(input.file_path ?? input.path ?? "");
+  const base = path.basename(file).toLowerCase();
+  const name = base.replace(/\.[a-z0-9]+$/, "").replace(/[-_]+/g, " ");
+  const body = `${input.content ?? ""} ${input.new_string ?? ""} ${input.old_string ?? ""}`.toLowerCase();
+  const thing = /\.css$/.test(base) ? "the styles"
+    : /\.m?js$/.test(base) ? "the scripts"
+    : /\.html?$/.test(base) ? (name === "index" ? "the home page" : `the ${name} page`)
+    : /\.(jpe?g|png|webp|gif|heic)$/.test(base) ? "the photos"
+    : /\.(md|txt|pdf|docx?)$/.test(base) ? (/about|company|services/.test(file) ? "the company info" : "the notes")
+    : "the files";
+  if (/maps\.google|google\.maps|maps\/embed|maps\.googleapis/.test(body)) return "Adding the contact map";
+  switch (tool) {
+    case "Write": return cutWords(`Building ${thing}`, SPEECH_MAX);
+    case "Edit": return thing === "the styles" ? (/header|\bnav\b/.test(body) ? "Styling the header" : "Styling the site") : cutWords(`Updating ${thing}`, SPEECH_MAX);
+    case "Read": return cutWords(`Looking at ${thing}`, SPEECH_MAX);
+    case "Glob": case "Grep": return "Looking through the files";
+    case "Bash": return "Checking the work";
+    case REQUEST_TOOL: return "Asking the owner for access";
+    default: return "Working on it";
   }
-  const plain = text.replace(/```[\s\S]*?```/g, " ").replace(/[#*_`>|]+/g, "").replace(/\s+/g, " ").trim();
-  return plain.length <= max ? plain : plain.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+}
+
+/** Lines that arrived less than 2s apart become one bubble (the latest wins if they don't fit together). */
+export function mergeLines(lines: string[], max = SPEECH_MAX): string {
+  const joined = lines.map((l) => (/[.!?…]$/.test(l) ? l : `${l}.`)).join(" ");
+  return joined.length <= max ? joined : lines[lines.length - 1];
+}
+
+/** First sentence, markdown stripped, at most `max` characters (kept for callers outside speech). */
+export function shortLine(text: string, max: number): string {
+  const plain = stripMarkdown(text);
+  if (!plain) return "";
+  const sentence = plain.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? plain;
+  return cutWords(sentence, max);
+}
+
+/** The turn's result for the timeline: Claude's final message as plain text, up to `max` characters,
+ *  cut at a sentence end when one is near, else at a word boundary. */
+export function summarize(result: string, max = SUMMARY_MAX): string {
+  const plain = stripMarkdown(result.replace(/\n\s*\n/g, "\n").split("\n").map((l) => l.trim().replace(/^(?:[-*+]|\d+[.)])\s+/, "")).filter(Boolean)
+    .map((l) => (/[.!?:]$/.test(l) ? l : `${l};`)).join(" ").replace(/;$/, "."));
+  if (!plain) return "Done.";
+  if (plain.length <= max) return plain;
+  const cut = plain.slice(0, max);
+  const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+  return end > max * 0.6 ? cut.slice(0, end + 1) : cutWords(plain, max);
 }

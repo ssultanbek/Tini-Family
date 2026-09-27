@@ -182,7 +182,8 @@ export function standinCrew(speed = 1): Crew {
         await brick(ctx, "edit", "gallery.html");
         return "Added the approved job-site photos to the gallery.";
       }
-      for (const [op, f] of [["read", "index.html"], ["write", `page-${turnId}.html`], ["edit", "styles.css"]] as const) await brick(ctx, op, f); // 3 per turn, like the mock
+      const page = /gallery/i.test(message) ? "gallery.html" : `page-${turnId}.html`;
+      for (const [op, f] of [["read", "index.html"], ["write", page], ["edit", "styles.css"]] as const) await brick(ctx, op, f); // 3 per turn, like the mock
       return `Done: ${message.split("\n")[0].slice(0, 60)}`;
     },
 

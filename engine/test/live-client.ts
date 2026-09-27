@@ -16,7 +16,8 @@ const replay = argv.includes("--replay");
 const main = argv.includes("--main");
 const observe = argv.includes("--observe");
 const TURNS = observe ? 1 : main ? 3 : 4;
-const PROMPTS = [SUGGESTED[1], SUGGESTED[2], SUGGESTED[3], "Add a contact form to every page"];
+// --main is the demo (T1-T3). The 4-turn run keeps Rivera-HR in turn 2 (HR card coverage) and a Stop in turn 4.
+const PROMPTS = main || observe ? [SUGGESTED[1], SUGGESTED[2], SUGGESTED[3]] : [SUGGESTED[1], "Add a careers page using the job descriptions in ~/Documents/Rivera-HR", SUGGESTED[3], "Add a contact form to every page"];
 const sock = io(`http://127.0.0.1:${opt("port") ?? ENGINE_PORT}`);
 const send = (c: GameCommand) => sock.emit(SOCKET.command, c);
 const t0 = Date.now();
@@ -113,13 +114,19 @@ function finish() {
   ] : main ? [
     ...common,
     ["harness spark (simulated)", blocked.some((b) => b.simulated && b.target === "~/.ssh/id_rsa")],
-    ["request_access card for Jobsite2024 -> narrow", escs.some((e) => e.source === "agent" && e.requested.includes("Jobsite2024")) &&
-      ev("escalation.resolved").some((r) => r.choice === "narrow" && escs.find((e) => e.escalationId === r.escalationId)?.source === "agent")],
     ["real red: API key on web-packages", reds.some((f) => f.segmentId === "web-packages" && /key/i.test(`${f.title} ${f.explanation}`))],
     ["real red: crew-truck metadata on photos", reds.some((f) => f.segmentId === "photos" && /crew-truck/.test(f.file ?? ""))],
     ["reds explained", reds.every((f) => f.explanation.length > 20)],
     ["fixes -> green -> launch -> report (turn 1)", ev("fix.applied").length >= 2 && inTurn(1, (e) => e.type === "launch.done") && inTurn(1, (e) => e.type === "report.ready")],
-    ["turn 2 Rivera-HR card", escs.some((e) => e.source === "prompt" && e.requested.includes("Rivera-HR"))],
+    [`T2 card for Jobsite2024 (${(() => { const c = escs.find((e) => e.requested.includes("Jobsite2024")); return c ? `${c.inspection.totalFiles} files: ${c.inspection.highlights.map((h) => `${h.count} ${h.label}`).join(" / ")}` : "none"; })()}) -> narrow`,
+      (() => {
+        const c = escs.find((e) => e.source === "prompt" && e.requested.includes("Jobsite2024"));
+        const n = (re: RegExp) => c?.inspection.highlights.find((h) => re.test(h.label))?.count;
+        return !!c && c.inspection.totalFiles === 1212 && n(/job|construction|project/i) === 12 && n(/personal/i) === 1199 && n(/licen/i) === 1 && n(/GPS/i) === 903
+          && ev("escalation.resolved").some((r) => r.escalationId === c.escalationId && r.choice === "narrow");
+      })()],
+    ["T2 gallery updated", inTurn(2, (e) => e.type === "dog.brick.placed" && (e.op === "write" || e.op === "edit") && /gallery/i.test(e.file))],
+    [`report shows narrowed + fixed lines (${s.report?.narrowed.length ?? 0} narrowed, ${s.report?.fixed.length ?? 0} fixed)`, (s.report?.narrowed.length ?? 0) >= 1 && (s.report?.fixed.length ?? 0) >= 2],
     ["turn 3 no card; relock -> re-inspect -> unlock", !inTurn(3, (e) => e.type === "escalation.opened") && inTurn(3, (e) => e.type === "launch.locked") && inTurn(3, (e) => e.type === "tina.inspect.finished") && inTurn(3, (e) => e.type === "launch.unlocked")],
     ["no Stop", !s.turns.some((t) => t.summary === "Stopped by you")],
     ["all green, launched", s.segments.every((g) => g.status === "green") && s.phase === "launched"],

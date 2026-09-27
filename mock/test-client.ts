@@ -24,8 +24,8 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.type === "tina.inspect.finished" && e.scope === "final") for (const f of state!.findings) send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id });
   if (e.type === "launch.unlocked" && state!.turns.length === 1) send({ type: "launch" });
   // Turn 2 names a new folder (escalation from the prompt); turn 3 needs nothing new.
-  if (e.type === "report.ready") send({ type: "prompt", text: "Add a careers page using the job descriptions in ~/Documents/Rivera-HR" });
-  if (e.type === "launch.unlocked" && state!.turns.length === 2) send({ type: "prompt", text: "Make the header darker" });
+  if (e.type === "report.ready") send({ type: "prompt", text: SUGGESTED[2] });
+  if (e.type === "launch.unlocked" && state!.turns.length === 2) send({ type: "prompt", text: SUGGESTED[3] });
   if (e.type === "launch.unlocked" && state!.turns.length === 3) {
     const s = state!;
     const ok = s.segments.every((g) => g.status === "green") && s.launchUnlocked && s.findings.length === 0

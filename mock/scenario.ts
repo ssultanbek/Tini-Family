@@ -39,9 +39,9 @@ let brickTotal = 0; // the house keeps growing across turns
 
 // v1.2: replay pre-fills the prompt bar before each prompt gate (turn id -> text).
 export const SUGGESTED: Record<number, string> = {
-  1: "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.",
-  2: "Add a careers page using the job descriptions in ~/Documents/Rivera-HR",
-  3: "Make the header darker",
+  1: "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects and a map of our office on the Contact page. Use our Google Maps key from the About folder so our custom pin shows. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.",
+  2: "Add this year's job-site photos from ~/Pictures/Jobsite2024 to the gallery.",
+  3: "Make the header darker.",
 };
 const suggest = (turnId: number): Step[] =>
   SUGGESTED[turnId] ? [s(0, { actor: "system", type: "prompt.suggested", text: SUGGESTED[turnId] })] : [];
@@ -158,6 +158,32 @@ export function riveraScenario(): Step[] {
   ];
 }
 
+// The prompt-sourced card: the demo's T2 names ~/Pictures/Jobsite2024; any other folder gets the
+// Rivera-HR card (still covered by tests, out of the main recording).
+function promptCard(folder: string) {
+  if (/Jobsite2024/i.test(folder)) return {
+    inspection: { totalFiles: 1212, highlights: [
+      { label: "job-site photos", count: 12, severity: "low" as const },
+      { label: "personal photos", count: 1199, severity: "medium" as const },
+      { label: "driver's license scan", count: 1, severity: "high" as const },
+      { label: "photos with GPS location", count: 903, severity: "medium" as const },
+    ] },
+    options: [
+      { id: "narrow" as const, label: "Allow only the 12 job-site photos", detail: "Locations removed. Personal photos and the license stay out.", recommended: true },
+      { id: "all" as const, label: "Allow the whole folder", detail: "All 1,212 files, including the license scan.", recommended: false },
+      { id: "deny" as const, label: "Deny", detail: "Claude works without it.", recommended: false },
+    ],
+  };
+  return {
+    inspection: { totalFiles: 8, highlights: [{ label: "documents", count: 7, severity: "low" as const }, { label: "file with a password in it", count: 1, severity: "high" as const }] },
+    options: [
+      { id: "narrow" as const, label: "Allow the 7 documents", detail: "The file with a password stays out.", recommended: true },
+      { id: "all" as const, label: "Allow the whole folder", detail: "All 8 files.", recommended: false },
+      { id: "deny" as const, label: "Deny", detail: "Claude works without it.", recommended: false },
+    ],
+  };
+}
+
 // Maria keeps working in the same project. Each prompt is a new turn inside the
 // same fence. If the prompt names a new folder (contains "~/"), Tini asks first.
 function followUps(turnId: number, segs: () => Segment[]): Step[] {
@@ -176,12 +202,7 @@ function followUps(turnId: number, segs: () => Segment[]): Step[] {
         s(0, { actor: "tina", type: "tina.inspect.started", scope: "folder" }),
         s(1200, { actor: "tini", type: "escalation.opened", escalationId: `esc-t${turnId}`, source: "prompt", requested: newFolder,
           ask: "Your new request needs a folder that isn't inside the fence yet.",
-          inspection: { totalFiles: 8, highlights: [{ label: "documents", count: 7, severity: "low" }, { label: "file with a password in it", count: 1, severity: "high" }] },
-          options: [
-            { id: "narrow", label: "Allow the 7 documents", detail: "The file with a password stays out.", recommended: true },
-            { id: "all", label: "Allow the whole folder", detail: "All 8 files.", recommended: false },
-            { id: "deny", label: "Deny", detail: "Claude works without it.", recommended: false },
-          ] }),
+          ...promptCard(newFolder) }),
         { gate: "escalation.choose", then: (c) => {
           const choice = c.type === "escalation.choose" ? c.optionId : "deny";
           const out: Step[] = [s(0, { actor: "system", type: "escalation.resolved", escalationId: `esc-t${turnId}`, choice, summary: choice === "deny" ? "Request denied" : "Folder added" })];

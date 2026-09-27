@@ -16,7 +16,8 @@ const choice = (process.argv.find((a) => ["narrow", "all", "deny"].includes(a)) 
 const replay = process.argv.includes("--replay");
 const pi = process.argv.indexOf("--port");
 const url = `http://127.0.0.1:${pi > 0 ? process.argv[pi + 1] : ENGINE_PORT}`;
-const PROMPTS = [SUGGESTED[1], SUGGESTED[2], SUGGESTED[3], "Add a contact form to every page"];
+// Turn 2 keeps the Rivera-HR prompt so the HR card stays covered (the demo's T2 is Jobsite2024).
+const PROMPTS = [SUGGESTED[1], "Add a careers page using the job descriptions in ~/Documents/Rivera-HR", SUGGESTED[3], "Add a contact form to every page"];
 
 const sock = io(url);
 const send = (c: GameCommand) => sock.emit(SOCKET.command, c);
