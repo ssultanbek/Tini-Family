@@ -14,7 +14,8 @@
     "test:tini": "tsx --env-file=.env test/tini.test.ts",
     "test:escalation": "tsx --env-file=.env test/escalation.test.ts",
     "tina:scan": "tsx --env-file=.env src/tina/try-scan.ts",
-    "test:tina": "tsx --env-file=.env test/tina.test.ts"
+    "test:tina": "tsx --env-file=.env test/tina.test.ts",
+    "warm": "tsx --env-file=.env scripts/warm.ts"
   },
   "keywords": [],
   "author": "",
