@@ -60,9 +60,9 @@ export const diorama = {
   orbit: { minDistance: 24, maxDistance: 85, minPolar: 0.25, maxPolar: 1.32 },
   sun: { position: [-16, 26, 12] as [number, number, number], intensity: 2.4, shadowMap: 2048, shadowMapLow: 1024, shadowBox: 24 },
   colors: {
-    grass: '#a8c98a', grassDark: '#93b877', yard: '#b9d69c', soil: '#b98b62', soilDark: '#a07651', stone: '#9aa1a8', stoneDark: '#858c94',
+    grass: '#9fd66b', grassDark: '#6fbb45', yard: '#b8e585', soil: '#b98b62', soilDark: '#a07651', stone: '#9aa1a8', stoneDark: '#858c94',
     sand: '#ecdcb8', wood: '#c08a57', woodDark: '#9b6b40', brick: '#d9825f', brickDark: '#bf6b4c', slab: '#d8cfbd',
-    leaf: '#7fae6b', leafDark: '#5f9154', autumn: '#e0a25c', trunk: '#8a6242', hedge: '#6f9f5c',
+    leaf: '#6fb85a', leafDark: '#4f9e47', autumn: '#e0a25c', trunk: '#8a6242', hedge: '#5fae44',
     mac: '#c9ced8', macDark: '#8f97a6', roof: '#6d7f9c', door: '#8fb8e6', asked: '#f2b705',
     red: '#e0483c', green: '#3fb56a', yellow: '#f3c64a', planned: '#c7c1b4',
   },
