@@ -24,9 +24,12 @@ test('the overlay renders at every step of the recorded story', async () => {
     const dashboardHtml = render(true), gameHtml = render(false);
     for (const [view, page] of [['dashboard', dashboardHtml], ['game', gameHtml]]) {
       assert.ok(page.includes('keys to the room, not the house'), `${view}: title bar tagline`);
-      if (store.getSnapshot().world.phase === 'building') assert.ok(page.includes('Tini is working'), `${view}: prompt bar is disabled while the crew works`);
-      const phase = store.getSnapshot().world.phase;
-      assert.equal(page.includes('■ Stop'), ['planning', 'contract', 'fencing', 'building'].includes(phase), `${view}: Stop only while stoppable (${phase})`);
+      if (store.getSnapshot().world.phase === 'building' && !store.getSnapshot().world.openEscalation) assert.ok(page.includes('Tini is working'), `${view}: prompt bar is disabled while the crew works`);
+      const w = store.getSnapshot().world, phase = w.phase;
+      assert.equal(page.includes('■ Stop'), ['planning', 'fencing', 'building'].includes(phase), `${view}: Stop only while stoppable (${phase})`);
+      assert.equal(page.includes('■ Cancel'), phase === 'contract', `${view}: Cancel while the plan waits (${phase})`);
+      if (phase === 'contract' && !w.openEscalation) assert.ok(page.includes('Waiting for your OK'), `${view}: contract status`);
+      if (w.openEscalation) assert.ok(page.includes('Waiting for your answer'), `${view}: escalation status`);
     }
     const html = dashboardHtml + gameHtml;
     if (store.getSnapshot().world.contract) seen.add('contract');

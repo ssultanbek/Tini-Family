@@ -27,7 +27,7 @@ export function PromptBar({ world, send, available, pending, epoch, compact = fa
   const disabled = !available || working || waiting;
   const submit = () => { if (command && text.trim() && send(command)) setText(''); };
   // While the crew works the bar can't send anything, so it shrinks to one line and covers no cards.
-  if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">{compact ? 'Tini is working…' : 'Tini is working… you can prompt again when the crew is done.'}</span>
+  if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">{crewStatus(world)}</span>
     {STOPPABLE.includes(world.phase) && <StopButton world={world} send={send} available={available} pending={pending} />}</div>;
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
     <label htmlFor="prompt-input">{compact ? (first ? 'First request' : 'Next request') : first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
@@ -61,7 +61,9 @@ function StopButton({ world, send, available, pending }: { world: WorldState; se
   const stopping = pending.includes('stop');
   return <button type="button" className={`stop-button ${armed ? 'armed' : ''}`} disabled={!available || stopping}
     onClick={() => { if (!armed) { setArmed(true); return; } setArmed(false); send({ type: 'stop' }); }}>
-    {stopping ? 'Stopping…' : armed ? (setup ? 'Really stop? Setup is cancelled' : 'Really stop? Tina still checks') : '■ Stop'}
+    {world.phase === 'contract'
+      ? stopping ? 'Cancelling…' : armed ? 'Really cancel? The plan is dropped' : '■ Cancel'
+      : stopping ? 'Stopping…' : armed ? (setup ? 'Really stop? Setup is cancelled' : 'Really stop? Tina still checks') : '■ Stop'}
   </button>;
 }
 
@@ -74,6 +76,14 @@ export function Summary({ text }: { text: string }) {
 }
 
 /** The game page's chat: each turn is your prompt, then Claude's summary (or a typing indicator). */
+/** What the crew is doing while the box is closed: waiting on you comes first, then the phase. */
+export function crewStatus(world: WorldState) {
+  if (world.openEscalation) return 'Waiting for your answer';
+  if (world.phase === 'contract') return 'Waiting for your OK';
+  if (world.phase === 'inspecting') return 'Tina is checking the work…';
+  return 'Tini is working…';
+}
+
 /** The game page's turn timeline: one card per turn with the request and its result (no chat bubbles). */
 export function TurnTimeline({ world }: { world: WorldState }) {
   // While the crew waits on you, say so instead of showing progress.
