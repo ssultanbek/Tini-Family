@@ -12,6 +12,10 @@ import { SUGGESTED } from "../../mock/scenario.ts";
 const argv = process.argv;
 const opt = (n: string) => { const i = argv.indexOf(`--${n}`); return i > 0 ? argv[i + 1] : undefined; };
 const replay = argv.includes("--replay");
+// --main: the demo recording (3 turns, no Stop, ends on the second launch). --observe: turn 1 only, no fixes.
+const main = argv.includes("--main");
+const observe = argv.includes("--observe");
+const TURNS = observe ? 1 : main ? 3 : 4;
 const PROMPTS = [SUGGESTED[1], SUGGESTED[2], SUGGESTED[3], "Add a contact form to every page"];
 const sock = io(`http://127.0.0.1:${opt("port") ?? ENGINE_PORT}`);
 const send = (c: GameCommand) => sock.emit(SOCKET.command, c);
@@ -19,7 +23,8 @@ const t0 = Date.now();
 const ts = () => `${((Date.now() - t0) / 1000).toFixed(0).padStart(4)}s`;
 
 let state: WorldState | null = null;
-let lastSeq = 0, booted = false, idleSeen = false, fixesSent = false, stopSent = false, suggestions = 0;
+let lastSeq = 0, booted = false, idleSeen = false, stopSent = false, suggestions = 0;
+const fixSent = new Set<string>();
 let turn4Bricks = 0;
 const events: EngineEvent[] = [];
 const problems: string[] = [];
@@ -39,14 +44,16 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.type === "prompt.suggested") { const i = suggestions++; if (e.text !== PROMPTS[i]) problems.push(`suggestion ${i + 1} mismatch`); if (replay) sendPrompt(i); }
   if (e.type === "session.phase" && e.phase === "contract") send({ type: "approve.plan" });
   if (e.type === "escalation.opened") send({ type: "escalation.choose", escalationId: e.escalationId, optionId: "narrow" });
-  if (e.type === "tina.inspect.finished" && e.scope === "final" && turns === 1 && !fixesSent) {
-    fixesSent = true;
-    for (const f of s.findings) send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id });
+  // Fix whatever Tina finds, in any turn (a judge clicks the first fix on each card).
+  if (!observe && e.type === "session.phase" && e.phase === "ready") {
+    for (const f of s.findings) if (!fixSent.has(f.id)) { fixSent.add(f.id); send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id }); }
   }
   if (e.type === "launch.unlocked" && (turns === 1 || turns === 3)) send({ type: "launch" });
-  if (!replay && e.type === "report.ready" && turns === 1) sendPrompt(1);
+  if (main && e.type === "launch.done" && turns === 3) setTimeout(finish, 500);
+  if (observe && e.type === "session.phase" && e.phase === "ready" && s.turns[0]?.summary) setTimeout(finish, 500);
+  if (!replay && TURNS > 1 && e.type === "report.ready" && turns === 1) sendPrompt(1);
   if (!replay && e.type === "launch.unlocked" && turns === 2) sendPrompt(2);
-  if (!replay && e.type === "report.ready" && turns === 3) sendPrompt(3);
+  if (!replay && TURNS === 4 && e.type === "report.ready" && turns === 3) sendPrompt(3);
   if (e.type === "dog.brick.placed" && turns === 4 && ++turn4Bricks === 2 && !stopSent) { stopSent = true; console.log(`${ts()}  >>> Stop`); send({ type: "stop" }); }
   if (e.type === "session.phase" && e.phase === "ready" && turns === 4 && s.turns[3]?.summary) setTimeout(finish, 500);
 });
@@ -59,6 +66,10 @@ function narrate(e: EngineEvent, turns: number) {
     case "fence.plan.proposed": console.log(`${tag} plan: ${e.segments.map((g) => g.id).join(", ")}`); break;
     case "fence.blocked": console.log(`${tag} ** fence.blocked ${JSON.stringify({ target: e.target, tool: e.tool, layer: e.layer, simulated: e.simulated, reason: e.reason })}`); break;
     case "escalation.opened": console.log(`${tag} ** escalation.opened source=${e.source} requested=${e.requested} files=${e.inspection.totalFiles}\n        ask: ${e.ask}\n        highlights: ${e.inspection.highlights.map((h) => `${h.count} ${h.label} (${h.severity})`).join(" | ")}\n        options: ${e.options.map((o) => `${o.id}: ${o.label}`).join(" | ")}`); break;
+    case "segment.red": console.log(`${tag} ** RED ${e.segmentId}: ${e.finding.title} (${e.finding.file}) - ${e.finding.explanation.slice(0, 140)}`); break;
+    case "fix.applied": console.log(`${tag} ** FIX ${e.fixId}: ${e.summary.slice(0, 140)}`); break;
+    case "finding.cleared": console.log(`${tag} ** CLEARED ${e.findingId}: ${e.reason.slice(0, 100)}`); break;
+    case "launch.done": console.log(`${tag} ** LAUNCH ${e.url ?? "(folder)"}`); break;
     case "escalation.resolved": console.log(`${tag} ** escalation.resolved ${e.choice}: ${e.summary}`); break;
     case "dog.brick.placed": console.log(`${tag} brick #${e.bricks} ${e.op} ${e.file}`); break;
     case "speech": if (e.actor === "dog") console.log(`${tag} dog: "${e.text}"`); break;
@@ -85,14 +96,39 @@ function finish() {
   };
   const workspace = s.rawLog.map((l) => l.match(/^\[config\] workspace (\S+);/)?.[1]).find(Boolean);
   const cost = [...s.rawLog].reverse().map((l) => l.match(/session \$([\d.]+)/)?.[1]).find(Boolean);
-  const checks: [string, boolean][] = [
-    ["4 turns with results", summary.turns.length === 4 && summary.turns.every((t) => t.summary)],
+  const ev = <T extends EngineEvent["type"]>(t: T) => events.filter((e): e is Extract<EngineEvent, { type: T }> => e.type === t);
+  const started = (id: number) => events.findIndex((x) => x.type === "turn.started" && x.turnId === id);
+  const finished = (id: number) => events.findIndex((x) => x.type === "turn.finished" && x.turnId === id);
+  const inTurn = (id: number, pred: (e: EngineEvent) => boolean) => events.slice(started(id), id < s.turns.length ? started(id + 1) : undefined).some(pred);
+  const reds = ev("segment.red").map((e) => e.finding);
+  const common: [string, boolean][] = [
+    [`${TURNS} turn(s) with results`, summary.turns.length === TURNS && summary.turns.every((t) => t.summary)],
+    ["no engine errors / gaps", summary.errors === 0 && problems.length === 0],
+    [replay ? `${TURNS} suggestion(s)` : "bricks accumulate", replay ? suggestions === TURNS : s.bricks > 5],
+  ];
+  const checks: [string, boolean][] = observe ? [
+    ...common,
+    ["no fence: no cards, no staging copies", escs.length === 0],
+    [`Tina's scan after the turn (${reds.length} red: ${reds.map((f) => `${f.segmentId}/${f.file}`).join(", ") || "none"})`, ev("tina.inspect.finished").length === 1],
+  ] : main ? [
+    ...common,
+    ["harness spark (simulated)", blocked.some((b) => b.simulated && b.target === "~/.ssh/id_rsa")],
+    ["request_access card for Jobsite2024 -> narrow", escs.some((e) => e.source === "agent" && e.requested.includes("Jobsite2024")) &&
+      ev("escalation.resolved").some((r) => r.choice === "narrow" && escs.find((e) => e.escalationId === r.escalationId)?.source === "agent")],
+    ["real red: API key on web-packages", reds.some((f) => f.segmentId === "web-packages" && /key/i.test(`${f.title} ${f.explanation}`))],
+    ["real red: crew-truck metadata on photos", reds.some((f) => f.segmentId === "photos" && /crew-truck/.test(f.file ?? ""))],
+    ["reds explained", reds.every((f) => f.explanation.length > 20)],
+    ["fixes -> green -> launch -> report (turn 1)", ev("fix.applied").length >= 2 && inTurn(1, (e) => e.type === "launch.done") && inTurn(1, (e) => e.type === "report.ready")],
+    ["turn 2 Rivera-HR card", escs.some((e) => e.source === "prompt" && e.requested.includes("Rivera-HR"))],
+    ["turn 3 no card; relock -> re-inspect -> unlock", !inTurn(3, (e) => e.type === "escalation.opened") && inTurn(3, (e) => e.type === "launch.locked") && inTurn(3, (e) => e.type === "tina.inspect.finished") && inTurn(3, (e) => e.type === "launch.unlocked")],
+    ["no Stop", !s.turns.some((t) => t.summary === "Stopped by you")],
+    ["all green, launched", s.segments.every((g) => g.status === "green") && s.phase === "launched"],
+  ] : [
+    ...common,
     ["turn 2 prompt-sourced card", escs.some((e) => e.source === "prompt" && e.requested.includes("Rivera-HR"))],
-    ["turn 3 straight through (no card)", !events.some((e) => e.type === "escalation.opened" && s.turns.length >= 3 && events.indexOf(e) > events.findIndex((x) => x.type === "turn.started" && x.turnId === 3) && events.indexOf(e) < events.findIndex((x) => x.type === "turn.finished" && x.turnId === 3))],
+    ["turn 3 straight through (no card)", !inTurn(3, (e) => e.type === "escalation.opened") && finished(3) > 0],
     ["turn 4 stopped by you", s.turns[3]?.summary === "Stopped by you"],
     ["back to ready", s.phase === "ready"],
-    ["no engine errors / gaps", summary.errors === 0 && problems.length === 0],
-    [replay ? "4 suggestions" : "bricks accumulate", replay ? suggestions === 4 : s.bricks > 5],
   ];
   if (replay && opt("compare")) {
     const want = JSON.parse(fs.readFileSync(opt("compare")!, "utf8"));

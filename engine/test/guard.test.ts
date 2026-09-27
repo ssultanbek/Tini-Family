@@ -47,6 +47,9 @@ const cases: [string, any, boolean][] = [
   // HTML closing tags are not paths (live run: a spark on "/div" from grep "</div"); input redirects still are
   ["Bash", { command: `grep -c "</div>" index.html && grep -n '</section' about.html` }, true],
   ["Bash", { command: "cat </etc/passwd" }, false],
+  // regex fragments are not paths (live run: a spark on "/(header")
+  ["Bash", { command: `grep -c '</\\(header\\|nav\\)' index.html; python3 -c "import re; re.findall(r'</(header|nav)>', open('a.html').read())"` }, true],
+  ["Bash", { command: "cat /etc/hosts /Users/x/.ssh/id_rsa" }, false],
   ["Bash", { command: "wc -l </Users/x/.ssh/id_rsa" }, false],
   ["Bash", { command: "cat //Users/x/.ssh/id_rsa" }, false],
   // ~/.npm is readable/writable by the OS sandbox (package cache); ~/.npmrc (tokens) never is.

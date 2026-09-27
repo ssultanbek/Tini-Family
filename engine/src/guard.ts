@@ -84,6 +84,7 @@ export function bashPaths(command: string): string[] {
   for (const m of noUrls.matchAll(PATH_TOKEN)) {
     const token = (m[1] ?? m[0]).trim().replace(/^[\s'"=:(<>]+/, "");
     if (!token || /^\/+$/.test(token)) continue; // bare slashes are sed/regex syntax (s/a/b/, "//"), not a path
+    if (/^\/[\\(]/.test(token)) continue;       // regex fragments like "/\(header" or "/(nav|footer)"; the OS sandbox backs up Bash
     out.push(token);
   }
   return out;

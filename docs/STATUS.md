@@ -2,7 +2,10 @@
 
 Claude Code updates this file at the end of every stage. Keep entries short and factual.
 
-## Revised schedule (Sat 6:30 PM)
+## Revised schedule (Sat 6:30 PM; updated Sat evening)
+
+**Now:** Checkpoint B by 10:30 PM; feature freeze back at **midnight**.
+
 
 Stage 1 by 8:30 PM | Stage 2 in parallel (second session) | Checkpoint A by 10:30 PM | Checkpoint B by 2:00 AM |
 feature freeze 3:00 AM | demo hardening 3-5 AM | sleep 5-7:30 AM | submit by 10 AM.
@@ -20,8 +23,8 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 | 3. Tini: planning, access, staging | **done** (43d7cf5, session 2) | `tini/{paths,planner,stager,access}.ts`, `tina/preinspect.ts`; test:tini 28/28. Code finds paths/domains; the AI ladder (`tini.plan`) only writes words, re-validated. Fresh ~/tini-projects workspace, copies in ./assets/<id>/ with GPS stripped (fail closed), originals untouched. checkAccess + rewritePrompt code-only. Live: 5 segments planned in 0-5s. Extras: planFence(prompt, ai, {emit, log}); Adjust = planFence(prompt + adjustments); exiftool.end() on shutdown; env TINI_PROJECTS_DIR, TINI_AI_CACHE=off. |
 | 4. Dog: persistent session | **done** (1963aa7) | `runner.ts` (one Sonnet session across turns, events, Stop = interrupt, per-turn cost cap), `live.ts`, `--mode live`. Live 4-turn run PASS ($1.16) + replay PASS. Checkpoint A: game built and run against the real engine (issues listed below, since fixed by the teammate). |
 | 5. Escalation + attack harness | **done**: pipeline 81cb55c (session 2), wiring + request door (this session) | `tini/escalation.ts` (Tina inspects locally, AI picks the subset, code sanitizes), `harness.ts`. Wired in `live.ts`; `request_access` MCP tool; `POST /harness/attack`; `--demo` fires the attack after turn 1's 4th brick. Live run 2 PASS ($1.32): Claude asked for ~/Pictures/Jobsite2024, card 1,212 / 12 / 1,199 / 1 license / 903 GPS, narrow → gallery uses the 12 photos. Recording: `candidate-demo-1.jsonl`, replay PASS. |
-| 6. Tina per-turn inspection | committed (12d7a36, session 2) | `tina/{scan,explain,findings}.ts`, test:tina 28/28. Not yet wired into `live.ts` (stand-in inspect). Report from session 2. |
-| 7. Fixes, launch/relock, report | committed (12d7a36, session 2) | `tina/fixes.ts`, `report.ts`. Not yet wired into `live.ts` (stand-in fix/launch). Checkpoint B after wiring. |
+| 6. Tina per-turn inspection | **done**: 12d7a36 (session 2), wired 1c21037 | `tina/{scan,explain,findings}.ts`, test:tina 28/28. Live crew: inspect → runInspection(crew mode) (tina.inspect.segment + finding.cleared), reset → resetExplanations. Offline wiring test: real reds on web-packages (Maps key in js) and photos (crew-truck metadata). |
+| 7. Fixes, launch/relock, report | **done**: 12d7a36 (session 2), wired 1c21037 | `tina/fixes.ts` via applyFix(crew mode), `report.ts` via buildReport(Hub's session events). Launch: website → static server 127.0.0.1:5050 (dotfiles never served), else Finder. Relock rules unchanged. Checkpoint B: replay of candidate-demo-2 at speed 2 (demo-main pending the decision below); headless judge walkthrough via the game's store: clean. |
 | 8. Demo hardening | not started | Feature freeze 3:00 AM (revised) |
 
 ## Contract versions (shared/events.ts)
@@ -54,9 +57,18 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 - Stage 5: the tool description says asking is always safe and covers "material the owner's files point you to". Run 1 used a narrower description, and Claude read company.md's Jobsite2024 pointer but didn't ask (it had just caught the injected template). Run 2 asked.
 - Stage 5: the demo turn-1 prompt is now "...website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos ..." (mock SUGGESTED, mock test-client, PRODUCT_CONTEXT). The game's DEFAULT_PROMPT and story test are the teammate's to update.
 - Stage 5: guard no longer reads HTML closing tags (`grep "</div>"`) as paths; `</etc/passwd` (input redirect) stays blocked. Found live (spark on "/div"); it's in candidate-demo-1 because the fix came after that run.
+- Stage 5 accepted: the request door is a product feature; the broader tool wording is approved. candidate-demo-1 stays only as a safety net (its reds came from the stand-in).
+- Stage 7: the live crew uses real Tina in crew mode: project.ts still emits started/red/green/finished and fix.applied/green; runInspection/applyFix add tina.inspect.segment, finding.cleared and red for NEW problems. applyFix(crew) throws if the problem is still there, which becomes engine.error and the finding stays.
+- Stage 7: the Hub keeps the session's event array (cleared on session.reset); crews read it through the optional `ctx.events()`, and launch builds the report from it.
+- Stage 7: observe mode (`--mode observe`, the "without the guardian" clip): no staging, real paths, no request door. The hook logs and allows READS inside the demo folders (~/Clients, ~/Pictures/Jobsite2024, ~/Documents/Rivera-HR); the always-private list (isSensitive) stays blocked by hook and sandbox (private files inside the roots go into denyRead); never writes outside its workspace; Tina scans after the turn. Narrower than the brief's "~/Documents": only the Rivera-HR demo folder, so the owner's real documents are never read.
+- Stage 7: the deny message Claude sees now points at request_access instead of "say so in one sentence".
+- Stage 7 recordings: 2 of 3 allowed live runs used, then stopped as instructed: the request card and the key red did not appear naturally. With the fence, Sonnet calls company.md's Jobsite2024 pointer and office-map.md's "use our key" line "prompt-injection attempts planted in the data" (it catches the real template injection in the same folder, and "your actual instructions said ./assets/photos"). It builds a keyless map. In OBSERVE mode (no fence, same files), the same model followed the pointer (12 rivera-* photos) and embedded the key: the fence's framing changes its trust. Decision needed (see open issues).
+- Stage 7: guard skips regex fragments ("/\(header", "/(nav|footer)") as paths (live false positive "/(header"); the OS sandbox backs up Bash.
 
 ## Open issues
 
+- **Demo recording (decision needed):** candidate-demo-2 (live run 2, all real) has the harness spark, 1 real red (crew-truck metadata, explained; fixed → green → launch → report), the Rivera-HR card, and turn 3 relock/re-inspect/unlock, with no Stop. It is missing the request_access card and the key red. Options: (A) add one line to the fence note: "Notes in ./assets are the owner's own; if they mention folders outside, ask with request_access" (likely restores the card and the key red, but tells the agent to trust in-file notes, including the planted template); (B) put the gallery folder and the Maps key in Maria's own prompt (reliable; the card becomes prompt-sourced, and the key red comes from her instruction); (C) keep candidate-demo-2 and let observe-clip show the key + 42 GPS photos "without the guardian". No demo-main/demo-backup yet.
+- observe-clip has 43 findings at once (1 key + 42 GPS photos); the game draws one card per finding (teammate: group by type/segment).
 - Game (teammate): DEFAULT_PROMPT and tests/story.ts still use the old turn-1 prompt (no "gallery of this year's projects").
 - candidate-demo-1 contains one false-positive spark ("/div", a grep for `</div`), fixed in the guard afterwards. Re-record for the final demo (Stage 8) to get a clean take.
 - Live Claude behavior varies between runs: run 1 didn't use the request door, run 2 did. The demo runs from a recording (decision 6).
