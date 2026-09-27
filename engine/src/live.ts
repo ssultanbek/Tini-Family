@@ -15,7 +15,9 @@ import { checkAccess, createEscalation, planFence, rewritePrompt, stageFence, ty
 
 const STATIC_SITE = "Keep it a simple static site: HTML, CSS and JavaScript, no build tools. Don't start a local server or open a browser to preview it: Tini launches the site after Tina's check.";
 // --demo (the live table demo): one page fewer, so turn 1 finishes sooner in front of judges.
-const DEMO_PAGES = "Keep it to 4 pages: a home page that includes the services, a gallery page, an about page and a contact page.";
+const DEMO_PAGES = "This is a timed demo, so work fast: keep it to 4 pages (a home page that includes the services, a gallery page, an about page with the team photo, and a contact page with the office map using the key). " +
+  "Write the pages directly from what's in ./assets, keep the CSS simple, don't re-read files you have already written, " +
+  "and finish with one quick check instead of a full link audit.";
 
 // The request door, replacing Stage 3's "say so in one sentence" line in the fence note.
 export const REQUEST_LINE = "Everything you were given is in ./assets. If you need a file or folder outside this workspace, don't try to open it: call request_access with the path and a one-line reason, then keep working.";

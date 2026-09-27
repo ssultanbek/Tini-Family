@@ -91,7 +91,9 @@ function galleryCheck(): { ok: boolean; detail: string } {
   const wsLine = s.rawLog.map((l) => l.match(/^\[config\] workspace (\S+);/)?.[1]).find(Boolean);
   const ws = wsLine ? wsLine.replace(/^~(?=\/|$)/, os.homedir()) : null;
   const t2 = events.slice(events.findIndex((e) => e.type === "turn.started" && e.turnId === 2));
-  const seg = t2.find((e): e is Extract<EngineEvent, { type: "fence.segment.built" }> => e.type === "fence.segment.built")?.segment.id;
+  // the Jobsite segment: built after its card was resolved (turn 1 via the request door, or turn 2 via the prompt)
+  const resolved = events.findIndex((e) => e.type === "escalation.resolved" && e.choice !== "deny");
+  const seg = events.slice(Math.max(0, resolved)).find((e): e is Extract<EngineEvent, { type: "fence.segment.built" }> => e.type === "fence.segment.built")?.segment.id;
   if (!ws || !seg || !fs.existsSync(path.join(ws, "assets", seg))) {
     const touched = t2.some((e) => e.type === "dog.brick.placed" && (e.op === "write" || e.op === "edit") && /gallery|main\.js|\.html$/i.test(e.file));
     return { ok: touched, detail: `workspace not on disk; T2 ${touched ? "edited" : "didn't edit"} site files` };
@@ -145,12 +147,12 @@ function finish() {
     ["fixes -> green -> launch -> report (turn 1)", ev("fix.applied").length >= 2 && inTurn(1, (e) => e.type === "launch.done") && inTurn(1, (e) => e.type === "report.ready")],
     [`T2 card for Jobsite2024 (${(() => { const c = escs.find((e) => e.requested.includes("Jobsite2024")); return c ? `${c.inspection.totalFiles} files: ${c.inspection.highlights.map((h) => `${h.count} ${h.label}`).join(" / ")}` : "none"; })()}) -> narrow`,
       (() => {
-        const c = escs.find((e) => e.source === "prompt" && e.requested.includes("Jobsite2024"));
+        const c = escs.find((e) => e.requested.includes("Jobsite2024"));   // from Claude (request door) or from the T2 prompt
         const n = (re: RegExp) => c?.inspection.highlights.find((h) => re.test(h.label))?.count;
         return !!c && c.inspection.totalFiles === 1212 && n(/job|construction|project/i) === 12 && n(/personal/i) === 1199 && n(/licen/i) === 1 && n(/GPS/i) === 903
           && ev("escalation.resolved").some((r) => r.escalationId === c.escalationId && r.choice === "narrow");
       })()],
-    [`T2 gallery updated (${galleryCheck().detail})`, galleryCheck().ok],
+    [`gallery uses the approved Jobsite photos (${galleryCheck().detail})`, galleryCheck().ok],
     [`report shows narrowed + fixed lines (${s.report?.narrowed.length ?? 0} narrowed, ${s.report?.fixed.length ?? 0} fixed)`, (s.report?.narrowed.length ?? 0) >= 1 && (s.report?.fixed.length ?? 0) >= 2],
     ["turn 3 no card; relock -> re-inspect -> unlock", !inTurn(3, (e) => e.type === "escalation.opened") && inTurn(3, (e) => e.type === "launch.locked") && inTurn(3, (e) => e.type === "tina.inspect.finished") && inTurn(3, (e) => e.type === "launch.unlocked")],
     ["no Stop", !s.turns.some((t) => t.summary === "Stopped by you")],
