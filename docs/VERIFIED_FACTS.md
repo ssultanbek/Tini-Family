@@ -74,6 +74,7 @@ Items marked **VERIFY** were not confirmed yet: confirm before relying on them.
   - JSON to stdout, and don't fail on findings: `gitleaks dir <path> --no-banner --log-level error -f json -r - --exit-code 0`. Rows have `File`, `StartLine`, `RuleID` (e.g. `gcp-api-key`), `Secret`, `Match`. `--redact` blanks `Secret`/`Match` to `REDACTED`.
   - Skip folders with a config via `-c <file>`: `[extend] useDefault = true` plus a global `[[allowlists]]` block with `paths = ['''(^|/)node_modules/''']`. Verified: a key inside `node_modules/` is ignored and the same key elsewhere is found.
   - The demo Maps key (`AIza` + 35 chars) is found by the default `gcp-api-key` rule.
+  - **But not when a `&` follows it** (verified Sat Sept 26, gitleaks 8.30.1): `maps/api/js?key=AIza...&callback=initMap` gives "no leaks found", while the same key as `const K = "AIza..."` is found. The rule's end boundary doesn't accept `&`. Tina's scanner therefore always runs its own regex rules alongside gitleaks (8e02657).
 - **GitHub push protection blocks pushes that contain real-looking API keys.** Demo-kit fake keys must be assembled at runtime by the script, never written into committed files.
 - Mac can't create folders at `/` without admin, so demo files live at `~/Clients/Rivera/...`.
 - Chrome app mode for the "desktop app" window: `open -na "Google Chrome" --args --app=http://localhost:4000`.
