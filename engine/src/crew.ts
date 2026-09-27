@@ -22,6 +22,8 @@ export interface CrewCtx {
   signal: AbortSignal;
   ai: Ask;
   state(): WorldState;
+  /** This session's events so far (for the access report). */
+  events?(): readonly EngineEvent[];
 }
 
 export interface FencePlan { segments: Segment[]; contract: ContractCard }

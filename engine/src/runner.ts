@@ -18,7 +18,7 @@ import path from "node:path";
 import { createSdkMcpServer, query, tool, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import type { CrewCtx } from "./crew.ts";
-import { dogOptions } from "./dog.ts";
+import { dogOptions, type DogPolicy } from "./dog.ts";
 import { escalationFolder, expandHome, isInside, pretty, realish, REQUEST_TOOL, type Fence, type GuardDecision } from "./guard.ts";
 import { Inbox } from "./inbox.ts";
 import { isSensitive } from "./tini/paths.ts";
@@ -34,6 +34,10 @@ export interface RunnerConfig {
   speechGapMs?: number;
   /** After every brick (e.g. the demo harness fires after turn 1's 4th brick). */
   onBrick?: (ctx: CrewCtx) => void;
+  /** Observe mode swaps in its own decision policy and sandbox read roots. */
+  policy?: DogPolicy;
+  /** The request_access tool (default on; observe mode has no fence to ask through). */
+  requestDoor?: boolean;
 }
 
 const REQUEST_DESCRIPTION =
@@ -115,13 +119,12 @@ export class DogRunner {
       onToolDone: (tool, input) => this.onToolDone(tool, input),
     }, {
       // The request door: one in-process MCP tool, always loaded (ToolSearch isn't in the dog's tool set).
-      mcpServers: { tini: createSdkMcpServer({ name: "tini", version: "1.0.0", alwaysLoad: true, tools: [
+      ...(this.cfg.requestDoor === false ? {} : { mcpServers: { tini: createSdkMcpServer({ name: "tini", version: "1.0.0", alwaysLoad: true, tools: [
         tool("request_access", REQUEST_DESCRIPTION, {
           path: z.string().describe("The file or folder you need, e.g. ~/Pictures/Jobsite2024"),
           reason: z.string().describe("One line: why the job needs it"),
         }, async ({ path: p, reason }) => ({ content: [{ type: "text" as const, text: this.onRequest(p, reason) }] })),
-      ] }) },
-      allowedTools: [REQUEST_TOOL],
+      ] }) }, allowedTools: [REQUEST_TOOL] }),
       model: this.cfg.model ?? "sonnet",
       maxTurns: this.cfg.maxTurnsPerTurn ?? 40,
       maxBudgetUsd: this.cfg.sessionBudgetUsd ?? 6,
@@ -130,7 +133,7 @@ export class DogRunner {
         append: this.cfg.fenceNote + (restart ? "\n\nThis is a new session for a project already in progress: the workspace already contains your earlier work. Look at it before changing things." : ""),
       },
       stderr: (s) => this.onStderr(s),
-    });
+    }, this.cfg.policy);
     this.q = query({ prompt: this.inbox, options: opts });
     this.alive = true;
     ctx.log("config", `dog session ${restart ? "restarted" : "opened"}: model=${opts.model} maxTurns/turn=${opts.maxTurns} sessionBudget=$${opts.maxBudgetUsd} turnBudget=$${this.cfg.turnBudgetUsd ?? 2}`);
@@ -261,7 +264,11 @@ export class DogRunner {
     if (tool === REQUEST_TOOL) return;   // asking isn't building
     const op = tool === "Write" ? "write" : tool === "Edit" ? "edit" : tool === "Bash" ? "run" : "read";
     const ws = this.cfg.fence.workspace;
-    const rel = (p: unknown) => { const s = String(p ?? ""); return s.startsWith("/") ? path.relative(ws, s) || "." : s; };
+    const rel = (p: unknown) => {
+      const s = String(p ?? "");
+      if (!s.startsWith("/")) return s;
+      return isInside(s, ws) ? path.relative(ws, s) || "." : pretty(s);   // observe mode reads real folders: show ~/...
+    };
     const file = tool === "Bash" ? String(input.command ?? "").replace(/\s+/g, " ").slice(0, 80)
       : tool === "Glob" ? String(input.pattern ?? "")
       : tool === "Grep" ? `grep ${String(input.pattern ?? "")}`

@@ -4,6 +4,14 @@
 import type { HookCallback, Options, PostToolUseHookInput, PreToolUseHookInput } from "@anthropic-ai/claude-agent-sdk";
 import { ALLOWED_TOOLS, checkToolCall, type Fence, type GuardDecision } from "./guard.ts";
 
+/** Who decides each tool call: Tini's fence by default; observe mode swaps in its own policy. */
+export type Decide = (tool: string, input: Record<string, unknown>, cwd: string) => GuardDecision;
+export interface DogPolicy {
+  decide?: Decide;
+  extraRead?: string[];   // sandbox allowRead beyond the workspace (observe: the demo folders)
+  denyRead?: string[];    // narrower sandbox denies inside those (observe: private files found there)
+}
+
 export interface DogHooks {
   onDecision?: (tool: string, input: Record<string, unknown>, d: GuardDecision) => void;
   /** A tool call that ran successfully (PostToolUse): becomes a brick. */
@@ -14,11 +22,12 @@ export interface DogHooks {
 // the yard; ~/.npmrc (auth tokens) and everything else under ~/ stays denied.
 const NPM_CACHE = "~/.npm";
 
-export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Options> = {}): Options {
+export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Options> = {}, policy: DogPolicy = {}): Options {
+  const decide: Decide = policy.decide ?? ((tool, input, cwd) => checkToolCall(tool, input, cwd, fence));
   const guard: HookCallback = async (raw) => {
     const input = raw as PreToolUseHookInput;
     const toolInput = (input.tool_input ?? {}) as Record<string, unknown>;
-    const d = checkToolCall(input.tool_name, toolInput, input.cwd || fence.workspace, fence);
+    const d = decide(input.tool_name, toolInput, input.cwd || fence.workspace);
     hooks.onDecision?.(input.tool_name, toolInput, d);
     if (d.allow) {
       return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", permissionDecisionReason: "Inside Tini's fence" } };
@@ -29,8 +38,8 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
         permissionDecision: "deny",
         permissionDecisionReason:
           `BLOCKED by Tini: ${d.reason} Do not retry or look for another way to reach it. ` +
-          `If you truly need it, say so in one sentence and continue with other work; the owner reviews requests, ` +
-          `and approved files appear in ./assets/.`,
+          `If you truly need it, call request_access with the path and a one-line reason, then continue with other work; ` +
+          `the owner reviews requests, and approved files appear in ./assets/.`,
       },
     };
   };
@@ -57,8 +66,8 @@ export function dogOptions(fence: Fence, hooks: DogHooks = {}, extra: Partial<Op
       autoAllowBashIfSandboxed: true,
       allowUnsandboxedCommands: false,    // no dangerouslyDisableSandbox retries
       filesystem: {
-        denyRead: ["~/"],
-        allowRead: [fence.workspace, NPM_CACHE],
+        denyRead: ["~/", ...(policy.denyRead ?? [])],
+        allowRead: [fence.workspace, NPM_CACHE, ...(policy.extraRead ?? [])],
         allowWrite: [fence.workspace, NPM_CACHE],
       },
       network: { allowedDomains: fence.allowedDomains, strictAllowlist: true },

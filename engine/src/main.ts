@@ -1,4 +1,4 @@
-// npm run engine -- --mode standin|replay|live [--demo] [--recording f] [--speed n] [--port n] [--turn-budget usd] [--session-budget usd]
+// npm run engine -- --mode standin|replay|live|observe [--demo] [--recording f] [--speed n] [--port n] [--turn-budget usd] [--session-budget usd]
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ENGINE_PORT } from "../../shared/events.ts";
@@ -9,6 +9,8 @@ import { ReplayDriver } from "./replay.ts";
 import { startServer } from "./server.ts";
 import { standinCrew } from "./standins.ts";
 import { liveCrew } from "./live.ts";
+import { observeCrew } from "./observe.ts";
+import { stopSite } from "./launcher.ts";
 import { exiftool } from "exiftool-vendored";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -21,8 +23,8 @@ const speed = Number(arg("speed") ?? 1);
 const port = Number(arg("port") ?? ENGINE_PORT);
 const demo = process.argv.includes("--demo"); // live: fire the simulated attack once in turn 1, after the 4th brick
 
-if (mode !== "standin" && mode !== "replay" && mode !== "live") {
-  console.error(`unknown --mode ${mode} (standin | replay | live)`);
+if (!["standin", "replay", "live", "observe"].includes(mode)) {
+  console.error(`unknown --mode ${mode} (standin | replay | live | observe)`);
   process.exit(1);
 }
 
@@ -36,9 +38,12 @@ if (mode === "replay") {
 } else {
   const ai = createAiFromEnv((line) => hub.emit({ actor: "system", type: "raw.log", channel: "ai", text: line }));
   let crew = standinCrew(speed);
+  if (mode === "live" || mode === "observe") {
+    if (!process.env.ANTHROPIC_API_KEY) { console.error(`${mode} mode needs ANTHROPIC_API_KEY in engine/.env`); process.exit(1); }
+  }
+  if (mode === "observe") crew = observeCrew({ turnBudgetUsd: Number(arg("turn-budget") ?? 2), sessionBudgetUsd: Number(arg("session-budget") ?? 6) });
   if (mode === "live") {
-    if (!process.env.ANTHROPIC_API_KEY) { console.error("live mode needs ANTHROPIC_API_KEY in engine/.env"); process.exit(1); }
-    crew = liveCrew({ speed: 1, demo, turnBudgetUsd: Number(arg("turn-budget") ?? 2), sessionBudgetUsd: Number(arg("session-budget") ?? 6) });
+    crew = liveCrew({ demo, turnBudgetUsd: Number(arg("turn-budget") ?? 2), sessionBudgetUsd: Number(arg("session-budget") ?? 6) });
   }
   driver = new Project(hub, crew, ai);
 }
@@ -57,5 +62,5 @@ startServer({ hub, driver, mode, port, gameDist: path.resolve(engineDir, "../gam
 
 // Shutdown: stop exiftool's background process (Stage 3/5 use the shared instance).
 for (const sig of ["SIGINT", "SIGTERM"] as const) {
-  process.once(sig, () => { void exiftool.end().catch(() => {}).finally(() => process.exit(0)); });
+  process.once(sig, () => { void Promise.allSettled([exiftool.end(), stopSite()]).finally(() => process.exit(0)); });
 }

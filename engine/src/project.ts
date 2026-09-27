@@ -14,12 +14,16 @@ import type { Recorder } from "./recorder.ts";
 export class Hub {
   private seq = 0;
   state: WorldState = initialState();
+  /** This session's events (cleared on session.reset): the access report is built from them. */
+  events: EngineEvent[] = [];
   private listeners = new Set<(e: EngineEvent) => void>();
   constructor(public recorder: Recorder | null = null) {}
 
   emit(ev: Ev): EngineEvent {
     const e = { ...ev, seq: ++this.seq, ts: Date.now() } as EngineEvent;
     this.state = reduce(this.state, e);
+    if (e.type === "session.reset") this.events = [];
+    this.events.push(e);
     this.recorder?.event(e);
     for (const l of this.listeners) { try { l(e); } catch { /* a bad listener never breaks emit */ } }
     return e;
@@ -168,6 +172,7 @@ export class Project implements Driver {
       signal,
       ai: this.ai,
       state: () => this.hub.state,
+      events: () => this.hub.events,
     };
   }
 

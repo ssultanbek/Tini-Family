@@ -76,21 +76,41 @@ export function checkPath(raw: string, cwd: string, fence: Fence): GuardDecision
 // is the real backstop for anything this misses (see spike probe 3).
 const PATH_TOKEN = /(?:~|\$\{?HOME\}?)(?:\/[^\s'";|&)<>]*)?|(?:^|[\s'"=:(<>])(\/[^\s'";|&)<>]+|\.\.(?:\/[^\s'";|&)<>]*)?)/g;
 
-export function checkBash(command: string, cwd: string, fence: Fence): GuardDecision {
+/** Path-looking tokens in a shell command (best effort; the OS sandbox backs it up). */
+export function bashPaths(command: string): string[] {
   // URLs and HTML closing tags (grep "</div>") aren't paths; "</etc/passwd" (an input redirect) still is.
   const noUrls = command.replace(/[a-z]+:\/\/[^\s'"]+/gi, "URL").replace(/<\/[a-z][a-z0-9-]*(?![a-z0-9/_.-])/gi, "TAG");
+  const out: string[] = [];
   for (const m of noUrls.matchAll(PATH_TOKEN)) {
     const token = (m[1] ?? m[0]).trim().replace(/^[\s'"=:(<>]+/, "");
     if (!token || /^\/+$/.test(token)) continue; // bare slashes are sed/regex syntax (s/a/b/, "//"), not a path
-    const d = checkPath(token, cwd, fence);
-    if (!d.allow) return d;
+    out.push(token);
   }
+  return out;
+}
+
+/** The network rule for a shell command: curl/wget only to approved domains. */
+export function checkNetwork(command: string, fence: Fence): GuardDecision {
   if (/\bcurl\b|\bwget\b/.test(command)) {
     const hosts = [...command.matchAll(/https?:\/\/([^/\s'"]+)/g)].map((m) => m[1]);
     const bad = hosts.find((h) => !fence.allowedDomains.some((d) => h === d || h.endsWith("." + d)));
     if (bad) return { allow: false, kind: "network", target: bad, reason: `${bad} is not on the list of websites the owner approved.` };
   }
   return { allow: true };
+}
+
+export function checkBash(command: string, cwd: string, fence: Fence): GuardDecision {
+  for (const token of bashPaths(command)) {
+    const d = checkPath(token, cwd, fence);
+    if (!d.allow) return d;
+  }
+  return checkNetwork(command, fence);
+}
+
+/** The tool rule alone: the six base tools plus the request door. */
+export function checkTool(tool: string): GuardDecision {
+  if (tool === REQUEST_TOOL || (ALLOWED_TOOLS as readonly string[]).includes(tool)) return { allow: true };
+  return { allow: false, kind: "tool", target: tool, reason: `The ${tool} tool isn't part of this job.` };
 }
 
 export function checkToolCall(tool: string, input: Record<string, unknown>, cwd: string, fence: Fence): GuardDecision {
