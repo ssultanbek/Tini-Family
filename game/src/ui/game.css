@@ -170,3 +170,5 @@ body:has(.gv) { background: #f1f3f4; }
 .gv .gv-fence li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .gv .action-card > .gv-btn { margin-top: 2px; }
 .gv .family-bubble { transform: translate(-50%, calc(-100% - var(--lift, 0px))); }
+/* Upper-yard characters speak downward so the top signs (About, Company Info…) are never covered. */
+.gv .family-bubble.bubble-below { transform: translate(-50%, var(--lift, 0px)); border-radius: 3px 16px 16px 16px; }

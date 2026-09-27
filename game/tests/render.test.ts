@@ -113,3 +113,22 @@ test('suggestion chips hide prompts already sent in this project', async () => {
   assert.ok(!html.includes('>Make the header darker</button>'), 'already sent');
   assert.ok(html.includes('Rivera-HR</button>'), 'not sent yet, still offered');
 });
+
+test('speech bubbles of characters in the upper yard sit below them, so the top signs stay visible', async () => {
+  const { familyPresentation } = await vite.ssrLoadModule('/src/familyPresentation.ts') as typeof import('../src/familyPresentation.ts');
+  const { Yard } = await vite.ssrLoadModule('/src/ui/Yard.tsx') as typeof import('../src/ui/Yard.tsx');
+  const { familyLayout } = await vite.ssrLoadModule('/src/layout.ts') as typeof import('../src/layout.ts');
+  familyPresentation.set([
+    { actor: 'tina', text: 'There is a driver\'s license scan in there.', x: 760, y: 318 },
+    { actor: 'tini', text: 'Nope. Not your house, buddy.', x: 355, y: 610 },
+  ]);
+  const html = renderToString(createElement(Yard));
+  const tina = html.slice(html.indexOf('bubble-tina'), html.indexOf('bubble-tini'));
+  const tini = html.slice(html.indexOf('bubble-tini'));
+  assert.ok(tina.includes('bubble-below'), 'Tina near the top speaks downward');
+  assert.ok(!tini.slice(0, 40).includes('bubble-below'), 'Tini lower down keeps the bubble above');
+  const top = Number(/top:([\d.]+)%/.exec(tina)?.[1]);
+  assert.ok(top > (318 / 880) * 100, `bubble starts below Tina (top ${top}%)`);
+  assert.ok(familyLayout.bubble.flipY > 318);
+  familyPresentation.set([]);
+});

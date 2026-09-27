@@ -3,6 +3,13 @@ import { yardLayout, familyLayout, canvasWidth } from '../layout.ts';
 import { store } from '../store.ts';
 import { familyPresentation } from '../familyPresentation.ts';
 
+/** Downward bubbles stay over the yard itself, so they cover neither the top signs nor the side signs. */
+function bubbleX(bubble: { x: number; y: number }) {
+  if (bubble.y >= familyLayout.bubble.flipY) return bubble.x;
+  const g = yardLayout.ground, half = familyLayout.bubble.insideHalf;
+  return Math.max(g.x + half, Math.min(g.x + g.width - half, bubble.x));
+}
+
 export function Yard() {
   const host = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
@@ -37,9 +44,11 @@ export function Yard() {
     for (const item of items) {
       item.style.setProperty('--lift', '0px');
       let rect = item.getBoundingClientRect(), lift = 0;
+      // Bubbles above a character move further up; bubbles below one move further down.
+      const down = item.classList.contains('bubble-below');
       for (const other of placed) {
         if (rect.left < other.right && rect.right > other.left && rect.top < other.bottom && rect.bottom > other.top) {
-          lift += rect.bottom - other.top + 8;
+          lift += down ? other.bottom - rect.top + 8 : rect.bottom - other.top + 8;
           item.style.setProperty('--lift', `${lift}px`);
           rect = item.getBoundingClientRect();
         }
@@ -52,10 +61,10 @@ export function Yard() {
     <div className="yard-caption"><strong>The yard</strong><span>Only what the job needs</span><span className={`gv-phase ${['planning', 'fencing', 'building', 'inspecting'].includes(world.phase) ? 'busy' : world.phase === 'launched' ? 'done' : ''}`}>{world.phase}</span></div>
     {error ? <p role="alert">{error} <a href="/?view=dashboard">Dashboard</a></p> : <div className="yard-stage">
       <div className="yard-canvas" ref={host} role="img" aria-label={description} />
-      <div className="family-bubbles" aria-live="polite" ref={bubbleLayer}>{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}`} style={{
+      <div className="family-bubbles" aria-live="polite" ref={bubbleLayer}>{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}${bubble.y < familyLayout.bubble.flipY ? ' bubble-below' : ''}`} style={{
         // Bubble x is in yard coordinates; the canvas also shows the Mac strip to its left.
-        left: `${Math.max(familyLayout.bubble.edge, Math.min(canvasWidth - familyLayout.bubble.edge, bubble.x + yardLayout.mac.strip)) / canvasWidth * 100}%`,
-        top: `${(bubble.y - familyLayout.bubble.offsetY) / yardLayout.height * 100}%`,
+        left: `${Math.max(familyLayout.bubble.edge, Math.min(canvasWidth - familyLayout.bubble.edge, bubbleX(bubble) + yardLayout.mac.strip)) / canvasWidth * 100}%`,
+        top: `${(bubble.y < familyLayout.bubble.flipY ? bubble.y + familyLayout.bubble.belowOffset : bubble.y - familyLayout.bubble.offsetY) / yardLayout.height * 100}%`,
         '--bubble-width': `${familyLayout.bubble.width / canvasWidth * 100}%`,
         '--bubble-padding': `${familyLayout.bubble.padding}px`, '--bubble-font': `${familyLayout.bubble.fontSize}px`,
       } as CSSProperties}><strong>{bubble.actor === 'tini' ? 'Tini' : bubble.actor === 'tina' ? 'Tina' : 'Dog'}</strong><p>{bubble.text}</p></div>)}</div>

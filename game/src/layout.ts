@@ -69,7 +69,8 @@ export const familyLayout = {
   inspection: { x: 30, y: -12, radius: 15, handle: 17, stroke: 5 },
   spark: { count: 8, distance: 39, radius: 5, stroke: 3 },
   brick: { x: -34, y: -22, width: 28, height: 18, rise: 25 },
-  bubble: { width: 300, offsetY: 55, edge: 160, padding: 12, fontSize: 18 },
+  // Characters above flipY speak downward (bubble under them), so bubbles never cover the top signs.
+  bubble: { width: 300, offsetY: 55, edge: 160, padding: 12, fontSize: 18, flipY: 520, belowOffset: 100, insideHalf: 165 },
   speech: { baseMs: 1800, perCharMs: 50, minMs: 2600, maxMs: 7000, holdPerCharMs: 30, minHoldMs: 1100, maxHoldMs: 3000 },
   motion: { walk: 330, carryLeg: 300, look: 180, bump: 240, place: 160, fastFactor: 0.22 },
 };
