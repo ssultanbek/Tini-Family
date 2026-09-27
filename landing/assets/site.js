@@ -25,9 +25,14 @@
   function svgRenderer(el) {
     return {
       kind: "svg",
-      set: function (state) { el.innerHTML = SVG.render(state); },
+      set: function (state) {
+        var old = el.querySelector(":scope > svg");
+        var tmp = document.createElement("div");
+        tmp.innerHTML = SVG.render(state);
+        if (old) el.replaceChild(tmp.firstChild, old); else el.insertBefore(tmp.firstChild, el.firstChild);
+      },
       setVisible: function () {},
-      destroy: function () { el.innerHTML = ""; }
+      destroy: function () { var old = el.querySelector(":scope > svg"); if (old) old.remove(); }
     };
   }
 
@@ -78,10 +83,13 @@
     this.renderer.setVisible(v && !document.hidden);
     if (v) this.schedule(); else clearTimeout(this.timer);
   };
+  /* Swap renderers (SVG <-> 3D). A renderer with takeover() removes the old one itself,
+     so the 3D canvas can fade in over the SVG instead of flashing. */
   Player.prototype.useRenderer = function (r) {
-    this.renderer.destroy();
+    var old = this.renderer;
     this.renderer = r;
-    if (this.seq) this.show(true);
+    if (this.seq) this.renderer.set(this.seq[this.i][0], true);
+    if (r.takeover) r.takeover(old); else old.destroy();
     this.renderer.setVisible(this.visible && !document.hidden);
   };
 
