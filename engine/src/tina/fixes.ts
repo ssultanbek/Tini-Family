@@ -43,7 +43,9 @@ export function keylessEmbedUrl(address: string): string {
   return `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
 }
 
-function moveKeyOut(staged: Staged, raw: RawFinding): string {
+interface Done { summary: string; log: string }
+
+function moveKeyOut(staged: Staged, raw: RawFinding): Done {
   const ws = staged.workspace;
   const files = walkWorkspace(ws);
   const secrets = raw.secrets ?? [];
@@ -65,7 +67,7 @@ function moveKeyOut(staged: Staged, raw: RawFinding): string {
   // 2. A key-based Google map becomes a keyless embed of the company address.
   const web = files.filter((f) => /\.(html?|js|mjs|cjs|jsx|ts|tsx)$/i.test(f));
   const usesMaps = web.some((f) => { const t = read(path.join(ws, f)); return /maps\.googleapis\.com\/maps\/api\/(js|staticmap)|google\.maps\.Map|google\.com\/maps\/embed\/v1/.test(t); });
-  if (!usesMaps) return `Removed the key from ${touched.length} file(s): ${touched.join(", ")}`;
+  if (!usesMaps) return { summary: "Key removed from the site", log: `removed the key from ${touched.length} file(s): ${touched.join(", ")}` };
 
   const address = findAddress(ws, files);
   const url = keylessEmbedUrl(address);
@@ -97,18 +99,21 @@ function moveKeyOut(staged: Staged, raw: RawFinding): string {
     t = t.replace(MAPS_LOADER, "about:blank#tini-removed-maps-loader");   // a keyless loader would only show an error box
     if (t !== before) { fs.writeFileSync(abs, t); if (!touched.includes(f)) touched.push(f); }
   }
-  return `Removed the key from ${touched.length} file(s) and replaced the Google map with a keyless map of ${address}${maps ? "" : " (no map spot found on the pages)"}`;
+  return {
+    summary: maps ? "Key removed; map switched to a keyless embed" : "Key removed; Google map switched off",
+    log: `removed the key from ${touched.length} file(s) and replaced the Google map with a keyless map of ${address}${maps ? "" : " (no map spot found on the pages)"}`,
+  };
 }
 
-async function removePhoto(staged: Staged, raw: RawFinding): Promise<string> {
+async function removePhoto(staged: Staged, file: string): Promise<string> {
   const ws = staged.workspace;
-  const gone = path.join(ws, raw.file);
+  const gone = path.join(ws, file);
   const files = walkWorkspace(ws);
   // Another approved photo with no identifying details, same folder first.
-  const pool = files.filter((f) => f.startsWith("assets/") && kindOf(f) === "image" && f !== raw.file);
+  const pool = files.filter((f) => f.startsWith("assets/") && kindOf(f) === "image" && f !== file);
   const tags = await identifyingTags(pool.map((f) => path.join(ws, f)));
   const clean = pool.filter((f) => Object.keys(tags.get(path.resolve(path.join(ws, f))) ?? { unknown: 1 }).length === 0);
-  const dir = path.posix.dirname(raw.file);
+  const dir = path.posix.dirname(file);
   const replacement = clean.find((f) => path.posix.dirname(f) === dir) ?? clean[0];
 
   // Repoint references in pages, styles and scripts (outside assets) before deleting.
@@ -122,7 +127,7 @@ async function removePhoto(staged: Staged, raw: RawFinding): Promise<string> {
     for (const r of raws) {
       let next = "";
       if (replacement) {
-        if (path.posix.dirname(replacement) === dir && r.endsWith(path.posix.basename(raw.file))) next = r.slice(0, -path.posix.basename(raw.file).length) + path.posix.basename(replacement);
+        if (path.posix.dirname(replacement) === dir && r.endsWith(path.posix.basename(file))) next = r.slice(0, -path.posix.basename(file).length) + path.posix.basename(replacement);
         else next = r.startsWith("/") ? "/" + replacement : posix(path.relative(path.dirname(abs), path.join(ws, replacement)));
       }
       t = t.split(r).join(next);
@@ -132,17 +137,29 @@ async function removePhoto(staged: Staged, raw: RawFinding): Promise<string> {
   }
   fs.rmSync(gone, { force: true });
   return replacement
-    ? `Removed ${raw.file} and pointed ${repointed} reference(s) at ${replacement}`
-    : `Removed ${raw.file} (no other clean approved photo to use; ${repointed} reference(s) cleared)`;
+    ? `removed ${file} and pointed ${repointed} reference(s) at ${replacement}`
+    : `removed ${file} (no other clean approved photo to use; ${repointed} reference(s) cleared)`;
 }
 
-async function perform(staged: Staged, raw: RawFinding, fixId: string): Promise<string> {
-  const abs = path.join(staged.workspace, raw.file);
+/** Performs a fix on every file in the finding's group. Summaries are short and past tense. */
+async function perform(staged: Staged, raw: RawFinding, fixId: string): Promise<Done> {
+  const k = raw.files.length;
+  const abs = (f: string) => path.join(staged.workspace, f);
   switch (fixId) {
     case "move-key-out": return moveKeyOut(staged, raw);
-    case "strip-metadata": await stripAllMetadata(abs); return `Removed hidden details (${raw.detail}) from ${raw.file}`;
-    case "remove-photo": return removePhoto(staged, raw);
-    case "remove-file": fs.rmSync(abs, { force: true }); return `Removed ${raw.file}`;
+    case "strip-metadata": {
+      for (const f of raw.files) await stripAllMetadata(abs(f));
+      const what = /name|serial/.test(raw.detail) ? "Camera owner details removed" : "Photo locations removed";
+      return { summary: k === 1 ? what : `${what} from ${k} photos`, log: `removed hidden details (${raw.detail}) from ${raw.files.join(", ")}` };
+    }
+    case "remove-photo": {
+      const logs: string[] = [];
+      for (const f of raw.files) logs.push(await removePhoto(staged, f));
+      return { summary: k === 1 ? "Photo removed" : `${k} photos removed`, log: logs.join("; ") };
+    }
+    case "remove-file":
+      for (const f of raw.files) fs.rmSync(abs(f), { force: true });
+      return { summary: k === 1 ? "File removed" : `${k} files removed`, log: `removed ${raw.files.join(", ")}` };
   }
   throw new Error(`unknown fix ${fixId}`);
 }
@@ -166,12 +183,13 @@ export async function applyFix(ctx: TinaCtx, staged: Staged, findingId: string, 
   const segmentId = raw?.segmentId ?? known.find((f) => f.id === findingId)?.segmentId ?? "workspace";
 
   let summary: string;
-  if (!raw) summary = "Already gone: Tina doesn't find this problem any more";
+  if (!raw) { summary = "Already gone"; ctx.log("scan", `fix ${fixId} on ${findingId}: Tina doesn't find this problem any more`); }
   else {
     if (!FIXES[raw.type].some((x) => x.id === fixId)) throw new Error(`${fixId} doesn't fix a ${raw.type} finding`);
-    summary = await perform(staged, raw, fixId);
+    const done = await perform(staged, raw, fixId);
+    summary = done.summary;
+    ctx.log("scan", `fix ${fixId} on ${raw.files.length} file(s): ${done.log}`);
   }
-  ctx.log("scan", `fix ${fixId} on ${raw?.file ?? findingId}: ${summary}`);
 
   // Rescan (whole workspace is quick; only this segment's verdict is decided here).
   const after = await scanWorkspace(staged, { segmentIds: segIds });

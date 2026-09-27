@@ -12,6 +12,7 @@ import type { ContractCard, Segment } from "../../../shared/events.ts";
 import { isInside, pretty } from "../guard.ts";
 import { detailLine, preinspect, strippedLines, type FolderInspection } from "../tina/preinspect.ts";
 import { expandHome, extractDomains, extractPaths, judgePath, outermost, slug } from "./paths.ts";
+import { firstWords, wordCount } from "./text.ts";
 
 export const NPM_REGISTRY = "registry.npmjs.org";
 export const OUTSIDE_LINE = "Everything else on your Mac stays outside the fence.";
@@ -55,7 +56,7 @@ You get the owner's request and the folders code already found in it, with file 
 Write friendly, plain-English words for a non-technical owner. Rules:
 - One segment per folder in the input, using its path exactly as given. Never add folders.
 - Labels are 1-2 words, Title Case (e.g. "Photos", "About", "Sales data").
-- Purposes are one short line (under 12 words).
+- Purposes are one short line (at most 7 words).
 - workspaceName: 2-4 lowercase words joined by hyphens, naming the project (e.g. "rivera-site").
 - contractLines: at most 1 short line, only about the listed folders. No paths or websites that aren't in the input.
 Reply with JSON only.`;
@@ -66,7 +67,15 @@ const PACKAGES_RE = /\b(npm|node|react|vite|next\.?js|express|typescript|package
 // ---------------------------------------------------------------------------
 // Validation of AI words
 // ---------------------------------------------------------------------------
-const clean = (s: string, max: number) => s.replace(/[\u0000-\u001f<>`{}]/g, " ").replace(/\s+/g, " ").trim().slice(0, max).trim();
+const clean = (s: string) => s.replace(/[\u0000-\u001f<>`{}]/g, " ").replace(/\s+/g, " ").trim();
+const MAX_LINE_WORDS = 12;   // contract lines stay short; AI words that don't fit are dropped, never cut
+/** A fence label: at most 3 whole words and 24 characters. */
+function fenceLabel(s: string): string {
+  const w = firstWords(clean(s).replace(/[^\w &'-]/g, "").trim(), 3).split(" ");
+  while (w.length > 1 && w.join(" ").length > 24) w.pop();
+  const out = w.join(" ");
+  return out.length <= 24 ? out : "";
+}
 const SENSITIVE_WORDS = /(\.ssh|\.aws|\.gnupg|id_rsa|keychain|password|\.env\b|credential|private key)/i;
 
 /** A line of AI text is kept only if every path and web address in it is one code already allowed. */
@@ -144,8 +153,8 @@ export async function planFence(prompt: string, ai: Ask, opts: PlanOptions = {})
     const match = sources.find((src) => src.abs === abs || src.display === s.path.trim());
     if (!match) { dropped.push(`segment for ${s.path} (not a folder code found)`); continue; }
     if (bySource.has(match.segmentId)) continue;
-    const label = clean(s.label, 24).replace(/[^\w &'-]/g, "").trim();
-    let purpose = clean(s.purpose, 90);
+    const label = fenceLabel(s.label);
+    let purpose = clean(s.purpose).replace(/\.$/, "");
     const safe = lineIsSafe(`${label} ${purpose}`, sources.map((x) => x.abs), [], "/nonexistent");
     if (!safe) { dropped.push(`words for ${s.path} (mentioned something outside the fence)`); purpose = ""; }
     bySource.set(match.segmentId, { label: safe && label ? label : match.fallbackLabel, purpose });
@@ -176,15 +185,19 @@ export async function planFence(prompt: string, ai: Ask, opts: PlanOptions = {})
   const allowed: string[] = sources.map((s) => {
     const words = bySource.get(s.segmentId);
     const label = words?.label ?? s.fallbackLabel;
-    return `${label}: copies of ${s.display}${words?.purpose ? ` (${words.purpose.replace(/\.$/, "")})` : ""}`;
+    const base = `${label}: copies of ${s.display}`;
+    const withPurpose = words?.purpose ? `${base} (${words.purpose})` : base;
+    if (withPurpose !== base && wordCount(withPurpose) > MAX_LINE_WORDS) dropped.push(`purpose for ${s.display} (too long for the card)`);
+    return wordCount(withPurpose) <= MAX_LINE_WORDS ? withPurpose : base;
   });
   if (needsPackages) allowed.push(`Web packages from the npm registry (${NPM_REGISTRY})`);
   const typedDomains = allowedDomains.filter((d) => d !== NPM_REGISTRY);
   if (typedDomains.length) allowed.push(`Websites you named: ${typedDomains.join(", ")}`);
   allowed.push(`A fresh project folder: ${workspaceDisplay}`);
   for (const line of aiPlan.contractLines.slice(0, 1)) {
-    const l = clean(line, 140);
+    const l = clean(line);
     if (!l) continue;
+    if (wordCount(l) > MAX_LINE_WORDS) { dropped.push(`contract line "${l}" (too long)`); continue; }
     if (lineIsSafe(l, sources.map((x) => x.abs), allowedDomains, path.join(projectsRoot(), workspaceName))) allowed.push(l);
     else dropped.push(`contract line "${l}"`);
   }

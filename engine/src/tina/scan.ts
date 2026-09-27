@@ -17,10 +17,11 @@ import { kindOf, riskyReason } from "./preinspect.ts";
 export type FindingType = "api-key" | "photo-metadata" | "personal-data" | "risky-file";
 
 export interface RawFinding {
-  id: string;                  // stable: hash of type + file, so a rescan recognizes it
+  id: string;                  // stable: hash of type + segment, so a rescan recognizes it
   type: FindingType;
   segmentId: string;
-  file: string;                // workspace-relative, posix
+  file: string;                // workspace-relative, posix: the first file in the group
+  files: string[];             // every file with this problem on this segment (a fix acts on all of them)
   severity: Severity;
   detail: string;              // plain and redacted: "Google API key", "camera owner's name, camera serial number"
   snippet: string;             // redacted context for the explainer; never contains a secret or a personal value
@@ -44,7 +45,8 @@ const MAX_TEXT = 1024 * 1024;
 const IGNORED_DOMAINS = new Set(["www.w3.org", "w3.org", "schema.org", "localhost", "127.0.0.1", "0.0.0.0"]);
 
 const posix = (p: string) => p.split(path.sep).join("/");
-export const findingId = (type: FindingType, file: string) => `f-${type}-${crypto.createHash("sha1").update(`${type}:${file}`).digest("hex").slice(0, 10)}`;
+/** One finding per (type, segment): 42 GPS photos on one segment are one problem with one fix. */
+export const findingId = (type: FindingType, segmentId: string) => `f-${type}-${crypto.createHash("sha1").update(`${type}:${segmentId}`).digest("hex").slice(0, 10)}`;
 
 export function walkWorkspace(root: string): string[] {
   const out: string[] = [];
@@ -246,8 +248,8 @@ export async function scanWorkspace(staged: Staged, opts: ScanOptions = {}): Pro
     return "workspace";
   };
 
-  const findings: RawFinding[] = [];
-  const push = (f: Omit<RawFinding, "id" | "segmentId">) => findings.push({ ...f, id: findingId(f.type, f.file), segmentId: segmentFor(f.file) });
+  const perFile: Omit<RawFinding, "id" | "files">[] = [];
+  const push = (f: Omit<RawFinding, "id" | "segmentId" | "files">) => perFile.push({ ...f, segmentId: segmentFor(f.file) });
 
   // 3. Secrets.
   let secretEngine: ScanResult["secretEngine"] = "gitleaks";
@@ -302,7 +304,25 @@ export async function scanWorkspace(staged: Staged, opts: ScanOptions = {}): Pro
     if (why) push({ type: "risky-file", file: f, severity: "medium", detail: `it ${why}`, snippet: `file name: ${path.basename(f)}` });
   }
 
-  return { findings, dataLeavesTo: [...hosts].sort(), scope: inScope, secretEngine, ms: Date.now() - t0 };
+  return { findings: groupFindings(perFile), dataLeavesTo: [...hosts].sort(), scope: inScope, secretEngine, ms: Date.now() - t0 };
+}
+
+const SEVERITY_RANK: Record<Severity, number> = { low: 0, medium: 1, high: 2 };
+
+/** Per-file hits -> one finding per (type, segment). The first file's snippet goes to the explainer. */
+function groupFindings(perFile: Omit<RawFinding, "id" | "files">[]): RawFinding[] {
+  const groups = new Map<string, RawFinding>();
+  for (const f of perFile) {
+    const key = `${f.type}\0${f.segmentId}`;
+    const g = groups.get(key);
+    if (!g) { groups.set(key, { ...f, id: findingId(f.type, f.segmentId), files: [f.file], secrets: f.secrets ? [...f.secrets] : undefined }); continue; }
+    g.files.push(f.file);
+    if (SEVERITY_RANK[f.severity] > SEVERITY_RANK[g.severity]) g.severity = f.severity;
+    const details = new Set([...g.detail.split(", "), ...f.detail.split(", ")]);
+    g.detail = [...details].join(", ");
+    if (f.secrets) g.secrets = [...new Set([...(g.secrets ?? []), ...f.secrets])];
+  }
+  return [...groups.values()];
 }
 
 function sha1FileSafe(f: string): string { try { return sha1File(f); } catch { return ""; } }

@@ -10,7 +10,7 @@ import type { CrewCtx, Ev } from "../src/crew.ts";
 import type { EngineEvent, WorldState } from "../../shared/events.ts";
 import { initialState, reduce } from "../../shared/reducer.ts";
 import { planFence, stageFence, type Staged } from "../src/tini/index.ts";
-import { runInspection } from "../src/tina/findings.ts";
+import { runInspection, toFinding } from "../src/tina/findings.ts";
 import { scanWorkspace } from "../src/tina/scan.ts";
 import { applyFix } from "../src/tina/fixes.ts";
 import { resetExplanations } from "../src/tina/explain.ts";
@@ -182,6 +182,58 @@ const s6 = await scanWorkspace({ fence: { workspace: ws6, allowedDomains: [] }, 
 console.log(`        engine ${s6.secretEngine}: ${JSON.stringify(s6.findings.map((f) => [f.type, f.file, f.snippet]))}`);
 ok(s6.findings.some((f) => f.type === "api-key" && f.file === "contact.html") && !JSON.stringify(s6.findings.map((f) => f.snippet)).includes(KEY), "key found (with gitleaks on) and redacted in the snippet");
 fs.rmSync(ws6, { recursive: true, force: true });
+
+// --- 7. grouping: one finding per (type, segment); a fix acts on the whole group -------------
+console.log("\n(7) 6 GPS photos outside assets + a key (the observe-mode shape):");
+const ws7 = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "tini-group-")));
+const jobsite = path.join(H, "Pictures/Jobsite2024");
+const rolls = fs.readdirSync(jobsite).filter((f) => /^IMG_\d+\.jpg$/.test(f)).sort().slice(0, 30).map((f) => path.join(jobsite, f));
+const rollTags = await identifyingTags(rolls);
+const gpsSix = rolls.filter((f) => rollTags.get(path.resolve(f))?.GPSLatitude !== undefined).slice(0, 6);
+fs.mkdirSync(path.join(ws7, "photos"));
+for (const f of gpsSix) fs.copyFileSync(f, path.join(ws7, "photos", path.basename(f)));
+fs.writeFileSync(path.join(ws7, "contact.html"), `<div id="map"></div>\n<script src="https://maps.googleapis.com/maps/api/js?key=${KEY}&callback=initMap" async defer></script>\n`);
+const staged7: Staged = { fence: { workspace: ws7, allowedDomains: ["registry.npmjs.org"] }, workspace: ws7, pathMap: {}, fenceNote: "" };
+const s7 = await scanWorkspace(staged7);
+const g7 = s7.findings.find((f) => f.type === "photo-metadata");
+console.log(`        ${s7.findings.length} finding(s): ${s7.findings.map((f) => `${f.type}/${f.segmentId} x${f.files.length}`).join(", ")}`);
+ok(gpsSix.length === 6 && s7.findings.length === 2, "6 GPS photos + 1 key -> exactly 2 findings", String(s7.findings.length));
+ok(g7?.files.length === 6 && g7.segmentId === "workspace", "the photo finding groups all 6 files on one segment");
+const w7 = g7 ? await toFinding(deadAi, g7) : null;
+console.log(`        title: ${w7?.title} | file: ${w7?.file} | fixes: ${w7?.fixes.map((x) => x.label).join(", ")}`);
+ok(w7?.title === "6 photos still have GPS locations" && /and 5 more$/.test(w7.file ?? ""), "group title and file line");
+let state7: WorldState = { ...initialState(), segments: [{ id: "workspace", label: "Workspace", kind: "workspace", detail: ws7, status: "red" }, { id: "web-packages", label: "Web packages", kind: "packages", detail: "", status: "red" }] };
+const ev7: Ev[] = [];
+const ctx7: Pick<CrewCtx, "emit" | "log" | "ai" | "state"> = { emit: (e) => { ev7.push(e); }, log: () => {}, ai: deadAi, state: () => state7 };
+const f7 = await applyFix(ctx7, staged7, g7!.id, "strip-metadata");
+const after7 = await identifyingTags(gpsSix.map((f) => path.join(ws7, "photos", path.basename(f))));
+console.log(`        fix: "${f7.summary}" green=${f7.green}`);
+ok(f7.green && [...after7.values()].every((t) => Object.keys(t).length === 0), "one click cleaned all 6 photos");
+ok(f7.summary === "Photo locations removed from 6 photos", "short past-tense summary", f7.summary);
+const k7 = s7.findings.find((f) => f.type === "api-key")!;
+const fk7 = await applyFix(ctx7, staged7, k7.id, "move-key-out");
+console.log(`        fix: "${fk7.summary}" green=${fk7.green}`);
+ok(fk7.green && fk7.summary === "Key removed; map switched to a keyless embed", "key fix summary", fk7.summary);
+fs.rmSync(ws7, { recursive: true, force: true });
+
+// --- 8. report lines for every escalation choice ------------------------------------------------
+console.log("\n(8) report: narrow / all / deny escalations:");
+const opt = (id: "narrow" | "all" | "deny", label: string, detail: string) => ({ id, label, detail, recommended: id === "narrow" });
+const escEvents = [
+  { actor: "system", type: "turn.started", turnId: 2, prompt: "p" },
+  { actor: "tini", type: "escalation.opened", escalationId: "e1", source: "agent", requested: "~/Pictures/Jobsite2024", ask: "", inspection: { totalFiles: 0, highlights: [] },
+    options: [opt("narrow", "Allow only the 12 job-site photos", "Locations removed. The 1,199 personal photos and the driver's license scan stay out."), opt("all", "Allow the whole folder", ""), opt("deny", "Deny", "")] },
+  { actor: "system", type: "escalation.resolved", escalationId: "e1", choice: "narrow", summary: "" },
+  { actor: "tini", type: "escalation.opened", escalationId: "e2", source: "prompt", requested: "~/Documents/Rivera-HR", ask: "", inspection: { totalFiles: 0, highlights: [] }, options: [opt("all", "Allow the whole folder", ""), opt("deny", "Deny", "")] },
+  { actor: "system", type: "escalation.resolved", escalationId: "e2", choice: "all", summary: "" },
+  { actor: "tini", type: "escalation.opened", escalationId: "e3", source: "agent", requested: "~/Downloads", ask: "", inspection: { totalFiles: 0, highlights: [] }, options: [opt("deny", "Deny", "")] },
+  { actor: "system", type: "escalation.resolved", escalationId: "e3", choice: "deny", summary: "" },
+] as EngineEvent[];
+const r8 = buildReport(escEvents);
+for (const k of ["allowed", "blocked", "narrowed"] as const) for (const l of r8[k]) console.log(`        ${k.padEnd(8)} ${l.what}  —  ${l.why}`);
+ok(r8.narrowed[0]?.what === "~/Pictures/Jobsite2024: only the 12 job-site photos, locations removed" && /\(turn 2\)$/.test(r8.narrowed[0].why), "narrow -> narrowed line");
+ok(r8.allowed[0]?.what === "~/Documents/Rivera-HR: the whole folder", "all -> allowed line");
+ok(r8.blocked[0]?.what === "~/Downloads" && /you said no/.test(r8.blocked[0].why), "deny -> blocked line");
 
 fs.rmSync(process.env.TINI_PROJECTS_DIR!, { recursive: true, force: true });
 await exiftool.end();

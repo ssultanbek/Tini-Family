@@ -54,11 +54,17 @@ export function buildReport(events: readonly E[]): AccessReport {
         break;
       case "escalation.resolved": {
         const o = openEsc.get(e.escalationId);
-        const what = o?.requested ?? e.escalationId;
-        const asker = o?.source === "prompt" ? "Your request" : "Claude";
-        if (e.choice === "narrow") narrowed.push({ what, why: tag(`${asker} asked; you allowed only part: ${o?.labels.get("narrow")?.replace(/^Allow (only )?/, "") ?? e.summary}. ${o?.details.get("narrow") ?? ""}`.trim(), turn) });
-        else if (e.choice === "all") allowed.push({ what, why: tag(`${asker} asked; you allowed the whole folder`, turn) });
-        else addBlocked(what, `${asker} asked; ${/stopped/i.test(e.summary) ? "the turn was stopped" : "you said no"}`);
+        const what = o?.requested ?? "A folder";
+        const asker = o?.source === "prompt" ? "Your prompt named it" : "Claude asked for it";
+        if (e.choice === "narrow") {
+          // "Allow only the 12 job-site photos" -> "only the 12 job-site photos"
+          const label = (o?.labels.get("narrow") ?? e.summary).replace(/^Allow\s+/i, "");
+          const detail = o?.details.get("narrow") ?? "";
+          const cleaned = /^Locations removed/.test(detail) ? ", locations removed" : "";
+          const rest = detail.replace(/^Locations removed\.\s*/, "").replace(/ stays? out\.$/, " stayed out.").trim();
+          narrowed.push({ what: `${what}: ${label}${cleaned}`, why: tag(`${asker}.${rest ? ` ${rest}` : ""}`, turn) });
+        } else if (e.choice === "all") allowed.push({ what: `${what}: the whole folder`, why: tag(`${asker}; you allowed all of it`, turn) });
+        else addBlocked(what, `${asker}; ${/stopped/i.test(e.summary) ? "the turn was stopped" : "you said no"}`);
         break;
       }
       case "segment.red": findings.set(e.finding.id, e.finding); break;

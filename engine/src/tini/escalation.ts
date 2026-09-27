@@ -13,6 +13,7 @@ import { stripGpsBatch } from "../tina/exif.ts";
 import { flagNoun, inspectFolder, type FolderReport } from "../tina/inspect-folder.ts";
 import { kindOf } from "../tina/preinspect.ts";
 import { judgePath, slug } from "./paths.ts";
+import { clip } from "./text.ts";
 import { recordBaseline, type Staged } from "./stager.ts";
 
 export interface EscalationDeps {
@@ -94,6 +95,22 @@ export function fallbackSubset(candidates: string[], contextText: string): { sub
     return { subset, noun: `${cap(top)} ${kindNoun(subset)}`, by: `name match "${[...hits.keys()].join('", "')}"` };
   }
   return { subset: [...candidates], noun: kindNoun(candidates), by: "all unflagged files" };
+}
+
+// Code-written segment labels, at most 3 whole words: "Job-site photos", "HR documents".
+const COMPOUNDS: Record<string, string> = { jobsite: "Job-site", worksite: "Work-site" };
+function folderWord(root: string): string {
+  const parts = path.basename(root).replace(/\.[a-z0-9]{1,5}$/i, "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2").split(/[^A-Za-z]+/).filter((w) => w.length >= 2);
+  const w = parts[parts.length - 1] ?? "";
+  if (!w) return "";
+  if (COMPOUNDS[w.toLowerCase()]) return COMPOUNDS[w.toLowerCase()];
+  return w === w.toUpperCase() ? w : cap(w.toLowerCase());
+}
+export function segmentLabel(root: string, files: string[]): string {
+  const word = folderWord(root);
+  const kind = kindNoun(files);
+  return word ? `${word} ${kind}` : cap(kind);
 }
 
 const NOUN_OK = /^[A-Za-z][A-Za-z '’-]*$/;
@@ -206,7 +223,7 @@ export function buildCard(p: Pending, source: EscalationSource, display: string,
   options.push({ id: "all", label: "Allow the whole folder", detail: allDetail, recommended: false });
   options.push({ id: "deny", label: "Deny", detail: "Claude keeps working without it.", recommended: !p.subset.length });
 
-  const cleanReason = reason?.replace(/\s+/g, " ").trim().slice(0, 160);
+  const cleanReason = reason ? clip(reason, 140) : "";
   const ask = source === "prompt"
     ? "Your new request needs a folder that isn't inside the fence yet."
     : cleanReason ? `Claude wants ${display}: ${cleanReason}` : `Claude wants ${display}. Claude asked for a folder you didn't name.`;
@@ -282,7 +299,8 @@ export function createEscalation(deps: EscalationDeps) {
     const files = narrow ? p.subset : r.files.filter((f) => !r.secretNames.has(f));
 
     const taken = new Set(ctx.state().segments.map((s) => s.id));
-    let id = slug(narrow ? p.noun : path.basename(r.root)) || "extra-files";
+    const label = segmentLabel(r.root, files);
+    let id = slug(label) || "extra-files";
     for (let n = 2, base = id; taken.has(id) || id === "workspace" || id === "web-packages" || fs.existsSync(path.join(staged.workspace, "assets", id)); n++) id = `${base}-${n}`;
     const destDir = path.join(staged.workspace, "assets", id);
     fs.mkdirSync(destDir, { recursive: true });
@@ -304,7 +322,6 @@ export function createEscalation(deps: EscalationDeps) {
 
     const images = files.filter((f) => kindOf(f) === "image").length - leftovers.length;
     const detailParts = [images ? `${fmt(images)} ${images === 1 ? "photo" : "photos"}` : "", fileCount - images ? `${fmt(fileCount - images)} ${fileCount - images === 1 ? "file" : "files"}` : ""].filter(Boolean);
-    const label = narrow ? cap(p.noun).slice(0, 24) : path.basename(r.root).slice(0, 24);
     const detail = `${detailParts.join(", ") || "empty"}${images ? ", locations removed" : ""}`;
     ctx.emit({ actor: "tini", type: "fence.segment.built", segment: { id, label, kind: "folder", detail, status: "built" } });
     ctx.emit({ actor: "tini", type: "tini.carry.box", segmentId: id, fileCount });

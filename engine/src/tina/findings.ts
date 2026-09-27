@@ -17,16 +17,39 @@ export const FIXES: Record<FindingType, FixOption[]> = {
   "risky-file": [{ id: "remove-file", label: "Remove this file" }],
 };
 
+const n = (k: number) => k.toLocaleString("en-US");
+
+/** Code-written headline for a group of several files; one file keeps the AI's (or template) title. */
+function groupTitle(raw: RawFinding): string {
+  const k = raw.files.length;
+  switch (raw.type) {
+    case "photo-metadata": return /GPS/.test(raw.detail) ? `${n(k)} photos still have GPS locations` : `${n(k)} photos still say who took them`;
+    case "api-key": return `API keys in ${n(k)} files of your website`;
+    case "personal-data": return `Private information in ${n(k)} files`;
+    case "risky-file": return `${n(k)} private-looking files in the output`;
+  }
+}
+
+/** Fix labels that say how many files the click acts on. */
+function fixesFor(raw: RawFinding): FixOption[] {
+  const k = raw.files.length;
+  if (k === 1) return FIXES[raw.type];
+  const noun = raw.type === "photo-metadata" ? "photos" : "files";
+  return FIXES[raw.type].map((f) => (f.id === "remove-file" || f.id === "remove-photo" ? { ...f, label: `Remove these ${n(k)} ${noun}` } : f));
+}
+
 export async function toFinding(ai: TinaCtx["ai"], raw: RawFinding): Promise<Finding> {
   const words = await explain(ai, raw);
+  const k = raw.files.length;
+  const where = k === 1 ? `Found in ${raw.file}` : `Found in ${n(k)} files, like ${raw.files.slice(0, 2).join(" and ")}`;
   return {
     id: raw.id,
     segmentId: raw.segmentId,
     severity: raw.severity,
-    title: words.title,
-    explanation: `${words.explanation} Found in ${raw.file} (${raw.detail}).`,
-    file: raw.file,
-    fixes: FIXES[raw.type],
+    title: k === 1 ? words.title : groupTitle(raw),
+    explanation: `${words.explanation} ${where} (${raw.detail}).`,
+    file: k === 1 ? raw.file : `${raw.file} and ${n(k - 1)} more`,
+    fixes: fixesFor(raw),
   };
 }
 
