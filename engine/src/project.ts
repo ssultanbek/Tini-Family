@@ -14,12 +14,16 @@ import type { Recorder } from "./recorder.ts";
 export class Hub {
   private seq = 0;
   state: WorldState = initialState();
+  /** This session's events (cleared on session.reset): the access report is built from them. */
+  events: EngineEvent[] = [];
   private listeners = new Set<(e: EngineEvent) => void>();
   constructor(public recorder: Recorder | null = null) {}
 
   emit(ev: Ev): EngineEvent {
     const e = { ...ev, seq: ++this.seq, ts: Date.now() } as EngineEvent;
     this.state = reduce(this.state, e);
+    if (e.type === "session.reset") this.events = [];
+    this.events.push(e);
     this.recorder?.event(e);
     for (const l of this.listeners) { try { l(e); } catch { /* a bad listener never breaks emit */ } }
     return e;
@@ -28,7 +32,7 @@ export class Hub {
 }
 
 /** What the server talks to: the live Project or the replay driver. */
-export interface Driver { boot(): void; command(cmd: GameCommand): void }
+export interface Driver { boot(): void; command(cmd: GameCommand): void; harness?(): string }
 
 // ---------------------------------------------------------------------------
 // Command validation (pure; shared with replay)
@@ -122,6 +126,14 @@ export class Project implements Driver {
 
   boot() { this.resetSession(); }
 
+  /** POST /harness/attack: fire the simulated attack into the current project (labelled simulated). */
+  harness(): string {
+    if (!this.crew.attack) return "this crew has no attack harness";
+    if (this.state.phase === "idle" || this.state.phase === "planning" && this.turnId <= 1 || this.state.phase === "contract") return "no fence yet: start a project and approve its plan first";
+    try { return this.crew.attack(this.ctx(this.sessionCtl.signal)); }
+    catch (e) { return `harness failed: ${msg(e)}`; }
+  }
+
   command(cmd: GameCommand) {
     const why = validateCommand(this.state, cmd) ?? this.busyReason(cmd);
     if (why) { this.hub.emit({ actor: "system", type: "raw.log", channel: "engine", text: `ignored ${cmd?.type ?? "?"}: ${why}` }); return; }
@@ -160,6 +172,7 @@ export class Project implements Driver {
       signal,
       ai: this.ai,
       state: () => this.hub.state,
+      events: () => this.hub.events,
     };
   }
 

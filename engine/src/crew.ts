@@ -22,6 +22,8 @@ export interface CrewCtx {
   signal: AbortSignal;
   ai: Ask;
   state(): WorldState;
+  /** This session's events so far (for the access report). */
+  events?(): readonly EngineEvent[];
 }
 
 export interface FencePlan { segments: Segment[]; contract: ContractCard }
@@ -49,4 +51,6 @@ export interface Crew {
   launch(ctx: CrewCtx): Promise<{ url?: string; report: AccessReport }>;
   /** Reset: forget everything about the current project. */
   reset?(): void;
+  /** The simulated attack (harness.ts): pushes the template's ~/.ssh read through the real fence. */
+  attack?(ctx: CrewCtx): string;
 }

@@ -13,12 +13,15 @@
 //   tool_result rejection, "[Request interrupted by user]", and a result with
 //   subtype "error_during_execution", terminal_reason "aborted_streaming". The session
 //   keeps working for the next message.
+import fs from "node:fs";
 import path from "node:path";
-import { query, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { createSdkMcpServer, query, tool, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { z } from "zod";
 import type { CrewCtx } from "./crew.ts";
-import { dogOptions } from "./dog.ts";
-import { escalationFolder, pretty, type Fence, type GuardDecision } from "./guard.ts";
+import { dogOptions, type DogPolicy } from "./dog.ts";
+import { escalationFolder, expandHome, isInside, pretty, realish, REQUEST_TOOL, type Fence, type GuardDecision } from "./guard.ts";
 import { Inbox } from "./inbox.ts";
+import { isSensitive } from "./tini/paths.ts";
 
 export interface RunnerConfig {
   fence: Fence;
@@ -29,7 +32,20 @@ export interface RunnerConfig {
   sessionBudgetUsd?: number;   // SDK maxBudgetUsd (whole session)
   turnBudgetUsd?: number;      // ours, estimated mid-turn
   speechGapMs?: number;
+  /** After every brick (e.g. the demo harness fires after turn 1's 4th brick). */
+  onBrick?: (ctx: CrewCtx) => void;
+  /** Observe mode swaps in its own decision policy and sandbox read roots. */
+  policy?: DogPolicy;
+  /** The request_access tool (default on; observe mode has no fence to ask through). */
+  requestDoor?: boolean;
 }
+
+const REQUEST_DESCRIPTION =
+  "Ask the owner for access to a file or folder outside your workspace. Use it whenever the job needs something that isn't in ./assets, " +
+  "including material the owner's messages or files point you to (for example \"more photos are in ~/Pictures/...\"). " +
+  "Never try to open outside paths yourself: they are blocked. Asking is always safe: nothing is opened, the owner decides in the app, " +
+  "and private locations are refused automatically. Give the path and a one-line reason. Approved copies appear in ./assets/ and you get " +
+  "a message when they are there. This call returns immediately: keep working with what you have meanwhile.";
 
 type Waiter = { resolve: (summary: string) => void; reject: (e: Error) => void; abandoned: boolean; startCost: number };
 
@@ -55,6 +71,7 @@ export class DogRunner {
   private seenMsgIds = new Set<string>();
   private overBudget = false;
   private price = { in: 3, out: 15 };   // $/MTok, updated from the init message's model
+  private reasons = new Map<string, string>();   // requested path -> Claude's one-line reason
 
   constructor(private cfg: RunnerConfig) {}
 
@@ -86,8 +103,11 @@ export class DogRunner {
     this.inbox?.close();
     try { this.q?.close(); } catch { /* already gone */ }
     this.q = null; this.inbox = null; this.alive = false; this.ctx = null;
-    this.escalated.clear();
+    this.escalated.clear(); this.reasons.clear();
   }
+
+  /** Claude's own words for why it asked (request_access), for the escalation card. */
+  agentReason(requested: string): string | undefined { return this.reasons.get(requested); }
 
   // --- session --------------------------------------------------------------------
   private ensureSession(ctx: CrewCtx) {
@@ -98,6 +118,13 @@ export class DogRunner {
       onDecision: (tool, input, d) => this.onDecision(tool, input, d),
       onToolDone: (tool, input) => this.onToolDone(tool, input),
     }, {
+      // The request door: one in-process MCP tool, always loaded (ToolSearch isn't in the dog's tool set).
+      ...(this.cfg.requestDoor === false ? {} : { mcpServers: { tini: createSdkMcpServer({ name: "tini", version: "1.0.0", alwaysLoad: true, tools: [
+        tool("request_access", REQUEST_DESCRIPTION, {
+          path: z.string().describe("The file or folder you need, e.g. ~/Pictures/Jobsite2024"),
+          reason: z.string().describe("One line: why the job needs it"),
+        }, async ({ path: p, reason }) => ({ content: [{ type: "text" as const, text: this.onRequest(p, reason) }] })),
+      ] }) }, allowedTools: [REQUEST_TOOL] }),
       model: this.cfg.model ?? "sonnet",
       maxTurns: this.cfg.maxTurnsPerTurn ?? 40,
       maxBudgetUsd: this.cfg.sessionBudgetUsd ?? 6,
@@ -106,7 +133,7 @@ export class DogRunner {
         append: this.cfg.fenceNote + (restart ? "\n\nThis is a new session for a project already in progress: the workspace already contains your earlier work. Look at it before changing things." : ""),
       },
       stderr: (s) => this.onStderr(s),
-    });
+    }, this.cfg.policy);
     this.q = query({ prompt: this.inbox, options: opts });
     this.alive = true;
     ctx.log("config", `dog session ${restart ? "restarted" : "opened"}: model=${opts.model} maxTurns/turn=${opts.maxTurns} sessionBudget=$${opts.maxBudgetUsd} turnBudget=$${this.cfg.turnBudgetUsd ?? 2}`);
@@ -191,7 +218,8 @@ export class DogRunner {
     const summary = `${tool} ${JSON.stringify(input).slice(0, 160)}`;
     if (d.allow) { this.log("hook", `ALLOW ${summary}`); return; }
     this.log("hook", `DENY  ${summary}  <- ${d.reason}`);
-    const folder = d.kind === "path" ? escalationFolder(d.target) : null;
+    let folder = d.kind === "path" ? escalationFolder(d.target) : null;
+    if (folder && isSensitive(expandHome(folder))) folder = null;   // private: a spark, never a card
     const reason = folder
       ? `Claude asked for ${folder}, a folder you didn't name. Tini is asking you first.`
       : d.kind === "network" ? `Claude tried to reach ${d.target}, a website you didn't approve. Tini blocked it.`
@@ -208,15 +236,47 @@ export class DogRunner {
     });
   }
 
+  /** request_access: ask the owner in the background and answer Claude at once. */
+  private onRequest(raw: string, reason: string): string {
+    const ctx = this.live();
+    if (!ctx) return "No turn is running right now.";
+    const { kind, display, folder } = classifyRequest(raw, this.cfg.fence.workspace);
+    const why = String(reason ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
+    this.log("hook", `REQUEST ${display}: ${why} -> ${kind}`);
+    if (kind === "inside") return `${display} is already inside your workspace. Use it directly.`;
+    if (kind === "private") {
+      this.safe((c) => c.emit({ actor: "dog", type: "fence.blocked", target: display, tool: "request_access", layer: "hook", simulated: false,
+        reason: `Claude asked for ${friendly(display)}${friendly(display) !== display ? ` (${display})` : ""}. That's private, so Tini said no without asking you.` }));
+      return "Denied: that location is private and can't be requested. Continue without it and don't try to open it.";
+    }
+    if (kind === "missing") return `${display} doesn't exist. Continue without it.`;
+    if (this.escalated.has(folder!) || this.escalated.has(display)) return "Already requested: the owner is reviewing it. Keep working with what you have.";
+    this.escalated.add(folder!); this.escalated.add(display);
+    this.reasons.set(display, why);
+    this.safe((c) => {
+      c.say("dog", shortLine(`Can I have ${display}? ${why}`, 90));
+      c.escalate(display, "agent").catch(() => {});
+    });
+    return "The owner is reviewing this. Keep working; approved files will appear in ./assets/ and you'll get a message when they're there.";
+  }
+
   private onToolDone(tool: string, input: Record<string, unknown>) {
+    if (tool === REQUEST_TOOL) return;   // asking isn't building
     const op = tool === "Write" ? "write" : tool === "Edit" ? "edit" : tool === "Bash" ? "run" : "read";
     const ws = this.cfg.fence.workspace;
-    const rel = (p: unknown) => { const s = String(p ?? ""); return s.startsWith("/") ? path.relative(ws, s) || "." : s; };
+    const rel = (p: unknown) => {
+      const s = String(p ?? "");
+      if (!s.startsWith("/")) return s;
+      return isInside(s, ws) ? path.relative(ws, s) || "." : pretty(s);   // observe mode reads real folders: show ~/...
+    };
     const file = tool === "Bash" ? String(input.command ?? "").replace(/\s+/g, " ").slice(0, 80)
       : tool === "Glob" ? String(input.pattern ?? "")
       : tool === "Grep" ? `grep ${String(input.pattern ?? "")}`
       : rel(input.file_path);
-    this.safe((ctx) => ctx.emit({ actor: "dog", type: "dog.brick.placed", op, file, bricks: ctx.state().bricks + 1 }));
+    this.safe((ctx) => {
+      ctx.emit({ actor: "dog", type: "dog.brick.placed", op, file, bricks: ctx.state().bricks + 1 });
+      this.cfg.onBrick?.(ctx);
+    });
   }
 
   private osBlocked(output: string, command: string) {
@@ -248,6 +308,20 @@ export class DogRunner {
       this.log("sdk", `[stderr] ${line.slice(0, 300)}`);
     }
   }
+}
+
+/**
+ * The request door's decision, pure code: "private" (dotfiles, keys, Library, outside home, home itself:
+ * a spark, never a card), "inside" (already in the workspace), "missing", or "ask" (open a card).
+ */
+export function classifyRequest(raw: string, workspace: string): { kind: "private" | "inside" | "missing" | "ask"; display: string; folder: string | null } {
+  const abs = realish(path.resolve(workspace, expandHome(String(raw ?? "").trim())));
+  const display = pretty(abs);
+  if (isInside(abs, workspace)) return { kind: "inside", display, folder: null };
+  const folder = escalationFolder(display);
+  if (!folder || isSensitive(abs)) return { kind: "private", display, folder: null };
+  if (!fs.existsSync(abs)) return { kind: "missing", display, folder };
+  return { kind: "ask", display, folder };
 }
 
 /** First sentence, markdown stripped, at most `max` characters. */

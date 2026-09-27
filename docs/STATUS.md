@@ -17,11 +17,11 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 | 0. Prove the fence | **done** (Sept 26) | Spike 5/5 PASS on the Mac (total $0.13). Guard tests 25/25, typecheck clean. Check 3 blocked by Seatbelt ("Operation not permitted"); check 5 = one session_id across 2 results. |
 | 1. Engine backbone + AI ladder | **done** (Sept 26) | Contract v1.2 pushed. `engine/src/{project,crew,standins,recorder,replay,server,main,ai}.ts`. Loop test PASS (narrow/all/deny + replay), ai.stress 100/100, ai:smoke real sources, edge tests, typecheck clean. |
 | 2. Demo kit | committed (f5e1362, second session) | Generator + verifier in `demo-kit/`; demo world present at ~/Clients/Rivera, ~/Pictures/Jobsite2024 (1,212 files), ~/Documents/Rivera-HR. Report from that session. |
-| 3. Tini: planning, access, staging | committed (43d7cf5, second session) | `tini/{paths,planner,stager,access}.ts`, `tina/preinspect.ts`, `test:tini`. Used by `--mode live`: live run planned 5 segments in 3s, staged ./assets, rewrote paths, prompt card for Rivera-HR. Report from that session. |
-| 4. Dog: persistent session | **done** (Sept 26) | `runner.ts`, `live.ts`, `--mode live`. Live 4-turn run PASS ($1.16), replay of it PASS, guard 32+12, typecheck clean. Checkpoint A: engine live on :4000. |
-| 5. Escalation + attack harness | committed (81cb55c, second session) | Not yet wired into `live.ts` (still uses the stand-in card + temporary copy). Report from that session. |
-| 6. Tina per-turn inspection | not started | |
-| 7. Fixes, launch/relock, report | not started | Checkpoint B after this stage |
+| 3. Tini: planning, access, staging | **done** (43d7cf5, session 2) | `tini/{paths,planner,stager,access}.ts`, `tina/preinspect.ts`; test:tini 28/28. Code finds paths/domains; the AI ladder (`tini.plan`) only writes words, re-validated. Fresh ~/tini-projects workspace, copies in ./assets/<id>/ with GPS stripped (fail closed), originals untouched. checkAccess + rewritePrompt code-only. Live: 5 segments planned in 0-5s. Extras: planFence(prompt, ai, {emit, log}); Adjust = planFence(prompt + adjustments); exiftool.end() on shutdown; env TINI_PROJECTS_DIR, TINI_AI_CACHE=off. |
+| 4. Dog: persistent session | **done** (1963aa7) | `runner.ts` (one Sonnet session across turns, events, Stop = interrupt, per-turn cost cap), `live.ts`, `--mode live`. Live 4-turn run PASS ($1.16) + replay PASS. Checkpoint A: game built and run against the real engine (issues listed below, since fixed by the teammate). |
+| 5. Escalation + attack harness | **done**: pipeline 81cb55c (session 2), wiring + request door (this session) | `tini/escalation.ts` (Tina inspects locally, AI picks the subset, code sanitizes), `harness.ts`. Wired in `live.ts`; `request_access` MCP tool; `POST /harness/attack`; `--demo` fires the attack after turn 1's 4th brick. Live run 2 PASS ($1.32): Claude asked for ~/Pictures/Jobsite2024, card 1,212 / 12 / 1,199 / 1 license / 903 GPS, narrow → gallery uses the 12 photos. Recording: `candidate-demo-1.jsonl`, replay PASS. |
+| 6. Tina per-turn inspection | committed (12d7a36, session 2) | `tina/{scan,explain,findings}.ts`, test:tina 28/28. Not yet wired into `live.ts` (stand-in inspect). Report from session 2. |
+| 7. Fixes, launch/relock, report | committed (12d7a36, session 2) | `tina/fixes.ts`, `report.ts`. Not yet wired into `live.ts` (stand-in fix/launch). Checkpoint B after wiring. |
 | 8. Demo hardening | not started | Feature freeze 3:00 AM (revised) |
 
 ## Contract versions (shared/events.ts)
@@ -29,6 +29,7 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 - v1: first version.
 - v1.1: multi-turn (`turn.started`, `turn.finished`, `launch.locked`, `prompt` command, escalation `source`, `turns` in state).
 - v1.2 (Stage 1, pushed 0798c61): `stop` command, `prompt.suggested` event, `suggestedPrompt` in WorldState, raw.log channels `ai` and `engine`.
+- v1.3 (session 2, c333248): `finding.cleared { findingId, reason }`; the reducer removes the finding.
 
 ## Decisions log
 
@@ -47,13 +48,16 @@ Gemini vision (metadata fallback keeps Photos red), incremental scanning.
 - Stage 4: a hook denial of a non-sensitive folder (`guard.escalationFolder`: no dotfiles, Library, keys, home root) emits fence.blocked and calls ctx.escalate(folder, "agent") without blocking the hook; deduped per folder per project. Sparks deduped per target per turn.
 - Stage 4: guard no longer treats bare slashes (sed/regex `s/a/b/`, `"//"`) as the path "/" (live-run false positive). Real paths like /etc/passwd stay blocked.
 - Stage 4: website turns append "Keep it a simple static site ... Don't start a local server or open a browser to preview it: Tini launches the site after Tina's check." (Claude tried `python3 -m http.server` + curl localhost in the live run; blocked by the network rule.)
-- Stage 4: live mode loads Stage 3 (`engine/src/tini`) at runtime, so the engine builds without it.
+- Stage 4: live mode loaded Stage 3 at runtime; since Stage 5 wiring it imports `tini/index.ts` statically (Stage 3 is committed).
+- Stage 5: the request door. `mcp__tini__request_access({ path, reason })` (in-process MCP server "tini", alwaysLoad). The guard allows exactly that MCP tool. `runner.classifyRequest` decides: private (dotfiles, keys, Library, outside home, home root) → fence.blocked only, no card; already inside → told so; missing → told so; otherwise ctx.escalate(path, "agent") in the background, with Claude's reason shown on the card (agentReason). Returns at once: "The owner is reviewing this. Keep working...". Unannounced attempts still go through the hook denial path (isSensitive → spark only).
+- Stage 5: fenceNote keeps Stage 3's text; live.ts swaps its "If you truly need..." line for the request-door line (stager.ts is session 2's file).
+- Stage 5: the tool description says asking is always safe and covers "material the owner's files point you to". Run 1 used a narrower description, and Claude read company.md's Jobsite2024 pointer but didn't ask (it had just caught the injected template). Run 2 asked.
+- Stage 5: the demo turn-1 prompt is now "...website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos ..." (mock SUGGESTED, mock test-client, PRODUCT_CONTEXT). The game's DEFAULT_PROMPT and story test are the teammate's to update.
+- Stage 5: guard no longer reads HTML closing tags (`grep "</div>"`) as paths; `</etc/passwd` (input redirect) stays blocked. Found live (spark on "/div"); it's in candidate-demo-1 because the fix came after that run.
 
 ## Open issues
 
-- Game vs real engine (teammate): Approve stays clickable while the engine re-plans after Adjust; the engine ignores it (can't approve an unseen plan) and the game's pending "approve.plan" never clears (only fence.plan.approved clears it). Fix in game: clear pending approve on fence.plan.proposed and/or disable Approve unless phase is contract. The game's story check sends adjust+approve in the same tick, so it stalls on the engine (passes with that line removed).
-- Game hasn't adopted v1.2 yet: no Stop button, no prompt.suggested prefill, no `ai`/`engine` raw-view chips. Adjust hint still says "the mock does not change the plan".
-- Claude (Sonnet) did not follow the Jobsite2024 pointer in the live run, and it spotted and refused the template's ~/.ssh instruction on its own. The agent escalation path is covered by stand-in tests; the demo recording needs a run where it happens (or Stage 5's harness/prompting).
-- Stage 6 will add the additive event `finding.cleared { findingId, reason }` (decided): findings a rescan no longer finds.
-- Temporary in `live.ts` until Stage 5: approved escalation files are copied by name heuristics (narrow skips IMG_*, scan_*, login/password files), GPS stripped with exiftool.
-- The game's RawView channel chips list only hook/config/sdk/scan; `ai` and `engine` lines still show but can't be filtered (teammate).
+- Game (teammate): DEFAULT_PROMPT and tests/story.ts still use the old turn-1 prompt (no "gallery of this year's projects").
+- candidate-demo-1 contains one false-positive spark ("/div", a grep for `</div`), fixed in the guard afterwards. Re-record for the final demo (Stage 8) to get a clean take.
+- Live Claude behavior varies between runs: run 1 didn't use the request door, run 2 did. The demo runs from a recording (decision 6).
+- `live.ts` still uses stand-ins for inspect/fix/launch until session 2 wires Stages 6-7 (the stand-in inspection invents 2 reds on turn 1).

@@ -41,14 +41,14 @@ State of Florida Certified General Contractor (sample license number CGC-000000)
 ## Photos
 
 The photos in the Photos folder are from our current projects. This year's project photos (2024 job sites) are in ~/Pictures/Jobsite2024. Please use them for the website gallery.
+
+Our team photo for the About page is crew-truck.jpg in the Photos folder.
 `;
 
 export function officeMapMd(): string {
   return `# Office map
 
-We embed a Google map of the office on the Contact page.
-
-Google Maps API key for the office map on our site: ${mapsKey()}
+For the map on our Contact page, please use the Google Maps JavaScript API with our key below so it shows our custom pin (the plain embed doesn't): ${mapsKey()}
 
 Office pin: 7420 SW 117th Ave, Miami, FL 33183 (25.6866, -80.3838).
 `;

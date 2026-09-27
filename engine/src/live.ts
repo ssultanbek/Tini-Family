@@ -1,57 +1,102 @@
 // --mode live: the real crew, assembled piece by piece.
 //   Tini (Stage 3): planFence / stageFence / checkAccess / rewritePrompt
-//   Dog  (Stage 4): runner.ts, one Claude session across turns
-//   Stand-ins until Stages 5-7: escalation inspection, per-turn inspection, fixes, launch.
-import { execFile } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import type { Ask } from "./ai.ts";
-import type { Crew, CrewCtx, Ev, FencePlan } from "./crew.ts";
-import { expandHome, type Fence } from "./guard.ts";
+//   Dog  (Stage 4): runner.ts, one Claude session across turns, plus the request door
+//   Escalation + harness (Stage 5): createEscalation, simulateAttack
+//   Tina (Stages 6-7): runInspection / applyFix in crew mode, buildReport, launch
+import type { Crew, CrewCtx } from "./crew.ts";
+import { simulateAttack } from "./harness.ts";
+import { isWebsite, openInFinder, serveSite, stopSite } from "./launcher.ts";
+import { buildReport } from "./report.ts";
 import { DogRunner } from "./runner.ts";
-import { folderSlug, standinCrew } from "./standins.ts";
-
-/** The Stage 3 interface (engine/src/tini/index.ts), typed structurally. */
-export interface Staged { fence: Fence; workspace: string; pathMap: Record<string, string>; fenceNote: string }
-export interface TiniApi {
-  planFence(prompt: string, ai: Ask, opts?: { emit?: (ev: Ev) => void; log?: (line: string) => void }): Promise<FencePlan>;
-  stageFence(plan: FencePlan, emit: (ev: Ev) => void): Promise<Staged>;
-  checkAccess(prompt: string, staged: Staged): { newFolders: string[]; sensitive: string[] };
-  rewritePrompt(prompt: string, pathMap: Record<string, string>): string;
-}
+import { resetExplanations } from "./tina/explain.ts";
+import { runInspection } from "./tina/findings.ts";
+import { applyFix } from "./tina/fixes.ts";
+import { checkAccess, createEscalation, planFence, rewritePrompt, stageFence, type Plan, type Staged } from "./tini/index.ts";
 
 const STATIC_SITE = "Keep it a simple static site: HTML, CSS and JavaScript, no build tools. Don't start a local server or open a browser to preview it: Tini launches the site after Tina's check.";
 
-export function liveCrew(tini: TiniApi, opts: { speed?: number; turnBudgetUsd?: number; sessionBudgetUsd?: number } = {}): Crew {
-  const stand = standinCrew(opts.speed ?? 1);
+// The request door, replacing Stage 3's "say so in one sentence" line in the fence note.
+export const REQUEST_LINE = "Everything you were given is in ./assets. If you need a file or folder outside this workspace, don't try to open it: call request_access with the path and a one-line reason, then keep working.";
+export function withRequestDoor(fenceNote: string): string {
+  const lines = fenceNote.split("\n");
+  const i = lines.findIndex((l) => /^If you truly need something outside the fence/.test(l));
+  if (i >= 0) lines[i] = REQUEST_LINE; else lines.push(REQUEST_LINE);
+  return lines.join("\n");
+}
+
+export interface LiveOptions { turnBudgetUsd?: number; sessionBudgetUsd?: number; demo?: boolean }
+
+/** Tina's side, shared by live and observe: inspect, fix, launch (+ the report), on whatever is staged. */
+export function tinaCrew(getStaged: () => Staged | null, isSite: () => boolean): Pick<Crew, "inspect" | "fix" | "launch"> {
+  const need = () => { const s = getStaged(); if (!s) throw new Error("no workspace yet"); return s; };
+  return {
+    async inspect(ctx) {
+      const r = await runInspection(ctx, need(), ctx.state().findings, { mode: "crew" });
+      return r.findings;
+    },
+    async fix(ctx, finding, fixId) {
+      return (await applyFix(ctx, need(), finding.id, fixId, { mode: "crew" })).summary;
+    },
+    async launch(ctx) {
+      const staged = need();
+      const report = buildReport(ctx.events?.() ?? []);
+      if (isSite() || isWebsite(staged.workspace)) {
+        const url = await serveSite(staged.workspace);
+        ctx.log("config", `launched: ${staged.workspace} served at ${url}`);
+        return { url, report };
+      }
+      await openInFinder(staged.workspace);
+      ctx.log("config", `launched: opened ${staged.workspace} in Finder`);
+      return { report };
+    },
+  };
+}
+export type LiveCrew = Crew & { attack(ctx: CrewCtx): string };
+
+export function liveCrew(opts: LiveOptions = {}): LiveCrew {
   let staged: Staged | null = null;
   let runner: DogRunner | null = null;
   let website = false;
+  let attacked = false;
+  const escalation = createEscalation({ getStaged: () => staged, agentReason: (p) => runner?.agentReason(p) });
+  const tina = tinaCrew(() => staged, () => website);
+
+  const attack = (ctx: CrewCtx): string => {
+    if (!staged) return "no fence yet: approve a plan first";
+    const d = simulateAttack(ctx, staged);
+    return d.allow ? "the fence ALLOWED the simulated read (check the fence config)" : "blocked";
+  };
 
   return {
-    reset() { runner?.close(); runner = null; staged = null; website = false; stand.reset?.(); },
+    attack,
+    reset() { runner?.close(); runner = null; staged = null; website = false; attacked = false; escalation.reset(); resetExplanations(); void stopSite(); },
 
     async plan(ctx, prompt, adjustments) {
       const full = [prompt, ...adjustments].join("\n");
       website = /\b(web ?site|landing page|web ?page|homepage)\b/i.test(full);
-      return tini.planFence(full, ctx.ai, { emit: ctx.emit, log: (l) => ctx.log("scan", l) });
+      return planFence(full, ctx.ai, { emit: ctx.emit, log: (l) => ctx.log("scan", l) });
     },
 
     async stage(ctx, plan) {
-      staged = await tini.stageFence(plan, ctx.emit);
+      staged = await stageFence(plan as Plan, ctx.emit);
       ctx.log("config", `workspace ${staged.workspace}; allowedDomains=${JSON.stringify(staged.fence.allowedDomains)}; pathMap=${JSON.stringify(staged.pathMap)}`);
       runner = new DogRunner({
         fence: staged.fence,
-        fenceNote: staged.fenceNote,
-        rewrite: (t) => tini.rewritePrompt(t, staged!.pathMap),
+        fenceNote: withRequestDoor(staged.fenceNote),
+        rewrite: (t) => rewritePrompt(t, staged!.pathMap),
         turnBudgetUsd: opts.turnBudgetUsd,
         sessionBudgetUsd: opts.sessionBudgetUsd,
+        // --demo: the template attack fires once, in turn 1, after the 4th brick (labelled simulated).
+        onBrick: (ctx) => {
+          const s = ctx.state();
+          if (opts.demo && !attacked && s.turns.length === 1 && s.bricks >= 4) { attacked = true; attack(ctx); }
+        },
       });
     },
 
     async access(ctx, text) {
       if (!staged) return [];
-      const r = tini.checkAccess(text, staged);
+      const r = checkAccess(text, staged);
       for (const s of r.sensitive) {
         ctx.emit({ actor: "tini", type: "fence.blocked", target: s, tool: "Prompt", layer: "hook", simulated: false,
           reason: `Your request mentions ${s}. That's private, so it stays outside the fence.` });
@@ -59,17 +104,8 @@ export function liveCrew(tini: TiniApi, opts: { speed?: number; turnBudgetUsd?: 
       return r.newFolders;
     },
 
-    inspectRequest: (ctx, requested, source) => stand.inspectRequest(ctx, requested, source),
-
-    async applyEscalation(ctx, esc, choice) {
-      const r = await stand.applyEscalation(ctx, esc, choice);        // card-side events (Stage 5 replaces)
-      if (choice === "deny" || !staged) return r;
-      const id = folderSlug(esc.requested);
-      const n = await copyApproved(esc.requested, path.join(staged.workspace, "assets", id), choice === "narrow");
-      staged.pathMap[esc.requested] = `./assets/${id}`;                // later prompts see it as inside the fence
-      ctx.log("scan", `copied ${n} file(s) from ${esc.requested} to ./assets/${id}/ (${choice}; GPS removed)`);
-      return { note: `Approved files are now in ./assets/${id}/.` };
-    },
+    inspectRequest: (ctx, requested, source) => escalation.inspectRequest(ctx, requested, source),
+    applyEscalation: (ctx, esc, choice) => escalation.applyEscalation(ctx, esc, choice),
 
     async runTurn(ctx, message, info) {
       if (!runner) throw new Error("the dog has no fence yet (stage() didn't run)");
@@ -77,24 +113,6 @@ export function liveCrew(tini: TiniApi, opts: { speed?: number; turnBudgetUsd?: 
       return runner.runTurn(ctx, text);
     },
 
-    inspect: (ctx, segments) => stand.inspect(ctx, segments),
-    fix: (ctx, finding, fixId) => stand.fix(ctx, finding, fixId),
-    launch: (ctx: CrewCtx) => stand.launch(ctx),
+    ...tina,
   };
-}
-
-/**
- * TEMPORARY until Stage 5's escalation pipeline: copy the approved folder in, GPS removed.
- * "narrow" keeps names that look like the job (not personal IMG_ photos, scans or logins).
- */
-async function copyApproved(requested: string, dest: string, narrow: boolean): Promise<number> {
-  const src = expandHome(requested);
-  fs.mkdirSync(dest, { recursive: true });
-  const files = fs.readdirSync(src, { withFileTypes: true }).filter((e) => e.isFile() && !e.name.startsWith("."));
-  const pick = narrow ? files.filter((e) => !/^IMG_\d+|scan_|login|password|secret|credential/i.test(e.name)) : files;
-  for (const e of pick) fs.copyFileSync(path.join(src, e.name), path.join(dest, e.name));
-  if (pick.some((e) => /\.jpe?g$/i.test(e.name))) {
-    await new Promise<void>((resolve) => execFile("exiftool", ["-q", "-overwrite_original", "-gps:all=", "-xmp:gps*=", "-ext", "jpg", "-ext", "jpeg", dest], () => resolve()));
-  }
-  return pick.length;
 }

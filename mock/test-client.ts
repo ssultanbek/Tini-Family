@@ -3,6 +3,7 @@
 import { io } from "socket.io-client";
 import { ENGINE_PORT, SOCKET, type EngineEvent, type GameCommand, type WorldState } from "../shared/events.ts";
 import { reduce } from "../shared/reducer.ts";
+import { SUGGESTED } from "./scenario.ts";
 
 const choice = (process.argv[2] ?? "narrow") as "narrow" | "all" | "deny";
 const sock = io(`http://localhost:${process.env.PORT ?? ENGINE_PORT}`);
@@ -17,7 +18,7 @@ sock.on(SOCKET.event, (e: EngineEvent) => {
   if (e.seq !== lastSeq + 1 && e.type !== "session.reset") console.log(`!! gap: got #${e.seq} after #${lastSeq}`);
   lastSeq = e.seq; state = reduce(state!, e);
   if (e.type === "prompt.suggested") suggested++;
-  if (e.type === "session.phase" && e.phase === "idle") send({ type: "start", prompt: "Build a modern, serious-looking website for Rivera Construction." });
+  if (e.type === "session.phase" && e.phase === "idle") send({ type: "start", prompt: SUGGESTED[1] });
   if (e.type === "session.phase" && e.phase === "contract") send({ type: "approve.plan" });
   if (e.type === "escalation.opened") send({ type: "escalation.choose", escalationId: e.escalationId, optionId: choice });
   if (e.type === "tina.inspect.finished" && e.scope === "final") for (const f of state!.findings) send({ type: "fix.apply", findingId: f.id, fixId: f.fixes[0].id });

@@ -13,6 +13,14 @@ export interface ServerOptions { hub: Hub; driver: Driver; mode: string; port?: 
 export function startServer({ hub, driver, mode, port = ENGINE_PORT, gameDist }: ServerOptions): Promise<http.Server> {
   const app = express();
   app.get("/health", (_req, res) => res.json({ ok: true, engine: mode, protocol: PROTOCOL_VERSION, seq: hub.state.seq, phase: hub.state.phase }));
+  // The attack harness, for the raw view or a presenter's terminal: loopback callers only.
+  app.post("/harness/attack", (req, res) => {
+    const from = req.socket.remoteAddress ?? "";
+    if (!["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(from)) { res.status(403).json({ ok: false, error: "localhost only" }); return; }
+    if (!driver.harness) { res.status(404).json({ ok: false, error: `no harness in ${mode} mode` }); return; }
+    const result = driver.harness();
+    res.json({ ok: result === "blocked", result });
+  });
   if (gameDist && fs.existsSync(path.join(gameDist, "index.html"))) app.use(express.static(gameDist));
 
   const server = http.createServer(app);
