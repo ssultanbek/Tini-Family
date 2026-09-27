@@ -98,7 +98,7 @@ Tests: `cd engine && npm test` (fence guard), `npm run test:loop`, `npm run type
 | Folder | What |
 |---|---|
 | `engine/` | The engine: Claude Agent SDK runner, Tini (`src/tini/`), Tina (`src/tina/`), the fence guard, the AI ladder, recorder and replay. |
-| `game/` | The game window: Phaser for the yard, React and Framer Motion for the cards. It only draws what the engine sends. |
+| `game/` | The game window: a 3D yard (three.js via React Three Fiber) at `/`, the 2D pixel yard (Phaser) at `/?view=2d`, React and Framer Motion for the cards. It only draws what the engine sends. |
 | `shared/` | The event contract (`events.ts`) and the state reducer both sides use. |
 | `mock/` | A fake engine on port 4000 for game development, and the recordings in `mock/recordings/`. |
 | `demo-kit/` | Generates the fake demo world on the laptop. |

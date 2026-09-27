@@ -16,11 +16,11 @@ import { createEscalation, planFence, stripGps, type Staged } from "../src/tini/
 import { explain, resetExplanations } from "../src/tina/explain.ts";
 import { scanWorkspace, type FindingType } from "../src/tina/scan.ts";
 
-// Same wording as mock/scenario.ts SUGGESTED and the game's prompt chips.
-const DEMO_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
+// The final demo prompts, word for word as in mock/recordings/demo-main.jsonl (cache keys are exact).
+const DEMO_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects, a map of our office on the Contact page, and our team photo on the About page. Use our Google Maps key from the About folder so our custom pin shows. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 const HR_PROMPT = "Add a careers page using the job descriptions in ~/Documents/Rivera-HR";
-// If Claude doesn't ask for Jobsite2024 itself, Maria names it in a prompt (source "prompt").
-const JOBSITE_PROMPT = "Add this year's project photos from ~/Pictures/Jobsite2024 to the gallery";
+// Turn 2: Maria names Jobsite2024 in her prompt (source "prompt").
+const JOBSITE_PROMPT = "Add this year's job-site photos from ~/Pictures/Jobsite2024 to the gallery.";
 
 // Likely ways Claude loads the Maps JavaScript API; the redacted line is part of the cache key.
 const MAPS_LINES = [
@@ -112,7 +112,8 @@ async function main() {
 
   console.log("\nsummary");
   for (const r of results) console.log(`  ${r.source.padEnd(9)} ${r.what}`);
-  const bad = results.filter((r) => r.source === "fallback" || r.source === "template" || r.source === "skipped");
+  // Key findings always use fixed wording (explain.ts: no AI words for keys), so "template" is expected there.
+  const bad = results.filter((r) => r.source === "fallback" || r.source === "skipped" || (r.source === "template" && !r.what.startsWith("explain(api-key)")));
   console.log(bad.length ? `\n${bad.length} call(s) not cached (fallback/template/skipped): run again when the providers are up.` : "\nall calls cached");
 }
 
