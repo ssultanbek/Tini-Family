@@ -10,9 +10,9 @@ import type { FindingType, RawFinding } from "./scan.ts";
 export interface Words { title: string; explanation: string }
 
 export const TEMPLATES: Record<FindingType, Words> = {
-  "api-key": {
-    title: "API key in your website's code",
-    explanation: "Anyone who visits the site can copy this key straight from the page. They could use it to run up charges on the account it belongs to.",
+  "api-key": {   // accuracy: a browser Maps key isn't "private"; the real risk is an unrestricted key
+    title: "Google Maps key is visible in your website's code",
+    explanation: "Anyone who visits the site can copy this key from the page. Unless the key is restricted to your own website, others can use it and run up charges on your account.",
   },
   "photo-metadata": {
     title: "A photo still says who took it",
@@ -26,6 +26,12 @@ export const TEMPLATES: Record<FindingType, Words> = {
     title: "A private-looking file is in the output",
     explanation: "This file's name suggests it holds private information. It would be published along with everything else.",
   },
+};
+
+/** Other kinds of keys (not Google): same facts, no product name. */
+const OTHER_KEY: Words = {
+  title: "A key is visible in your website's code",
+  explanation: "Anyone who visits the site can copy this key from the page. Unless the key is restricted, others can use it and run up charges on your account.",
 };
 
 export const ExplainSchema = z.object({
@@ -55,6 +61,11 @@ const memo = new Map<FindingType, Promise<Words & { source: string }>>();
 
 /** Words for this finding's type (first finding of a type sets them for the process). */
 export function explain(ai: Ask, f: RawFinding): Promise<Words & { source: string }> {
+  // Keys get fixed, reviewed wording (no AI): accuracy matters more than variety here.
+  if (f.type === "api-key") {
+    const google = /gcp|google|AIza/i.test(`${f.detail} ${f.snippet}`);
+    return Promise.resolve({ ...(google ? TEMPLATES["api-key"] : OTHER_KEY), source: "template" });
+  }
   const hit = memo.get(f.type);
   if (hit) return hit;
   const p = (async () => {

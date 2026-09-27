@@ -95,7 +95,7 @@ resetExplanations();
 const r4 = await runInspection(ctx(deadAi), staged, state.findings);
 for (const f of r4.findings) console.log(`        ${f.segmentId}: ${f.title} | ${f.explanation}`);
 ok(r4.findings.map((f) => f.id).sort().join() === firstIds, "same finding ids");
-ok(r4.findings.some((f) => f.title === "API key in your website's code") && r4.findings.some((f) => f.title === "A photo still says who took it"), "template words");
+ok(r4.findings.some((f) => f.title === "Google Maps key is visible in your website's code") && r4.findings.some((f) => f.title === "A photo still says who took it"), "template words");
 resetExplanations();
 
 // --- 2. fixes ---------------------------------------------------------------------------------
