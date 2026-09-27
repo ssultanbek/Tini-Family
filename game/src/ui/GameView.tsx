@@ -58,7 +58,7 @@ function describe(event: EngineEvent): string {
 }
 
 /** The game view at `/`: chat | yard | analysis. Split from Dashboard.tsx so it can be redesigned while the dashboard stays frozen. */
-export function GameView({ send }: { send: (command: GameCommand) => boolean }) {
+export function GameView({ send, stage }: { send: (command: GameCommand) => boolean; stage?: ReactNode }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { world, events, pending, connected, synced } = state;
   const [adjustment, setAdjustment] = useState('');
@@ -109,7 +109,7 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
         <PromptBar compact world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
       </aside>
 
-      <section className="gv-center" aria-label="The yard"><Yard /></section>
+      <section className="gv-center" aria-label="The yard">{stage ?? <Yard />}</section>
 
       <aside className="gv-panel gv-analysis" aria-label="Analysis" ref={analysis}>
         <h2>Analysis</h2>

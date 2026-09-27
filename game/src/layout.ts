@@ -39,6 +39,28 @@ export const yardLayout = {
   type: { small: 23, label: 27, heading: 30, minFit: 17, font: '"Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
     load: ['400 23px "Instrument Sans Variable"', '700 27px "Instrument Sans Variable"'] },
 };
+/** 3D "Toy Diorama" view (/?view=3d): world units per yard pixel, the floating block, heights and colours.
+ *  Positions still come from yardLayout (zones, slots, house, gate, decor); these only turn them into 3D. */
+export const diorama = {
+  unit: 1 / 40,                       // one world unit = 40 yard pixels
+  center: { x: 410, y: 440 },         // yard-pixel point placed at the world origin (Mac strip included)
+  block: { minX: -320, maxX: 1115, minY: 10, maxY: 870, radius: 0.9, grass: 0.5, soil: 2.6, stone: 2.2, lip: 0.35 },
+  fence: { height: 1.1, post: 0.24, rail: 0.1, railHeights: [0.45, 0.85], posts: 7 },
+  house: { columns: 4, rows: 3, maxLayers: 8, brick: [1.2, 0.42, 1.18] as [number, number, number], gap: 0.1, slab: 0.2 },
+  mac: { height: 3.4, roof: 1.6, doorWidth: 1.9, doorHeight: 1.9 },
+  sign: { height: 1.6, outward: 0.9, scale: 17, plaque: 14 },  // label size in world terms (drei Html distanceFactor)   // signs sit on their own fence, nudged to its outer side so neighbours don't overlap
+  // Three-quarter view from the front-right, far enough back that the whole floating block (and its layered sides) is in frame.
+  camera: { position: [20, 27, 44] as [number, number, number], target: [0.2, -2.6, 0.4] as [number, number, number], fov: 30 },
+  sun: { position: [-16, 26, 12] as [number, number, number], intensity: 2.4, shadowMap: 2048, shadowMapLow: 1024, shadowBox: 24 },
+  colors: {
+    grass: '#a8c98a', grassDark: '#93b877', yard: '#b9d69c', soil: '#b98b62', soilDark: '#a07651', stone: '#9aa1a8', stoneDark: '#858c94',
+    sand: '#ecdcb8', wood: '#c08a57', woodDark: '#9b6b40', brick: '#d9825f', brickDark: '#bf6b4c', slab: '#d8cfbd',
+    leaf: '#7fae6b', leafDark: '#5f9154', autumn: '#e0a25c', trunk: '#8a6242', hedge: '#6f9f5c',
+    mac: '#c9ced8', macDark: '#8f97a6', roof: '#6d7f9c', door: '#8fb8e6', asked: '#f2b705',
+    red: '#e0483c', green: '#3fb56a', yellow: '#f3c64a', planned: '#c7c1b4',
+  },
+};
+
 /** The Phaser canvas: the old yard plus the Mac strip on its left. */
 export const canvasWidth = yardLayout.width + yardLayout.mac.strip;
 
