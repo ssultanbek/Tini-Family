@@ -16,6 +16,7 @@ body:has(.app), .gv {
   --gv-display: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gv-body: "Manrope Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gv-serif: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-austera: "Austera Text", "Manrope Variable", "Manrope", sans-serif;
   --gv-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gv-fs-xs: 14px; --gv-fs-sm: 15.5px; --gv-fs-base: 17px; --gv-fs-md: 19px; --gv-fs-lg: 22px; --gv-fs-xl: 28px; --gv-fs-stat: 34px; --gv-fs-hero: 40px;
   --gv-fw-regular: 450; --gv-fw-medium: 550; --gv-fw-semi: 650; --gv-fw-bold: 750; --gv-fw-black: 800;
@@ -259,7 +260,7 @@ body:has(.app) {
 .gv .gv-logo { width: 40px; height: 40px; border-radius: 12px; box-shadow: none;
   background: linear-gradient(#fff, #fff) center / 14px 14px no-repeat, var(--gv-accent); }
 .gv .gv-brand h1 { font-size: var(--gv-fs-xl); font-weight: var(--gv-fw-black); color: var(--gv-ink); letter-spacing: var(--gv-track-tight); }
-.gv .gv-brand p { font-family: var(--gv-serif); font-size: 17px; font-style: normal; color: var(--gv-muted); font-variation-settings: "SOFT" 100, "WONK" 0; }
+.gv .gv-brand p { font-family: var(--font-austera); font-size: 17px; font-style: normal; color: var(--gv-muted); }
 .gv .gv-link { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; text-underline-offset: 3px; }
 .gv .gv-link:hover { text-decoration: underline; }
 

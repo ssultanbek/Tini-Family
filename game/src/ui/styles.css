@@ -283,7 +283,7 @@ body:has(.app:not(.game-app)) .app:not(.game-app) {
 .app:not(.game-app) .titlebar { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-xs); padding: var(--gv-s3) var(--gv-s5); }
 .app:not(.game-app) .brand-mark { background: var(--gv-accent); color: #fff; border-radius: 12px; }
 .app:not(.game-app) .titlebar h1 { font-weight: var(--gv-fw-black); color: var(--gv-ink); }
-.app:not(.game-app) .tagline { font-family: var(--gv-serif); font-weight: 400; color: var(--gv-muted); font-variation-settings: "SOFT" 100, "WONK" 0; }
+.app:not(.game-app) .tagline { font-family: var(--font-austera); font-weight: 400; color: var(--gv-muted); }
 .app:not(.game-app) .brand-view { background: var(--gv-accent-soft); color: var(--gv-accent-text); border: 1px solid var(--gv-accent-line); letter-spacing: var(--gv-track-label); }
 .app:not(.game-app) .titlebar .header-actions a { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; }
 .app:not(.game-app) .titlebar .header-actions a:hover { text-decoration: underline; text-underline-offset: 3px; }
