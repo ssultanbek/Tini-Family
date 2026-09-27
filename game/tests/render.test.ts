@@ -84,3 +84,21 @@ test('a long turn summary shows a preview with "more"; a short one shows whole',
   assert.ok(!html.includes('fixed two broken image paths'), 'collapsed by default');
   assert.equal(html.split('>more</button>').length, 2, 'only the long summary gets the link');
 });
+
+test('v1.3: a cleared finding card says "Cleared" with the reason, then leaves when the segment turns green', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  const finding = { id: 'f1', segmentId: 'photos', severity: 'high' as const, title: 'GPS in photos', explanation: 'x', fixes: [{ id: 'strip-exif', label: 'Strip GPS' }] };
+  // React joins text pieces with <!-- --> markers; compare the visible text.
+  const page = () => renderToString(createElement(GameView, { send: () => true })).replaceAll('<!-- -->', '');
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 800, phase: 'building', segments: [{ id: 'photos', label: 'Photos', kind: 'folder', detail: '', status: 'built' }] });
+  store.event({ actor: 'tina', type: 'segment.red', segmentId: 'photos', finding, seq: 801, ts: 0 });
+  assert.ok(page().includes('Strip GPS'), 'open finding shows its fix button');
+  store.event({ actor: 'tina', type: 'finding.cleared', findingId: 'f1', reason: 'Claude removed the GPS data', seq: 802, ts: 0 });
+  const cleared = page();
+  assert.ok(cleared.includes('✓ Cleared') && cleared.includes('Claude removed the GPS data') && !cleared.includes('Strip GPS'));
+  store.event({ actor: 'tina', type: 'segment.green', segmentId: 'photos', seq: 803, ts: 0 });
+  assert.ok(!page().includes('✓ Cleared'), 'gone once Tina turns the segment green');
+});

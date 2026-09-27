@@ -50,6 +50,7 @@ function describe(event: EngineEvent): string {
     case 'tina.inspect.segment': case 'segment.green': return event.segmentId;
     case 'tina.inspect.started': return `${event.scope}${event.segmentId ? ` · ${event.segmentId}` : ''}`;
     case 'tina.inspect.finished': return `${event.scope} · ${event.redCount} red`;
+    case 'finding.cleared': return `${event.findingId}: ${event.reason}`;
     case 'engine.error': return event.message;
     case 'launch.done': return event.url ?? 'Launch complete';
     default: return '';
@@ -134,7 +135,7 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
             <div className="button-row">{finding.fixes.map(fix => <button key={fix.id} className="gv-btn" disabled={busy({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })} onClick={() => send({ type: 'fix.apply', findingId: finding.id, fixId: fix.id })}>{fix.label}</button>)}</div>
             {pending.includes(`fix:${finding.id}`) && <p role="status" className="gv-small">Fixing…</p>}
           </MotionCard>)}
-          {fixed.map(({ finding, summary }) => <MotionCard key={finding.id} title={finding.title} className="finding fixed" lingering><p className="gv-chip ok">✓ Fixed · {finding.segmentId}</p><p>{summary}</p></MotionCard>)}
+          {fixed.map(({ finding, summary, how }) => <MotionCard key={finding.id} title={finding.title} className="finding fixed" lingering><p className="gv-chip ok">✓ {how === 'cleared' ? 'Cleared' : 'Fixed'} · {finding.segmentId}</p><p>{summary}</p></MotionCard>)}
           </AnimatePresence>
         </section>
 

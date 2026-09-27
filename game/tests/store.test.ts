@@ -114,3 +114,12 @@ test('Stop stays pending until the turn ends or the crew leaves the stoppable ph
   store.event({ actor: 'system', type: 'session.phase', phase: 'inspecting', seq: 33, ts: 0 });
   assert.deepEqual(store.getSnapshot().pending, []);
 });
+
+test('v1.3: a fix click is released when the finding clears on its own first', () => {
+  const store = createStore();
+  store.snapshot({ ...initialState(), seq: 40, phase: 'ready' });
+  store.sent({ type: 'fix.apply', findingId: 'f-key', fixId: 'move-key-to-env' });
+  assert.deepEqual(store.getSnapshot().pending, ['fix:f-key']);
+  store.event({ actor: 'tina', type: 'finding.cleared', findingId: 'f-key', reason: 'Claude moved the key in turn 2', seq: 41, ts: 0 });
+  assert.deepEqual(store.getSnapshot().pending, []);
+});
