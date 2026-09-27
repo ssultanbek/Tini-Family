@@ -35,10 +35,19 @@ const cases: [string, any, boolean][] = [
   ["Bash", { command: "curl https://registry.npmjs.org/react" }, true],
   ["Agent", { prompt: "go" }, false],
   ["WebFetch", { url: "https://x.com" }, false],
+  // the request door: exactly one MCP tool is allowed, whatever path it names (it only asks)
+  ["mcp__tini__request_access", { path: "~/Pictures/Jobsite2024", reason: "gallery" }, true],
+  ["mcp__tini__other_tool", { path: "~/x" }, false],
+  ["mcp__evil__request_access", { path: "~/x" }, false],
+  ["mcp__tini__request_access_all", { path: "~/x" }, false],
   // sed/regex slashes are not paths (live run: a spark on "/" from sed 's/.*src=\"//;s/\"$//')
   ["Bash", { command: `grep -oE 'src="assets/[a-z]+"' index.html | sed 's/.*src="//;s/"$//' | sort -u` }, true],
   ["Bash", { command: "sed -i '' 's/161b22/0b0e13/g' css/styles.css" }, true],
   ["Bash", { command: "cat /etc/passwd" }, false],
+  // HTML closing tags are not paths (live run: a spark on "/div" from grep "</div"); input redirects still are
+  ["Bash", { command: `grep -c "</div>" index.html && grep -n '</section' about.html` }, true],
+  ["Bash", { command: "cat </etc/passwd" }, false],
+  ["Bash", { command: "wc -l </Users/x/.ssh/id_rsa" }, false],
   ["Bash", { command: "cat //Users/x/.ssh/id_rsa" }, false],
   // ~/.npm is readable/writable by the OS sandbox (package cache); ~/.npmrc (tokens) never is.
   ["Read", { file_path: "~/.npmrc" }, false],

@@ -49,4 +49,6 @@ export interface Crew {
   launch(ctx: CrewCtx): Promise<{ url?: string; report: AccessReport }>;
   /** Reset: forget everything about the current project. */
   reset?(): void;
+  /** The simulated attack (harness.ts): pushes the template's ~/.ssh read through the real fence. */
+  attack?(ctx: CrewCtx): string;
 }

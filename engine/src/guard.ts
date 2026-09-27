@@ -24,6 +24,10 @@ const SYSTEM_OK = [
 // Tools the dog is allowed to use at all. Everything else is refused.
 export const ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash"] as const;
 
+// The request door: the one MCP tool the dog may call (in-process server "tini", tool
+// "request_access"). It opens nothing; it only asks the owner. No other MCP tool is allowed.
+export const REQUEST_TOOL = "mcp__tini__request_access";
+
 /** realpath that works for files that don't exist yet (Write of a new file). */
 export function realish(p: string): string {
   let cur = path.resolve(p);
@@ -73,7 +77,8 @@ export function checkPath(raw: string, cwd: string, fence: Fence): GuardDecision
 const PATH_TOKEN = /(?:~|\$\{?HOME\}?)(?:\/[^\s'";|&)<>]*)?|(?:^|[\s'"=:(<>])(\/[^\s'";|&)<>]+|\.\.(?:\/[^\s'";|&)<>]*)?)/g;
 
 export function checkBash(command: string, cwd: string, fence: Fence): GuardDecision {
-  const noUrls = command.replace(/[a-z]+:\/\/[^\s'"]+/gi, "URL");
+  // URLs and HTML closing tags (grep "</div>") aren't paths; "</etc/passwd" (an input redirect) still is.
+  const noUrls = command.replace(/[a-z]+:\/\/[^\s'"]+/gi, "URL").replace(/<\/[a-z][a-z0-9-]*(?![a-z0-9/_.-])/gi, "TAG");
   for (const m of noUrls.matchAll(PATH_TOKEN)) {
     const token = (m[1] ?? m[0]).trim().replace(/^[\s'"=:(<>]+/, "");
     if (!token || /^\/+$/.test(token)) continue; // bare slashes are sed/regex syntax (s/a/b/, "//"), not a path
@@ -89,6 +94,7 @@ export function checkBash(command: string, cwd: string, fence: Fence): GuardDeci
 }
 
 export function checkToolCall(tool: string, input: Record<string, unknown>, cwd: string, fence: Fence): GuardDecision {
+  if (tool === REQUEST_TOOL) return { allow: true }; // asking is always allowed; the owner decides (sensitive paths are refused by its handler)
   if (!(ALLOWED_TOOLS as readonly string[]).includes(tool)) {
     return { allow: false, kind: "tool", target: tool, reason: `The ${tool} tool isn't part of this job.` };
   }

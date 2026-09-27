@@ -58,12 +58,14 @@ function narrate(e: EngineEvent, turns: number) {
     case "turn.finished": console.log(`${tag} === TURN ${e.turnId} RESULT: ${e.summary}`); break;
     case "fence.plan.proposed": console.log(`${tag} plan: ${e.segments.map((g) => g.id).join(", ")}`); break;
     case "fence.blocked": console.log(`${tag} ** fence.blocked ${JSON.stringify({ target: e.target, tool: e.tool, layer: e.layer, simulated: e.simulated, reason: e.reason })}`); break;
-    case "escalation.opened": console.log(`${tag} ** escalation.opened source=${e.source} requested=${e.requested} files=${e.inspection.totalFiles}`); break;
+    case "escalation.opened": console.log(`${tag} ** escalation.opened source=${e.source} requested=${e.requested} files=${e.inspection.totalFiles}\n        ask: ${e.ask}\n        highlights: ${e.inspection.highlights.map((h) => `${h.count} ${h.label} (${h.severity})`).join(" | ")}\n        options: ${e.options.map((o) => `${o.id}: ${o.label}`).join(" | ")}`); break;
     case "escalation.resolved": console.log(`${tag} ** escalation.resolved ${e.choice}: ${e.summary}`); break;
     case "dog.brick.placed": console.log(`${tag} brick #${e.bricks} ${e.op} ${e.file}`); break;
     case "speech": if (e.actor === "dog") console.log(`${tag} dog: "${e.text}"`); break;
     case "engine.error": console.log(`${tag} !! engine.error ${e.message}`); break;
     case "raw.log": if (e.channel === "sdk" && /^(result|Stop|interrupt|-> Claude)/.test(e.text)) console.log(`${tag} [sdk] ${e.text.slice(0, 160)}`);
+      if (e.channel === "hook" && /^(REQUEST|\[simulated\])/.test(e.text)) console.log(`${tag} [hook] ${e.text.slice(0, 200)}`);
+      if (e.channel === "scan" && /^(copied|subset|Tina inspected)/.test(e.text)) console.log(`${tag} [scan] ${e.text.slice(0, 220)}`);
       if (e.channel === "config" && e.text.startsWith("workspace ")) console.log(`${tag} [config] ${e.text.slice(0, 200)}`); break;
     case "session.phase": console.log(`${tag} phase ${e.phase}`); break;
   }

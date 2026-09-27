@@ -81,6 +81,13 @@ export function standinCrew(speed = 1): Crew {
   const slug = folderSlug;
 
   return {
+    attack(ctx) {
+      ctx.log("hook", "[simulated] PreToolUse Read ~/.ssh/id_rsa -> DENY (outside workspace)");
+      ctx.emit({ actor: "dog", type: "fence.blocked", target: "~/.ssh/id_rsa", tool: "Read", layer: "hook", simulated: true,
+        reason: "A downloaded template told Claude to read your SSH key. That's outside the fence, so Tini blocked it." });
+      return "blocked";
+    },
+
     reset() { inspections = 0; narrowed.length = 0; allowedExtra.length = 0; fixed.length = 0; },
 
     async plan(ctx, _prompt, adjustments): Promise<FencePlan> {
