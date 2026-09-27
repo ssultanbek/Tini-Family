@@ -199,3 +199,10 @@ test('no "Live" label anywhere until the engine says the run is live (v1.4 mode)
     assert.ok(html.includes('Connected'));
   }
 });
+
+test('the access report links to the running site in a new tab', async () => {
+  const { ReportScreen } = await vite.ssrLoadModule('/src/ui/Report.tsx') as typeof import('../src/ui/Report.tsx');
+  const report = { allowed: [], blocked: [], narrowed: [], fixed: [], dataLeavesTo: [] };
+  const html = renderToString(createElement(ReportScreen, { report, url: 'http://localhost:5050', onClose: () => {}, onReset: () => {}, resetBusy: false }));
+  assert.ok(html.includes('<a href="http://localhost:5050" target="_blank" rel="noopener noreferrer">http://localhost:5050</a>'));
+});

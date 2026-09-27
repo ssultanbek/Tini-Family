@@ -189,3 +189,4 @@ body:has(.gv) { background: #f1f3f4; }
 .gv .turn-pending { color: var(--gv-warn); font-weight: 600; }
 .gv .timeline-empty { margin: 0; color: var(--gv-muted); font-size: 16px; }
 .gv .gv-chat-scroll > .timeline, .gv .gv-chat-scroll > .timeline-empty { margin-top: auto; }
+.gv .report-header .path a { color: var(--gv-accent-text); font-weight: 700; text-underline-offset: 3px; }

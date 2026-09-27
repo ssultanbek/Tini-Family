@@ -29,7 +29,7 @@ export function ReportScreen({ report, url, onClose, onReset, resetBusy }: { rep
       <motion.header className="report-header" variants={rise}>
         <p className="eyebrow">LAUNCHED · ACCESS REPORT</p>
         <h2 id="report-title">Here’s everything the dog could touch</h2>
-        {url && <p className="path">Site running at {url}</p>}
+        {url && <p className="path">Site running at <a href={url} target="_blank" rel="noopener noreferrer">{url}</a></p>}
       </motion.header>
       <div className="report-grid">{sections.map(section => <Section key={section.key} kind={section.key} title={section.title} icon={section.icon} empty={section.empty} lines={report[section.key]} />)}</div>
       <motion.section className="report-leaves" variants={rise}>
