@@ -68,7 +68,7 @@ function Signpost({ segment, x, z, look }: { segment: Segment; x: number; z: num
   return <group position={[x, 0, z]} rotation={[0, yaw, 0]}>
     <mesh position={[0, s.post / 2, -0.05]} castShadow><cylinderGeometry args={[0.07, 0.09, s.post, 6]} /><meshStandardMaterial color={C.woodDark} flatShading transparent={planned} opacity={planned ? 0.5 : 1} /></mesh>
     <RoundedBox args={[s.board[0], s.board[1], 0.1]} radius={0.05} smoothness={2} position={[0, s.boardY, 0]} castShadow>
-      <meshStandardMaterial color={planned ? '#cfc6b3' : '#b98652'} roughness={0.9} transparent={planned} opacity={planned ? 0.7 : 1} />
+      <meshStandardMaterial color={planned ? '#d9d2c2' : '#e2c394'} roughness={0.9} transparent={planned} opacity={planned ? 0.75 : 1} />
     </RoundedBox>
     <RoundedBox args={[s.board[0] + 0.08, 0.1, 0.13]} radius={0.04} position={[0, s.boardY + s.board[1] / 2, 0]} castShadow>
       <meshStandardMaterial color={planned ? '#cfc8b8' : C.woodDark} roughness={0.9} />
@@ -77,9 +77,9 @@ function Signpost({ segment, x, z, look }: { segment: Segment; x: number; z: num
       <icosahedronGeometry args={[0.22, 1]} /><meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={0.9} roughness={0.3} toneMapped={false} />
     </mesh>
     <Html position={[0, s.boardY, 0.06]} transform distanceFactor={s.text} zIndexRange={[10, 0]}>
-      <div className={`d3-board st-${segment.status}`} title={segment.detail}>
+      <div className={`d3-board st-${segment.status}${segment.label.length > 16 ? ' longest' : segment.label.length > 10 ? ' long' : ''}`} title={`${segment.label}: ${look.word}. ${segment.detail}`} aria-label={`${segment.label}: ${look.word}`}>
+        <span className="d3-badge" aria-hidden="true">{look.icon}</span>
         <strong>{segment.label}</strong>
-        <span>{look.icon} {look.word}</span>
       </div>
     </Html>
   </group>;

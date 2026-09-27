@@ -126,12 +126,12 @@ async function animate(bodies: Record<AnimatedActor, Body>, event: EngineEvent, 
       return;
     case 'segment.red':
       await walk(b, atSegment(event.segmentId), options);
-      spark('achoo', b.pos, 1.9, 1.1);
+      spark('achoo', b.pos, 1.9, 0.8);
       await act(b, 'sneeze', 0.9, options);
       return;
     case 'segment.green':
       await act(b, 'thumbs', 0.6, options);
-      spark('check', atSegment(event.segmentId, F.bumpApproach), 1.2, 0.9);
+      spark('check', atSegment(event.segmentId, F.bumpApproach), 1.2, 0.6);
       return;
     case 'fix.applied': case 'finding.cleared':
       await act(b, 'nod', 0.55, options);

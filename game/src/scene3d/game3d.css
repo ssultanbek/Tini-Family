@@ -17,9 +17,9 @@
 .d3-sign.built .d3-sign-status { color: #6e421e; }
 
 .d3-tag { padding: 2px 8px; font: 700 12.5px/1.2 "Instrument Sans Variable", system-ui, sans-serif; color: #3b2a1c; background: #fffdf6e8; border-radius: 7px; white-space: nowrap; pointer-events: none; }
-.d3-tag.house { display: grid; text-align: center; font-family: "Bricolage Grotesque Variable", system-ui, sans-serif; font-size: 13.5px; }
-.d3-tag.house span { font: 600 12px/1.2 "Instrument Sans Variable", system-ui, sans-serif; color: #5b6670; }
-.d3-name { padding: 1px 7px; font: 700 12.5px/1.3 "Instrument Sans Variable", system-ui, sans-serif; color: #1b2228; background: #ffffffe6; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.d3-tag.house { display: grid; text-align: center; font-family: "Bricolage Grotesque Variable", system-ui, sans-serif; font-size: 11px; padding: 1px 6px; }
+.d3-tag.house span { font: 600 10px/1.2 "Instrument Sans Variable", system-ui, sans-serif; color: #5b6670; }
+.d3-name { padding: 0 5px; font: 700 10.5px/1.3 "Instrument Sans Variable", system-ui, sans-serif; color: #1b2228; background: #ffffffe6; border-radius: 6px; white-space: nowrap; pointer-events: none; }
 
 .d3-vault { display: flex; gap: 5px; align-items: center; white-space: nowrap; padding: 2px 8px; font: 600 12px/1.2 "Instrument Sans Variable", system-ui, sans-serif;
   color: #1f2630; background: #f4f6fa; border: 2px solid #6d7f9c; border-radius: 8px; box-shadow: 0 4px 10px #1f263022; pointer-events: none; }
@@ -38,29 +38,32 @@
 .d3-vault.asked { font-size: 13px; }
 
 /* Text mounted on the 3D wooden boards (moves and turns with the world). */
-.d3-board { display: grid; place-content: center; justify-items: center; width: 200px; height: 58px; gap: 3px; transform: translateY(3px); pointer-events: none; color: #fff8ec; text-align: center; text-shadow: 0 1px 0 #5a3a1c; }
-.d3-board strong { font: 800 22px/1.05 "Bricolage Grotesque Variable", system-ui, sans-serif; white-space: nowrap; letter-spacing: -.01em; }
-.d3-board span { font: 700 17px/1.1 "Instrument Sans Variable", system-ui, sans-serif; white-space: nowrap; }
-.d3-board.st-planned { color: #5d564a; text-shadow: none; }
-.d3-board span { padding: 1px 8px; border-radius: 6px; text-shadow: none; }
-.d3-board.st-inspecting span { background: #fff2c2; color: #7a5a00; }
-.d3-board.st-red span { background: #ffe3df; color: #b3261e; }
-.d3-board.st-green span { background: #e2f3e6; color: #1c7a3f; }
-.d3-board.st-built span { background: #f7ead6; color: #6e421e; }
-.d3-board.st-planned span { background: #efebe2; color: #5d564a; }
+.d3-board { display: flex; align-items: center; justify-content: center; gap: 8px; width: 200px; height: 58px; padding: 0 8px; pointer-events: none; color: #3a2616; }
+.d3-board strong { font: 800 21px/1 "Bricolage Grotesque Variable", system-ui, sans-serif; white-space: nowrap; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; }
+.d3-badge { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 900 17px/1 "Instrument Sans Variable", system-ui, sans-serif; color: #fff; box-shadow: inset 0 -2px 0 #0003; }
+.d3-board.st-green .d3-badge { background: #2f9a58; }
+.d3-board.st-red .d3-badge { background: #d0433a; }
+.d3-board.st-inspecting .d3-badge { background: #d9a520; }
+.d3-board.st-built .d3-badge { background: #9b6b40; }
+.d3-board.st-planned .d3-badge { background: #a8a295; }
+.d3-board.st-planned { color: #6b6457; }
 
 /* Speech bubbles float above heads and always face the camera. */
-.d3-bubble { max-width: 230px; padding: 7px 11px 8px; background: #fffdf6; border: 3px solid #4f86c6; border-radius: 14px 14px 14px 4px; box-shadow: 0 4px 12px #1f263026;
-  font: 500 14px/1.3 "Instrument Sans Variable", system-ui, sans-serif; color: #1b2228; pointer-events: none; }
-.d3-bubble strong { display: block; font: 700 13px/1.2 "Bricolage Grotesque Variable", system-ui, sans-serif; }
+.d3-bubble { max-width: 170px; padding: 4px 8px 5px; background: #fffdf6; border: 3px solid #4f86c6; border-radius: 14px 14px 14px 4px; box-shadow: 0 4px 12px #1f263026;
+  font: 500 11.5px/1.3 "Instrument Sans Variable", system-ui, sans-serif; color: #1b2228; pointer-events: none; }
+.d3-bubble strong { display: block; font: 700 11px/1.2 "Bricolage Grotesque Variable", system-ui, sans-serif; }
 .d3-bubble p { margin: 2px 0 0; }
 .d3-bubble.tina { border-color: #a4679a; }
 .d3-bubble.dog { border-color: #c98a47; }
-.d3-pop { font: 900 26px/1 "Bricolage Grotesque Variable", system-ui, sans-serif; pointer-events: none; text-shadow: 0 2px 0 #fff, 0 0 8px #fff; }
+.d3-pop { font: 900 16px/1 "Bricolage Grotesque Variable", system-ui, sans-serif; pointer-events: none; text-shadow: 0 2px 0 #fff, 0 0 8px #fff; }
 .d3-pop.achoo { color: #c62f26; }
-.d3-pop.check { color: #1c7a3f; font-size: 34px; }
+.d3-pop.check { color: #1c7a3f; font-size: 20px; }
 .d3-box-count { font: 800 16px/1 "Instrument Sans Variable", system-ui, sans-serif; color: #4a2f16; white-space: nowrap; pointer-events: none; }
 .d3-ask { font: 900 40px/1 "Bricolage Grotesque Variable", system-ui, sans-serif; color: #d99a00; pointer-events: none; }
 .gv .yard3d-stage { cursor: grab; }
 .gv .yard3d-stage:active { cursor: grabbing; }
 .gv .yard3d-credit { display: block; font-size: 12.5px; color: var(--gv-muted); background: var(--gv-card); padding: .2em 1em .5em; text-align: center; }
+
+.gv .yard3d-caption { justify-content: center; }
+.d3-board.long strong { font-size: 17px; }
+.d3-board.longest strong { font-size: 13.5px; white-space: normal; line-height: 1.05; text-align: left; }

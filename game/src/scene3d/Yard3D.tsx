@@ -79,14 +79,13 @@ export default function Yard3D() {
   const { world } = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const c = D.camera;
   return <section className="yard-view yard3d" aria-label="The yard in 3D">
-    <div className="yard-caption"><strong>The yard</strong><span>Only what the job needs</span><span className={`gv-phase ${['planning', 'fencing', 'building', 'inspecting'].includes(world.phase) ? 'busy' : world.phase === 'launched' ? 'done' : ''}`}>{world.phase}</span></div>
+    <div className="yard-caption yard3d-caption"><strong>The yard</strong></div>
     <div className="yard3d-stage" onDoubleClick={() => window.dispatchEvent(new Event('tini:camera-reset'))} title="Drag to turn the island · scroll to zoom · double-click to reset">
       <Canvas shadows="soft" flat dpr={[1, 2]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         camera={{ position: c.position, fov: c.fov, near: 0.5, far: 200 }}>
         <Scene />
       </Canvas>
     </div>
-    <p className="yard-help">○ Planned &nbsp; ▤ Built &nbsp; ◉ Inspecting &nbsp; ⚠ Needs fix &nbsp; ✓ Green{fx ? '' : ' · effects off'} &nbsp;·&nbsp; Drag to turn · scroll to zoom · double-click to reset</p>
-    <p className="yard-note yard3d-credit">3D world, characters and props are built in code from simple shapes (no third-party models or textures). 2D backup art: Kenney Tiny Town &amp; Tiny Dungeon (CC0). Fonts: Bricolage Grotesque &amp; Instrument Sans (OFL).</p>
+
   </section>;
 }
