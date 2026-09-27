@@ -6,6 +6,8 @@ import { STOPPABLE } from '../store.ts';
 import { clampText } from './clampText.ts';
 
 export const DEFAULT_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
+// The box stays active with open findings on purpose: Maria can ask Claude to fix things herself.
+export const OPEN_FINDINGS_PLACEHOLDER = 'Fix the red spots before launching, or ask for a change';
 // Typing helpers only: they fill the box, the engine decides what happens.
 const SUGGESTIONS = ['Add a careers page using the job descriptions in ~/Documents/Rivera-HR', 'Make the header darker'];
 
@@ -30,7 +32,7 @@ export function PromptBar({ world, send, available, pending, epoch, compact = fa
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
     <label htmlFor="prompt-input">{compact ? (first ? 'Start a project' : 'Message the crew') : first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
     <div className="prompt-row">
-      <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder="Ask for the next thing…"
+      <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder={world.findings.length ? OPEN_FINDINGS_PLACEHOLDER : 'Ask for the next thing…'}
         onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
       <button disabled={disabled || !text.trim()}>{waiting ? 'Sent…' : first ? 'Start' : 'Send'}</button>
     </div>
