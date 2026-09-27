@@ -36,7 +36,8 @@ export const yardLayout = {
     { frame: 16, x: 50, y: 720 }, { frame: 16, x: 130, y: 800 }, { frame: 28, x: 230, y: 740 }, { frame: 29, x: 300, y: 830 },
     { frame: 15, x: 1060, y: 720 }, { frame: 16, x: 980, y: 810 }, { frame: 5, x: 880, y: 760 }, { frame: 17, x: 520, y: 830 },
   ],
-  type: { small: 23, label: 27, heading: 30, minFit: 17, font: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
+  type: { small: 23, label: 27, heading: 30, minFit: 17, font: '"Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
+    load: ['400 23px "Instrument Sans Variable"', '700 27px "Instrument Sans Variable"'] },
 };
 /** The Phaser canvas: the old yard plus the Mac strip on its left. */
 export const canvasWidth = yardLayout.width + yardLayout.mac.strip;

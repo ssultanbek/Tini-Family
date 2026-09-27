@@ -48,7 +48,8 @@ export function createStore(queues = animationQueues) {
       // A (re)proposed plan answers Adjust, and frees an Approve the engine ignored while it was re-planning.
       if (event.type === 'fence.plan.proposed') acknowledged.push('adjust.plan', 'approve.plan');
       if (event.type === 'escalation.resolved') acknowledged.push(`escalation:${event.escalationId}`);
-      if (event.type === 'fix.applied') acknowledged.push(`fix:${event.findingId}`);
+      // A fix click is answered by the fix, or by the finding clearing on its own (v1.3) before the click lands.
+      if (event.type === 'fix.applied' || event.type === 'finding.cleared') acknowledged.push(`fix:${event.findingId}`);
       if (event.type === 'launch.done') acknowledged.push('launch');
       // Stop is answered by the turn ending ("Stopped by you") or the crew leaving the stoppable phases.
       if (event.type === 'turn.finished' || (event.type === 'session.phase' && !STOPPABLE.includes(event.phase))) acknowledged.push('stop');

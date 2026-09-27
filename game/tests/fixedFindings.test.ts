@@ -30,3 +30,27 @@ test('after a snapshot (no events) nothing lingers', () => {
   for (const event of story.slice(0, 3)) world = reduce(world, event);
   assert.equal(fixedAwaitingGreen(world, []).length, 0);
 });
+
+test('v1.3: a finding cleared on a rescan shows as cleared (with the reason) until its segment turns green', () => {
+  const events: EngineEvent[] = [
+    story[0], story[1],
+    { seq: 3, ts: 0, actor: 'tina', type: 'finding.cleared', findingId: 'f1', reason: 'Claude removed the GPS data in turn 2' },
+    { seq: 4, ts: 0, actor: 'tina', type: 'segment.green', segmentId: 'photos' },
+  ];
+  let world = initialState();
+  const seen: string[] = [];
+  const log: EngineEvent[] = [];
+  for (const event of events) {
+    world = reduce(world, event); log.push(event);
+    seen.push(fixedAwaitingGreen(world, log).map(item => `${item.how}:${item.summary}`).join());
+  }
+  assert.deepEqual(seen, ['', '', 'cleared:Claude removed the GPS data in turn 2', '']);
+  assert.equal(world.findings.length, 0, 'the reducer removed the finding');
+});
+
+test('a re-reported finding is open again, and a second fix shows once', () => {
+  let world = initialState();
+  const log: EngineEvent[] = [];
+  for (const event of [...story.slice(0, 3), story[1], story[2]]) { world = reduce(world, event); log.push(event); }
+  assert.deepEqual(fixedAwaitingGreen(world, log).map(item => item.finding.id), ['f1']);
+});

@@ -2,6 +2,9 @@
 // It resets the shared mock session and drives real commands through src/net.ts.
 import assert from 'node:assert/strict';
 import { connectEngine } from '../src/net.ts';
+
+// The turn-1 demo prompt, exactly as the presenter types it (keep in sync with DEFAULT_PROMPT in src/ui/Project.tsx).
+const DEMO_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 import { createStore } from '../src/store.ts';
 import type { EscalationOption, GameCommand } from '../../shared/events.ts';
 
@@ -39,7 +42,7 @@ function check() {
     const world = state.world;
     if (!resetSent) { resetSent = true; once('reset', { type: 'reset' }); return; }
     if (state.pending.includes('reset')) return;
-    if (world.phase === 'idle' && !started) { started = true; once('start', { type: 'start', prompt: 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.' }); }
+    if (world.phase === 'idle' && !started) { started = true; once('start', { type: 'start', prompt: DEMO_PROMPT }); }
     if (world.contract && world.phase === 'contract') {
       // Adjust first, then Approve only once the engine has answered: the real engine re-plans and
       // proposes again (a fresh fence.plan.proposed); the mock never answers, so fall back after a pause.

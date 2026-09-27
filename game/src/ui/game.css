@@ -1,0 +1,164 @@
+/* Game page (`/`) only: Harbor Slate colours, Bricolage Grotesque + Instrument Sans, chat | yard | analysis.
+   Everything is scoped under .gv so the dashboard (the frozen fallback) never changes. */
+.gv {
+  --gv-page: #f1f3f4; --gv-head: #27313a; --gv-head-ink: #f5f7f8; --gv-card: #ffffff; --gv-soft: #eef1f3;
+  --gv-ink: #1b2228; --gv-muted: #5b6670; --gv-line: #d7dde2;
+  --gv-accent: #2d6f73; --gv-accent-hover: #245b5e; --gv-accent-ink: #ffffff; --gv-accent-text: #28666a; --gv-accent-soft: #bfe0de;
+  --gv-good: #2f7a47; --gv-good-bg: #e2f2e6; --gv-bad: #a3322a; --gv-bad-bg: #fde6e3; --gv-warn: #7a5a00; --gv-warn-bg: #fff2c2;
+  --gv-display: "Bricolage Grotesque Variable", "Instrument Sans Variable", system-ui, sans-serif;
+  --gv-body: "Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --gv-radius: 14px; --gv-gap: 14px;
+  max-width: 1880px; padding: 14px 18px 18px; font-family: var(--gv-body); font-size: 17px; line-height: 1.45; color: var(--gv-ink);
+}
+body:has(.gv) { background: #f1f3f4; }
+.gv h1, .gv h2, .gv h3 { font-family: var(--gv-display); letter-spacing: -.01em; }
+.gv .muted, .gv .gv-small { color: var(--gv-muted); }
+.gv .gv-small { font-size: 15px; margin: 0; }
+.gv .gv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.gv .gv-label { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--gv-muted); }
+.gv .path { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; }
+
+/* Buttons */
+.gv button { font-family: var(--gv-body); }
+.gv .gv-btn, .gv .card button:not(.option):not(.link-button):not(.chip) { background: var(--gv-accent); border: 1.5px solid var(--gv-accent); color: var(--gv-accent-ink); border-radius: 10px; font-weight: 650; min-height: 42px; padding: .45em .9em; }
+.gv .gv-btn:hover:not(:disabled), .gv .card button:not(.option):not(.link-button):not(.chip):hover:not(:disabled) { background: var(--gv-accent-hover); border-color: var(--gv-accent-hover); }
+.gv .gv-btn.ghost { background: transparent; color: var(--gv-ink); border-color: var(--gv-line); }
+.gv .gv-btn.ghost:hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-muted); }
+.gv .gv-btn.big { width: 100%; min-height: 50px; font-size: 19px; font-family: var(--gv-display); }
+.gv button:focus-visible, .gv a:focus-visible, .gv textarea:focus-visible, .gv summary:focus-visible { outline: 3px solid var(--gv-accent); outline-offset: 2px; }
+
+/* Title bar */
+.gv .gv-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 18px; margin-bottom: var(--gv-gap); background: var(--gv-head); color: var(--gv-head-ink); border-radius: var(--gv-radius); }
+.gv .gv-logo { width: 38px; height: 38px; flex: none; border-radius: 10px; background:
+    linear-gradient(var(--gv-head), var(--gv-head)) center / 16px 16px no-repeat, var(--gv-accent-soft); box-shadow: inset 0 0 0 5px var(--gv-accent); }
+.gv .gv-brand h1 { font-size: 28px; line-height: 1.05; font-weight: 800; }
+.gv .gv-brand p { margin: 2px 0 0; font-size: 15.5px; color: #c7d0d8; }
+.gv .gv-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gv .gv-actions .gv-btn.ghost { color: var(--gv-head-ink); border-color: #52606d; min-height: 38px; }
+.gv .gv-actions .gv-btn.ghost:hover:not(:disabled) { background: #33404b; }
+.gv .gv-actions .raw-toggle { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; }
+.gv .gv-actions .raw-toggle.on { background: var(--gv-accent-soft); color: var(--gv-head); border-color: var(--gv-accent-soft); }
+.gv .gv-link { color: #c7d0d8; font-weight: 600; }
+.gv .gv-pill { font-size: 14px; font-weight: 700; padding: 3px 11px; border-radius: 999px; }
+.gv .gv-pill.ok { background: #1f4d3a; color: #a8e7c3; }
+.gv .gv-pill.bad { background: #5a2622; color: #ffc4bd; }
+.gv .gv-notice { margin: 0 0 var(--gv-gap); padding: 10px 14px; border-radius: 10px; background: var(--gv-warn-bg); color: var(--gv-warn); }
+.gv .gv-notice.bad { background: var(--gv-bad-bg); color: var(--gv-bad); }
+
+/* Three columns; side panels scroll on their own so the yard stays in view. */
+.gv .gv-cols { display: grid; grid-template-columns: 300px minmax(0, 1fr) 350px; gap: var(--gv-gap); align-items: start; }
+.gv .gv-panel { position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow: auto; display: flex; flex-direction: column; gap: 12px;
+  background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-radius); padding: 14px; }
+.gv .gv-panel > h2 { margin: 0; font-size: 21px; font-weight: 750; }
+.gv .gv-center { position: sticky; top: 14px; min-width: 0; }
+@media (max-width: 1180px) {
+  .gv .gv-cols { grid-template-columns: minmax(0, 1fr); }
+  .gv .gv-panel, .gv .gv-center { position: static; max-height: none; }
+  .gv .gv-center { order: -1; }
+}
+
+/* Chat */
+.gv .gv-chat-panel { overflow: hidden; }
+.gv .gv-chat-scroll { flex: 1; min-height: 120px; overflow: auto; margin: 0 -4px; padding: 0 4px; }
+.gv .chat { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.gv .chat-turn { display: grid; gap: 8px; margin: 0; }
+.gv .msg { display: grid; gap: 3px; max-width: 94%; }
+.gv .msg .who { font-size: 13px; font-weight: 700; color: var(--gv-muted); }
+.gv .msg p { margin: 0; padding: 9px 12px; border-radius: 14px; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; }
+.gv .msg.me { justify-self: end; }
+.gv .msg.me .who { text-align: right; }
+.gv .msg.me p { background: var(--gv-accent); color: var(--gv-accent-ink); border-bottom-right-radius: 4px; }
+.gv .msg.crew p { background: var(--gv-soft); color: var(--gv-ink); border-bottom-left-radius: 4px; }
+.gv .msg.crew .turn-summary { color: var(--gv-ink); }
+.gv .msg .typing { letter-spacing: .2em; font-weight: 800; color: var(--gv-muted); width: fit-content; }
+.gv .msg .link-button { color: var(--gv-accent-text); }
+.gv .chat-empty { margin: 0; color: var(--gv-muted); font-size: 16px; }
+
+/* Prompt bar lives at the bottom of the chat panel here (not fixed, not sticky). */
+.gv .prompt-bar { position: static; transform: none; width: auto; box-shadow: none; border: 1.5px solid var(--gv-line); background: var(--gv-page); border-radius: 12px; padding: 10px; font-size: 16px; }
+.gv .prompt-bar label { color: var(--gv-ink); font-weight: 700; font-size: 15px; }
+.gv .prompt-row { flex-direction: column; gap: 8px; }
+.gv .prompt-row textarea { height: 4.4em; font-family: var(--gv-body); font-size: 16px; background: var(--gv-card); border-color: var(--gv-line); border-radius: 9px; }
+.gv .prompt-row button { background: var(--gv-accent); border-color: var(--gv-accent); border-radius: 10px; font-size: 17px; }
+.gv .prompt-row button:hover:not(:disabled) { background: var(--gv-accent-hover); }
+.gv .prompt-bar .chip { background: var(--gv-card); color: var(--gv-accent-text); border-color: var(--gv-line); font-size: 14px; }
+.gv .prompt-bar.working { background: var(--gv-soft); border-color: var(--gv-line); color: var(--gv-muted); }
+
+/* The yard frame */
+.gv .yard-view { position: static; border: 1px solid var(--gv-line); border-radius: var(--gv-radius); background: var(--gv-card); }
+.gv .yard-caption { background: var(--gv-card); color: var(--gv-ink); border-bottom: 1px solid var(--gv-line); padding: 10px 16px; align-items: center; }
+.gv .yard-caption strong { font-family: var(--gv-display); font-size: 20px; letter-spacing: -.01em; }
+.gv .yard-caption span { color: var(--gv-muted); font-size: 15.5px; }
+.gv .yard-help, .gv .yard-note { background: var(--gv-card); color: var(--gv-muted); font-size: 15px; }
+.gv .yard-note { font-size: 13px; }
+.gv .family-bubble { font-family: var(--gv-body); }
+.gv .gv-phase { font-size: 14px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: var(--gv-soft); color: var(--gv-ink); text-transform: capitalize; }
+.gv .gv-phase.busy { background: var(--gv-warn-bg); color: var(--gv-warn); }
+.gv .gv-phase.done { background: var(--gv-good-bg); color: var(--gv-good); }
+
+/* Analysis */
+.gv .gv-needs { display: grid; gap: 10px; }
+.gv .gv-quiet { margin: 0; color: var(--gv-muted); font-size: 16px; }
+.gv .card { padding: 14px; border-radius: 12px; border: 1px solid var(--gv-line); background: var(--gv-card); font-size: 16px; }
+.gv .card > h2 { font-size: 18.5px; margin-bottom: .45em; font-weight: 700; }
+.gv .card p { margin-top: .5em; }
+.gv .card ul { margin-top: .3em; padding-left: 1.2em; }
+.gv .card li + li { margin-top: .25em; }
+.gv .card .gv-label { margin-top: .8em; }
+.gv .action-card { border: 2px solid var(--gv-accent); box-shadow: 0 6px 18px #27313a14; }
+.gv .finding { border-left: 6px solid var(--gv-bad); }
+.gv .finding.fixed { border-left-color: var(--gv-good); background: var(--gv-good-bg); }
+.gv .gv-chip { display: inline-block; margin: 0; padding: 2px 9px; border-radius: 7px; font-size: 14px; font-weight: 700; }
+.gv .gv-chip.bad { background: var(--gv-bad-bg); color: var(--gv-bad); }
+.gv .gv-chip.ok { background: var(--gv-good-bg); color: var(--gv-good); }
+.gv .gv-adjust { margin-top: 10px; }
+.gv .gv-adjust summary { cursor: pointer; color: var(--gv-accent-text); font-weight: 650; font-size: 15px; }
+.gv .gv-adjust textarea { min-height: 70px; margin: .5em 0; border-color: var(--gv-line); font-family: var(--gv-body); }
+.gv .gv-adjust .adjust { border-top: none; padding-top: 0; margin-top: 0; }
+.gv .gv-counts { list-style: none; padding: 0 !important; display: grid; gap: 3px; }
+.gv .gv-counts .sev-high strong { color: var(--gv-bad); }
+.gv .gv-counts .sev-medium strong { color: var(--gv-warn); }
+.gv .gv-options { display: grid; gap: 8px; margin-top: 10px; }
+.gv .option { display: grid; gap: 2px; text-align: left; width: 100%; padding: 10px 12px; border-radius: 10px; font-size: 15.5px; background: var(--gv-card); color: var(--gv-ink); border: 1.5px solid var(--gv-line); }
+.gv .option:hover:not(:disabled) { border-color: var(--gv-muted); background: var(--gv-soft); }
+.gv .option.recommended { border-color: var(--gv-accent); background: #e6f2f1; }
+.gv .option .recommend-label { color: var(--gv-accent-text); font-size: 13px; font-weight: 750; }
+.gv .gv-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gv .gv-stats div { background: var(--gv-soft); border-radius: 11px; padding: 8px 10px; }
+.gv .gv-stats b { display: block; font-family: var(--gv-display); font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.gv .gv-stats span { font-size: 14px; color: var(--gv-muted); }
+.gv .gv-launch { display: grid; gap: 8px; }
+.gv .gv-launch .lock-reason { margin: 0; font-size: 15px; }
+.gv .gv-fence { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.gv .gv-fence li { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0; font-size: 16px; }
+.gv .gv-status { flex: none; font-size: 13.5px; font-weight: 700; padding: 1px 8px; border-radius: 7px; border: none; }
+.gv .gv-status.planned { background: var(--gv-soft); color: var(--gv-muted); }
+.gv .gv-status.built { background: #f3e7d7; color: #6e421e; }
+.gv .gv-status.inspecting { background: var(--gv-warn-bg); color: var(--gv-warn); }
+.gv .gv-status.red { background: var(--gv-bad-bg); color: var(--gv-bad); }
+.gv .gv-status.green { background: var(--gv-good-bg); color: var(--gv-good); }
+.gv .gv-block { display: grid; gap: 4px; padding: 10px 12px; border-radius: 11px; background: var(--gv-bad-bg); }
+.gv .gv-block .path { margin: 0; color: var(--gv-bad); font-weight: 600; }
+.gv .gv-block .tag { width: fit-content; margin: 0; }
+.gv .gv-log summary { cursor: pointer; color: var(--gv-muted); font-weight: 650; font-size: 15px; }
+.gv .gv-log .event-log { max-height: 260px; font-size: 14px; }
+
+/* Overlays drawn inside the game page pick up the fonts and accent too. */
+.gv .report-panel { font-family: var(--gv-body); }
+.gv .report-header h2 { font-family: var(--gv-display); }
+.gv .report-actions button { background: var(--gv-accent); border-color: var(--gv-accent); border-radius: 10px; }
+.gv .report-actions button.secondary { background: transparent; color: var(--gv-ink); border-color: var(--gv-line); }
+
+/* One screen: title bar on top, three columns fill the rest; each column scrolls on its own. */
+@media (min-width: 1181px) {
+  .gv { height: 100vh; height: 100dvh; display: flex; flex-direction: column; margin: 0 auto; }
+  .gv > .gv-top, .gv > .gv-notice { flex: none; }
+  .gv .gv-cols { flex: 1; min-height: 0; align-items: stretch; }
+  .gv .gv-panel { position: static; max-height: none; min-height: 0; }
+  .gv .gv-center { position: static; min-height: 0; overflow: auto; }
+}
+.gv .gv-chat-panel .prompt-bar { flex: none; }
+.gv .report-reopen { margin-left: 0; }
+/* Messenger behaviour: the chat sits at the bottom and opens scrolled to the newest message. */
+.gv .gv-chat-scroll { display: flex; flex-direction: column-reverse; }
+.gv .prompt-bar.working > span[role="status"] { flex: 1 1 0; }

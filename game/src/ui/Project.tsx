@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { GameCommand, WorldState } from '../../../shared/events.ts';
 import { promptCommand } from './promptMode.ts';
 import { STOPPABLE } from '../store.ts';
 import { clampText } from './clampText.ts';
 
-export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
+export const DEFAULT_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 // Typing helpers only: they fill the box, the engine decides what happens.
 const SUGGESTIONS = ['Add a careers page using the job descriptions in ~/Documents/Rivera-HR', 'Make the header darker'];
 
 /** Always on screen. Sends `start` when idle, `prompt` when ready or launched, nothing otherwise. */
-export function PromptBar({ world, send, available, pending, epoch }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[]; epoch: number }) {
+export function PromptBar({ world, send, available, pending, epoch, compact = false }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[]; epoch: number; compact?: boolean }) {
   // Until Maria types, the box shows the engine's suggestion (v1.2 `prompt.suggested`, used by replays),
   // else the example for the very first prompt. A new suggestion replaces whatever was typed.
   const [draft, setDraft] = useState<string | null>(null);
@@ -25,10 +25,10 @@ export function PromptBar({ world, send, available, pending, epoch }: { world: W
   const disabled = !available || working || waiting;
   const submit = () => { if (command && text.trim() && send(command)) setText(''); };
   // While the crew works the bar can't send anything, so it shrinks to one line and covers no cards.
-  if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">Tini is working… you can prompt again when the crew is done.</span>
+  if (working) return <div className="prompt-bar working"><span className="working-dot" aria-hidden="true" /><span role="status">{compact ? 'Tini is working…' : 'Tini is working… you can prompt again when the crew is done.'}</span>
     {STOPPABLE.includes(world.phase) && <StopButton world={world} send={send} available={available} pending={pending} />}</div>;
   return <form className={`prompt-bar ${working ? 'working' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
-    <label htmlFor="prompt-input">{first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
+    <label htmlFor="prompt-input">{compact ? (first ? 'Start a project' : 'Message the crew') : first ? 'Start a project: tell the crew what you need' : 'What next? Same project, same fence'}</label>
     <div className="prompt-row">
       <textarea id="prompt-input" rows={1} value={text} disabled={disabled} placeholder="Ask for the next thing…"
         onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
@@ -64,9 +64,24 @@ function StopButton({ world, send, available, pending }: { world: WorldState; se
 }
 
 /** A turn summary; long ones collapse to a preview with more/less. */
-function Summary({ text }: { text: string }) {
+export function Summary({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   const preview = clampText(text);
   return <p className="turn-summary">✓ {open || !preview ? text : preview}
     {preview && <> <button type="button" className="link-button" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'less' : 'more'}</button></>}</p>;
+}
+
+/** The game page's chat: each turn is your prompt, then Claude's summary (or a typing indicator). */
+export function ChatHistory({ world }: { world: WorldState }) {
+  const end = useRef<HTMLDivElement>(null);
+  const last = world.turns.at(-1);
+  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [world.turns.length, last?.summary]);
+  if (!world.turns.length) return <p className="chat-empty">Tell the crew what you need. Tini fences only what the job uses.</p>;
+  return <ol className="chat" aria-label="Conversation">
+    <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="chat-turn">
+      <div className="msg me"><span className="who">You · Turn {turn.id}</span><p>{turn.prompt}</p></div>
+      <div className="msg crew"><span className="who">Claude</span>{turn.summary ? <Summary text={turn.summary} /> : <p className="typing" aria-label="Working">⋯</p>}</div>
+    </motion.li>)}</AnimatePresence>
+    <div ref={end} />
+  </ol>;
 }
