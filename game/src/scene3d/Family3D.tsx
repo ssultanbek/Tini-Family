@@ -197,7 +197,8 @@ function usePose(body: Body, kind: AnimatedActor, parts: React.MutableRefObject<
     }
     // Dog moods from state: sleeping curls up, waiting sits, working/done wags.
     if (kind === 'dog') {
-      if (p.tail) p.tail.rotation.y = Math.sin(t * (world.dog === 'working' ? 18 : world.dog === 'done' ? 12 : 3)) * (world.dog === 'sleeping' ? 0.1 : 0.6);
+      // The mascot has no tail: it wiggles happily while working and bounces a little when done.
+      if (!body.moving && !body.action && (world.dog === 'working' || world.dog === 'done')) { p.body.rotation.z = Math.sin(t * (world.dog === 'done' ? 5 : 7)) * 0.06; if (world.dog === 'done') p.body.position.y += Math.abs(Math.sin(t * 5)) * 0.05; }
       if (world.dog === 'sleeping' && !body.moving) { p.body.scale.set(1.1, 0.7, 0.9); p.body.position.y = -0.08 + Math.sin(t * 1.5) * 0.015; }
       if (world.dog === 'waiting' && !body.moving) p.body.rotation.x = -0.35;
     }
@@ -256,32 +257,44 @@ function Person({ kind, body, world, children }: { kind: 'tini' | 'tina'; body: 
   </group>;
 }
 
+/** The agent: our own fuzzy mascot (the engine still calls this actor "dog"). Rounded body, face window, `›_` on the chest. */
 function Dog({ body, world }: { body: Body; world: WorldState }) {
   const parts = useRef<Parts>({ root: null, body: null, legL: null, legR: null, armL: null, armR: null, head: null, tail: null });
   usePose(body, 'dog', parts, world);
   const set = (key: keyof Parts) => (g: Group | null) => { parts.current[key] = g; };
-  const fur = '#d39a5b', dark = '#8a5a35';
-  const leg = (x: number, z: number, key: keyof Parts) => <group key={`${x}${z}`} position={[x, 0.3, z]} ref={set(key)}>
-    <mesh position={[0, -0.15, 0]} castShadow><capsuleGeometry args={[0.07, 0.16, 4, 8]} /><meshStandardMaterial color={fur} roughness={0.8} /></mesh>
-  </group>;
+  const fur = '#3f6fd8', face = '#6f95ea', mark = '#f1e6cc';
+  const asleep = world.dog === 'sleeping';
+  const furMat = <meshStandardMaterial color={fur} roughness={1} />;
   return <group ref={set('root')}>
     <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.45, 16]} /><meshBasicMaterial color="#000" transparent opacity={0.16} depthWrite={false} /></mesh>
     <group ref={set('body')}>
-      {leg(-0.16, 0.22, 'legL')}{leg(0.16, 0.22, 'legR')}{leg(-0.16, -0.22, 'armL')}{leg(0.16, -0.22, 'armR')}
-      <RoundedBox args={[0.46, 0.4, 0.78]} radius={0.17} smoothness={3} position={[0, 0.45, 0]} castShadow><meshStandardMaterial color={fur} roughness={0.8} /></RoundedBox>
-      <group position={[0, 0.72, 0.42]} ref={set('head')}>
-        <mesh castShadow><sphereGeometry args={[0.24, 16, 14]} /><meshStandardMaterial color={fur} roughness={0.8} /></mesh>
-        <mesh position={[0, -0.05, 0.2]} castShadow><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#e8c08d" roughness={0.8} /></mesh>
-        <mesh position={[0, -0.02, 0.31]}><sphereGeometry args={[0.045, 8, 8]} /><meshBasicMaterial color="#2a1f1a" /></mesh>
-        {[-1, 1].map(s => <mesh key={s} position={[s * 0.19, 0.06, -0.02]} rotation={[0, 0, s * 0.35]} scale={[0.5, 1.2, 0.8]} castShadow><sphereGeometry args={[0.14, 10, 8]} /><meshStandardMaterial color={dark} roughness={0.9} /></mesh>)}
-        {world.dog !== 'sleeping' && [-1, 1].map(s => <mesh key={`e${s}`} position={[s * 0.09, 0.07, 0.2]}><sphereGeometry args={[0.032, 8, 8]} /><meshBasicMaterial color="#1b2228" /></mesh>)}
+      {/* stubby legs */}
+      {([[-0.17, 'legL'], [0.17, 'legR']] as const).map(([x, key]) => <group key={key} position={[x, 0.24, 0]} ref={set(key)}>
+        <mesh position={[0, -0.12, 0]} castShadow><capsuleGeometry args={[0.11, 0.1, 4, 10]} />{furMat}</mesh>
+      </group>)}
+      {/* body: a tall soft capsule */}
+      <mesh position={[0, 0.72, 0]} scale={[1, 1, 0.88]} castShadow><capsuleGeometry args={[0.36, 0.5, 8, 18]} />{furMat}</mesh>
+      {/* arms hang from the shoulders and swing while walking */}
+      {([[-0.4, 'armL'], [0.4, 'armR']] as const).map(([x, key]) => <group key={key} position={[x, 0.86, 0]} ref={set(key)}>
+        <mesh position={[0, -0.2, 0]} rotation={[0, 0, x < 0 ? -0.12 : 0.12]} castShadow><capsuleGeometry args={[0.1, 0.24, 4, 10]} />{furMat}</mesh>
+      </group>)}
+      {/* face window, eyes and smile */}
+      <group position={[0, 1.02, 0.25]} ref={set('head')}>
+        <mesh scale={[1, 0.72, 0.4]}><sphereGeometry args={[0.24, 20, 14]} /><meshStandardMaterial color={face} roughness={0.9} /></mesh>
+        {[-0.08, 0.08].map(x => asleep
+          ? <mesh key={x} position={[x, 0.02, 0.09]}><boxGeometry args={[0.06, 0.012, 0.01]} /><meshBasicMaterial color="#0f1733" /></mesh>
+          : <mesh key={x} position={[x, 0.02, 0.085]}><sphereGeometry args={[0.028, 10, 10]} /><meshBasicMaterial color="#0f1733" /></mesh>)}
+        <mesh position={[0, -0.05, 0.085]} rotation={[0, 0, Math.PI]}><torusGeometry args={[0.035, 0.009, 6, 12, Math.PI]} /><meshBasicMaterial color="#0f1733" /></mesh>
       </group>
-      <group position={[0, 0.58, -0.38]} ref={set('tail')}>
-        <mesh position={[0, 0.12, -0.08]} rotation={[-0.7, 0, 0]} castShadow><capsuleGeometry args={[0.05, 0.22, 4, 8]} /><meshStandardMaterial color={fur} roughness={0.8} /></mesh>
+      {/* chest mark: a terminal prompt, our own emblem */}
+      <group position={[0, 0.62, 0.33]}>
+        <mesh position={[-0.07, 0.03, 0]} rotation={[0, 0, -0.7]}><boxGeometry args={[0.1, 0.035, 0.02]} /><meshStandardMaterial color={mark} /></mesh>
+        <mesh position={[-0.07, -0.03, 0]} rotation={[0, 0, 0.7]}><boxGeometry args={[0.1, 0.035, 0.02]} /><meshStandardMaterial color={mark} /></mesh>
+        <mesh position={[0.07, -0.06, 0]}><boxGeometry args={[0.12, 0.035, 0.02]} /><meshStandardMaterial color={mark} /></mesh>
       </group>
     </group>
-    <Html position={[0, 1.35, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[12, 0]} className="d3-name">
-      {world.dog === 'sleeping' ? 'Dog · Zzz' : world.dog === 'waiting' ? 'Dog · ?' : 'Dog'}
+    <Html position={[0, 1.65, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[12, 0]} className="d3-name">
+      {asleep ? 'Agent · Zzz' : world.dog === 'waiting' ? 'Agent · ?' : 'Agent'}
     </Html>
     <Bubble body={body} kind="dog" />
   </group>;
@@ -310,8 +323,8 @@ function Bubble({ body, kind }: { body: Body; kind: AnimatedActor }) {
     if (live !== text) setText(live);
   });
   if (!text) return null;
-  return <Html position={[0, kind === 'dog' ? 1.8 : 2.45, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[20, 0]}>
-    <div className={`d3-bubble ${kind}`}><strong>{kind === 'tini' ? 'Tini' : kind === 'tina' ? 'Tina' : 'Dog'}</strong><p>{text}</p></div>
+  return <Html position={[0, kind === 'dog' ? 2.1 : 2.45, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[20, 0]}>
+    <div className={`d3-bubble ${kind}`}><strong>{kind === 'tini' ? 'Tini' : kind === 'tina' ? 'Tina' : 'Agent'}</strong><p>{text}</p></div>
   </Html>;
 }
 

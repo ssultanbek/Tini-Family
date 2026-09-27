@@ -50,7 +50,34 @@ export function YardGround() {
     <RoundedBox args={[gw + 0.5, 0.22, 0.26]} radius={0.06} position={[gate.x, 1.5, gate.z]} castShadow>
       <meshStandardMaterial color={C.wood} roughness={0.9} />
     </RoundedBox>
+    {/* Fixed fence runs close the gaps between the gate and the yard corner / next fence slot. */}
+    {gateFillers().map((run, i) => <FenceRun key={i} {...run} />)}
     <Html position={[gate.x, 1.95, gate.z]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[5, 0]} className="d3-tag">Gate</Html>
+  </group>;
+}
+
+/** Pixel spans along the gate's side of the yard that no fence slot covers: corner → gate, gate → first slot. */
+function gateFillers() {
+  const gy = L.gate.y, gl = L.gate.x - L.gate.width / 2, gr = L.gate.x + L.gate.width / 2;
+  const covered = L.slots.filter(sl => !sl.vertical && sl.y === gy).map(sl => [sl.x - L.fence.length / 2, sl.x + L.fence.length / 2]);
+  const left = L.ground.x, right = L.ground.x + L.ground.width;
+  const spans: [number, number][] = [[left, gl]];
+  const next = covered.map(c => c[0]).filter(x => x >= gr).sort((a, b) => a - b)[0] ?? right;
+  spans.push([gr, next]);
+  const lastEnd = Math.max(gr, ...covered.map(c => c[1]));
+  if (lastEnd < right) spans.push([lastEnd, right]);
+  return spans.filter(([a, b]) => b - a > 4).map(([a, b]) => ({ from: toWorld(a, gy), to: toWorld(b, gy) }));
+}
+
+function FenceRun({ from, to }: { from: { x: number; z: number }; to: { x: number; z: number } }) {
+  const length = to.x - from.x, n = Math.max(2, Math.round(length / 0.6) + 1), f = D.fence;
+  return <group>
+    {Array.from({ length: n }, (_, i) => <RoundedBox key={i} args={[f.post, f.height, f.post]} radius={0.05} smoothness={2} position={[from.x + (length * i) / (n - 1), f.height / 2, from.z]} castShadow>
+      <meshStandardMaterial color={C.wood} roughness={0.85} />
+    </RoundedBox>)}
+    {f.railHeights.map(h => <mesh key={h} position={[from.x + length / 2, h, from.z]} castShadow>
+      <boxGeometry args={[length, f.rail, f.rail]} /><meshStandardMaterial color={C.wood} roughness={0.85} />
+    </mesh>)}
   </group>;
 }
 
