@@ -395,3 +395,186 @@ body:has(.app) {
 .gv .turn-card.open::before { animation: gv-dot-pulse 1.4s ease-in-out infinite; }
 @keyframes gv-dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(211 154 0 / .5); } 50% { box-shadow: 0 0 0 6px rgb(211 154 0 / 0); } }
 @media (prefers-reduced-motion: reduce) { .gv .turn-card::after, .gv .turn-card::before { animation: none !important; transition: none !important; } }
+
+/* ======================================================================================
+   B2B SaaS pass: neutral zinc palette, compact type, crisp 1px borders, black primary,
+   table-like rows, small badges, quiet motion. The yard column stays pinned (see .gv-center).
+   ====================================================================================== */
+.gv {
+  --gv-page: #FAFAFA; --gv-card: #FFFFFF; --gv-soft: #F4F4F5; --gv-sunken: #FAFAFA;
+  --gv-line: #E4E4E7; --gv-line-strong: #D4D4D8; --gv-ink: #09090B; --gv-muted: #71717A; --gv-faint: #A1A1AA;
+  --gv-primary: #18181B; --gv-primary-hover: #27272A;
+  --gv-shadow-xs: 0 1px 2px rgb(9 9 11 / .04);
+  --gv-shadow-sm: 0 1px 2px rgb(9 9 11 / .04), 0 2px 8px -2px rgb(9 9 11 / .06);
+  --gv-shadow-md: 0 1px 2px rgb(9 9 11 / .05), 0 8px 24px -8px rgb(9 9 11 / .12);
+  --gv-focus: 0 0 0 2px var(--gv-card), 0 0 0 4px rgb(91 69 214 / .55);
+  font-size: 14.5px; letter-spacing: -.005em;
+}
+body:has(.gv) { background: #FAFAFA; background-image: none; }
+
+/* Header: a slim product bar */
+.gv .gv-top { padding: 10px 16px; border-radius: 12px; box-shadow: var(--gv-shadow-xs); gap: 12px; }
+.gv .gv-logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(#fff, #fff) center / 10px 10px no-repeat, var(--gv-primary); }
+.gv .gv-brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.gv .gv-brand h1 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.gv .gv-brand p { margin: 0; font-size: 13.5px; color: var(--gv-muted); padding-left: 12px; border-left: 1px solid var(--gv-line); }
+.gv .gv-actions { gap: 8px; }
+.gv .gv-actions .gv-btn.ghost, .gv .gv-actions .raw-toggle { min-height: 32px; padding: 0 12px; font-size: 13.5px; border-radius: 8px; box-shadow: none; }
+.gv .gv-actions .raw-toggle { font-size: 12.5px; }
+.gv .gv-link { font-size: 13.5px; color: var(--gv-ink); font-weight: 600; padding: 6px 10px; border-radius: 8px; transition: background var(--gv-t-fast); }
+.gv .gv-link:hover { background: var(--gv-soft); text-decoration: none; }
+.gv .gv-pill { font-size: 12px; padding: 3px 10px; font-weight: 600; }
+
+/* Panels: flat cards with a hairline header */
+.gv .gv-panel { border-radius: 12px; padding: 0; gap: 0; box-shadow: var(--gv-shadow-xs); }
+.gv .gv-panel > h2 { font-size: 13.5px; font-weight: 650; letter-spacing: 0; color: var(--gv-ink); margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--gv-line); position: sticky; top: 0; background: var(--gv-card); z-index: 2; }
+.gv .gv-analysis > :not(h2) { margin: 0 16px; }
+.gv .gv-analysis > :nth-child(2) { margin-top: 14px; }
+.gv .gv-analysis > * + * { margin-top: 14px; }
+.gv .gv-analysis > :last-child { margin-bottom: 16px; }
+.gv .gv-chat-panel .gv-chat-scroll { padding: 14px 12px 8px 16px; margin: 0; }
+.gv .gv-chat-panel .prompt-bar { margin: 0 12px 12px; }
+
+/* Section labels: small sentence-case captions instead of shouting caps */
+.gv .gv-label, .gv .turn-label { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; text-transform: none; color: var(--gv-muted); }
+.gv .action-card .gv-label { color: var(--gv-muted); }
+
+/* Buttons: black primary, white secondary, 36px, quiet motion */
+.gv .gv-btn, .gv .card button:not(.option):not(.link-button):not(.chip), .gv .prompt-row button, .gv .report-actions button {
+  background: var(--gv-primary); color: #fff; min-height: 36px; padding: 6px 14px; font-size: 13.5px; font-weight: 600; border-radius: 8px;
+  box-shadow: var(--gv-shadow-xs), inset 0 1px 0 rgb(255 255 255 / .08); letter-spacing: 0; }
+.gv .gv-btn:hover:not(:disabled), .gv .card button:not(.option):not(.link-button):not(.chip):hover:not(:disabled), .gv .prompt-row button:hover:not(:disabled), .gv .report-actions button:hover:not(:disabled) { background: var(--gv-primary-hover); }
+.gv .gv-btn:active:not(:disabled), .gv .card button:not(.option):not(.link-button):not(.chip):active:not(:disabled), .gv .prompt-row button:active:not(:disabled) { background: #000; transform: translateY(.5px); }
+.gv .gv-btn:disabled, .gv .card button:not(.option):not(.link-button):not(.chip):disabled, .gv .prompt-row button:disabled { background: var(--gv-soft); color: var(--gv-faint); box-shadow: none; }
+.gv .gv-btn.big { min-height: 40px; font-size: 14px; font-weight: 600; }
+.gv .gv-btn.ghost, .gv .report-actions button.secondary, .gv .card.finding .button-row button:not(.option):not(.link-button):not(.chip) + button:not(.option):not(.link-button):not(.chip) { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-xs); }
+.gv .gv-btn.ghost:hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-line-strong); }
+.gv .stop-button { min-height: 32px; font-size: 13px; border-radius: 8px; }
+
+/* Metrics: label on top, number below, one row */
+.gv .gv-stats { gap: 0; border: 1px solid var(--gv-line); border-radius: 10px; overflow: hidden; }
+.gv .gv-stats div { display: flex; flex-direction: column-reverse; gap: 2px; background: var(--gv-card); border-radius: 0; padding: 10px 12px; }
+.gv .gv-stats div + div { border-left: 1px solid var(--gv-line); }
+.gv .gv-stats b { font-size: 22px; font-weight: 650; letter-spacing: -.02em; line-height: 1.1; }
+.gv .gv-stats span { font-size: 12px; font-weight: 500; }
+
+/* Badges: small, dot-led, same recipe everywhere */
+.gv .gv-chip, .gv .gv-status, .gv .turn-state { font-size: 12px; font-weight: 600; padding: 2px 8px; gap: 5px; border-radius: 999px; }
+.gv .gv-status::before, .gv .turn-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .9; }
+.gv .gv-status.green, .gv .gv-chip.ok { animation-duration: 3s; }
+
+/* Fence: a compact table */
+.gv .gv-fence { border: 1px solid var(--gv-line); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+.gv .gv-fence li { padding: 9px 12px; font-size: 13.5px; font-weight: 500; transition: background var(--gv-t-fast); }
+.gv .gv-fence li:hover { background: var(--gv-soft); }
+
+/* Cards in Analysis */
+.gv .card { border-radius: 10px; padding: 14px; font-size: 14px; box-shadow: var(--gv-shadow-xs); }
+.gv .card > h2 { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; line-height: 1.35; }
+.gv .card.action-card { background: var(--gv-card); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-md), inset 3px 0 0 var(--gv-accent); }
+.gv .action-card ul li, .gv .path { font-size: 12.5px; }
+.gv .option { font-size: 13.5px; border-radius: 8px; padding: 10px 12px; transition: border-color var(--gv-t-fast), background var(--gv-t-fast); }
+.gv .option .recommend-label { font-size: 11px; padding: 1px 8px; }
+.gv .card.finding { border-left-width: 1px; box-shadow: var(--gv-shadow-xs), inset 3px 0 0 var(--gv-bad-solid); }
+.gv .card.finding.fixed { box-shadow: var(--gv-shadow-xs), inset 3px 0 0 var(--gv-good-solid); }
+.gv .gv-block { border-radius: 10px; padding: 12px 14px; font-size: 13.5px; }
+.gv .gv-block .path { font-size: 13px; }
+.gv .gv-quiet { font-size: 13.5px; text-align: left; font-family: var(--gv-body); }
+.gv .gv-launch .lock-reason { font-size: 12.5px; }
+.gv .gv-log summary { font-size: 12.5px; }
+
+/* Turns: a quiet activity feed */
+.gv .turn-card { padding: 10px 12px; border-radius: 10px; box-shadow: none; gap: 2px; transition: border-color var(--gv-t-fast), box-shadow var(--gv-t-fast); }
+.gv .turn-card:hover { border-color: var(--gv-line-strong); box-shadow: var(--gv-shadow-sm); }
+.gv .turn-card .turn-number { font-size: 12.5px; font-weight: 600; }
+.gv .turn-request, .gv .turn-card .turn-summary, .gv .turn-pending { font-size: 13.5px; line-height: 1.45; }
+.gv .turn-card::before { top: 12px; }
+.gv .timeline { gap: 10px; }
+
+/* Composer */
+.gv .prompt-bar { background: var(--gv-card); border-radius: 12px; padding: 10px; box-shadow: var(--gv-shadow-sm); }
+.gv .prompt-bar label { font-size: 12.5px; font-weight: 600; color: var(--gv-muted); }
+.gv .prompt-row textarea { font-size: 13.5px; border-color: var(--gv-line); border-radius: 8px; padding: 8px 10px; min-height: 76px; transition: border-color var(--gv-t-fast), box-shadow var(--gv-t-fast); }
+.gv .prompt-row textarea:focus-visible { border-color: var(--gv-accent); }
+.gv .prompt-bar .chip { font-size: 12px; font-weight: 500; padding: 4px 10px; color: var(--gv-ink); text-align: left; line-height: 1.35; }
+.gv .prompt-bar .chip:hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-line-strong); }
+.gv .prompt-bar.working { font-size: 13px; }
+
+/* ======================================================================================
+   AIdMD-style refinement: lavender panel headers with icon tiles, violet caps labels,
+   centred metric tiles, outlined tinted pills, action rows. The yard column stays pinned.
+   ====================================================================================== */
+.gv {
+  --gv-page: #F6F6F7; --gv-accent: #6C4FD8; --gv-accent-hover: #5B3FC4; --gv-accent-text: #5B3FC4;
+  --gv-accent-soft: #F4F0FE; --gv-accent-line: #D9CFFA; --gv-head-tint: #F7F5FD;
+}
+body:has(.gv) { background: #F6F6F7; }
+
+/* Header */
+.gv .gv-logo { background: linear-gradient(#fff, #fff) center / 10px 10px no-repeat, linear-gradient(135deg, #7B5CE0, #5B3FC4); }
+.gv .gv-pill { text-transform: uppercase; letter-spacing: .04em; font-size: 11.5px; font-weight: 700; }
+.gv .gv-pill::first-letter { color: currentColor; }
+
+/* Panel headers: lavender strip with an icon tile, like "Clinical Actions" */
+.gv .gv-panel > h2 { display: flex; align-items: center; gap: 10px; background: var(--gv-head-tint); font-size: 14.5px; font-weight: 650; padding: 11px 16px; }
+.gv .gv-panel > h2::before { content: ""; flex: none; width: 24px; height: 24px; border-radius: 6px; background-color: #2A2139;
+  -webkit-mask: var(--gv-icon) center / 14px 14px no-repeat, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: var(--gv-icon) center / 14px 14px no-repeat exclude, linear-gradient(#000 0 0); }
+.gv .gv-chat-panel > h2 { --gv-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'/%3E%3C/svg%3E"); }
+.gv .gv-analysis > h2 { --gv-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l3 8 4-16 3 8h4'/%3E%3C/svg%3E"); background-color: #EFEAFD; }
+
+/* Section labels: small violet caps, like "AI TOOLS" */
+.gv .gv-label, .gv .turn-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gv-accent-text); }
+.gv .gv-needs > .gv-label { color: var(--gv-muted); }
+
+/* Metric tiles: white, bordered, centred label over value, like HR / SPO2 / BP */
+.gv .gv-stats { gap: 8px; border: none; overflow: visible; }
+.gv .gv-stats div { align-items: center; text-align: center; background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: 10px; padding: 10px 8px; box-shadow: var(--gv-shadow-xs); }
+.gv .gv-stats div + div { border-left: 1px solid var(--gv-line); }
+.gv .gv-stats span { font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gv-muted); }
+.gv .gv-stats b { font-size: 19px; font-weight: 700; }
+.gv .gv-stats div:nth-child(2) b { color: var(--gv-accent-text); }
+.gv .gv-stats div:nth-child(3) b { color: var(--gv-bad); }
+
+/* Pills: tint fill + stronger outline, like "2 Alerts" / "1 Care Gap" / "In Visit" */
+.gv .gv-chip, .gv .gv-status, .gv .turn-state { border-width: 1px; font-weight: 600; }
+.gv .gv-status.green, .gv .gv-chip.ok, .gv .turn-card.done .turn-state { border-color: #9ED3AE; }
+.gv .gv-status.red, .gv .gv-chip.bad { border-color: #EFA59F; }
+.gv .gv-status.inspecting, .gv .turn-card.open .turn-state { border-color: #EFC56B; color: #9A5B00; background: #FFF5E0; }
+.gv .gv-status.built { border-color: #D8B690; }
+
+/* Fence: rows like "Chart-Aware Insights" (muted label left, status right) */
+.gv .gv-fence { border: none; border-radius: 0; }
+.gv .gv-fence li { padding: 9px 2px; color: var(--gv-muted); font-weight: 500; }
+.gv .gv-fence li:hover { background: transparent; color: var(--gv-ink); }
+
+/* Needs-you card: a selected action row (violet outline on lavender) */
+.gv .card.action-card { background: var(--gv-accent-soft); border: 1.5px solid var(--gv-accent); box-shadow: 0 0 0 3px rgb(108 79 216 / .10), var(--gv-shadow-sm); }
+.gv .card.action-card .gv-label { color: var(--gv-accent-text); }
+.gv .action-card ul li { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: 8px; padding: 6px 10px; list-style: none; margin-left: -1.2em; }
+.gv .action-card ul li + li { margin-top: 6px; }
+.gv .option.recommended { border: 1.5px solid var(--gv-accent); background: #fff; box-shadow: 0 0 0 3px rgb(108 79 216 / .10); }
+.gv .option .recommend-label { background: var(--gv-accent-soft); color: var(--gv-accent-text); border: 1px solid var(--gv-accent-line); text-transform: uppercase; letter-spacing: .06em; }
+.gv .card.finding { background: #fff; }
+.gv .card.finding.fixed { background: #F1FAF3; }
+.gv .gv-block { background: #FFF7F6; border-color: #F6CFCA; }
+.gv .gv-block .path { display: inline-block; width: fit-content; padding: 1px 8px; border: 1px solid #EFA59F; border-radius: 999px; background: #fff; }
+
+/* Turns: rows like the Assessment & Plan items */
+.gv .turn-card { background: #fff; border: 1px solid var(--gv-line); border-radius: 10px; }
+.gv .turn-card.open { border-color: var(--gv-accent); box-shadow: 0 0 0 3px rgb(108 79 216 / .10); }
+.gv .turn-card .turn-number { color: var(--gv-ink); font-weight: 650; }
+
+/* Buttons: black primary like "Schedule a Demo"; accent focus */
+.gv .gv-btn.big { background: #0B0B0F; }
+.gv .gv-btn.big:hover:not(:disabled) { background: #26262B; }
+.gv .prompt-bar .chip { color: var(--gv-accent-text); background: #fff; border-color: var(--gv-accent-line); }
+.gv .prompt-bar .chip:hover:not(:disabled) { background: var(--gv-accent-soft); border-color: var(--gv-accent); }
+.gv .prompt-row textarea:focus-visible { border-color: var(--gv-accent); box-shadow: 0 0 0 3px rgb(108 79 216 / .15); }
+
+/* Motion: cards and rows ease in hover elevation; panels breathe in on load */
+@keyframes gv-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.gv .gv-panel { animation: gv-rise .45s var(--gv-ease) both; }
+.gv .gv-analysis { animation-delay: .08s; }
+.gv .card, .gv .turn-card, .gv .gv-stats div { transition: transform var(--gv-t-med) var(--gv-ease), box-shadow var(--gv-t-med) var(--gv-ease), border-color var(--gv-t-med); }
+.gv .card:hover, .gv .gv-stats div:hover { transform: translateY(-1px); box-shadow: var(--gv-shadow-md); }
+@media (prefers-reduced-motion: reduce) { .gv .gv-panel, .gv .card, .gv .turn-card, .gv .gv-stats div { animation: none !important; transition: none !important; transform: none !important; } }
