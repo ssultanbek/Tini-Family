@@ -255,10 +255,11 @@ export async function scanWorkspace(staged: Staged, opts: ScanOptions = {}): Pro
   if (opts.useGitleaks !== false && process.env.TINI_NO_GITLEAKS !== "1") {
     try { hits = await runGitleaks(ws); } catch { secretEngine = "regex"; }
   } else secretEngine = "regex";
-  if (secretEngine === "regex") {
-    for (const f of inScope) if (TEXT_EXT.has(path.extname(f).toLowerCase()) || path.basename(f).startsWith(".env")) {
-      for (const h of regexSecrets(text(f))) hits.push({ file: abs(f), ...h });
-    }
+  // The regex rules always run too: gitleaks' default GCP rule misses a key followed by "&",
+  // e.g. maps/api/js?key=AIza...&callback=initMap, which is how Claude loads the Maps API.
+  const seen = new Set(hits.map((h) => `${h.file}\0${h.secret}`));
+  for (const f of inScope) if (TEXT_EXT.has(path.extname(f).toLowerCase()) || path.basename(f).startsWith(".env")) {
+    for (const h of regexSecrets(text(f))) if (!seen.has(`${abs(f)}\0${h.secret}`)) { seen.add(`${abs(f)}\0${h.secret}`); hits.push({ file: abs(f), ...h }); }
   }
   const byFile = new Map<string, SecretHit[]>();
   for (const h of hits) {
