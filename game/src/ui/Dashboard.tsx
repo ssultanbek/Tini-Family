@@ -70,6 +70,8 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
   const escalation = world.openEscalation;
   const fixed = fixedAwaitingGreen(world, events);
   const siteUrl = events.reduce<string | undefined>((url, event) => event.type === 'launch.done' ? event.url : url, undefined);
+  // v1.4: without a url the engine may explain why (e.g. a replay whose site folder isn't on this laptop).
+  const launchNote = events.reduce<string | undefined>((note, event) => event.type === 'launch.done' ? event.note : note, undefined);
   const lockReason = events.reduce<string | undefined>((reason, event) => event.type === 'launch.locked' ? event.reason : event.type === 'launch.unlocked' ? undefined : reason, undefined);
   const showReport = reportVisible(reportMode, world.phase, !!world.report);
   // Yard view: the bar leads the controls column so it never covers a card. Dashboard: docked at the bottom.
@@ -101,7 +103,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
     </div></details></div></main>
     <aside className="toasts" aria-label="Blocked attempt notifications" aria-live="polite">{world.blocked.filter(block => !dismissed.includes(block.seq)).slice(-2).map(block => <div className="toast" key={block.seq}><div className="segment-heading"><strong>Access blocked</strong><button className="dismiss" aria-label={`Dismiss notification for ${block.target}`} onClick={() => setDismissed(current => [...current, block.seq])}>×</button></div>{block.simulated && <span className="tag">Simulated attack</span>}<p className="path">{block.target}</p><p>{block.reason}</p></div>)}</aside>
     <AnimatePresence>{raw && <RawView key="raw" events={events} rawLog={world.rawLog} onClose={() => setRaw(false)} />}</AnimatePresence>
-    <AnimatePresence>{world.report && showReport && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportMode('closed')} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
+    <AnimatePresence>{world.report && showReport && <ReportScreen key="report" report={world.report} url={siteUrl} note={launchNote} onClose={() => setReportMode('closed')} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
     {!yard && promptBar}
     <footer>Engine: localhost:4000 · Last event #{world.seq} · <a href="/?view=dashboard">Dashboard</a></footer>
   </div></MotionConfig>;

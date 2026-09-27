@@ -111,10 +111,10 @@ test('suggestion chips hide prompts already sent in this project', async () => {
   const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
   const { initialState } = await import('../../shared/reducer.ts');
   store.connection(true);
-  store.snapshot({ ...initialState(), seq: 900, phase: 'ready', turns: [{ id: 1, prompt: 'Build it', summary: 'Built.' }, { id: 2, prompt: 'Make the header darker', summary: 'Done.' }] });
+  store.snapshot({ ...initialState(), seq: 900, phase: 'ready', turns: [{ id: 1, prompt: 'Build it', summary: 'Built.' }, { id: 2, prompt: 'Make the header darker.', summary: 'Done.' }] });
   const html = renderToString(createElement(GameView, { send: () => true }));
-  assert.ok(!html.includes('>Make the header darker</button>'), 'already sent');
-  assert.ok(html.includes('Rivera-HR</button>'), 'not sent yet, still offered');
+  assert.ok(!html.includes('>Make the header darker.</button>'), 'already sent');
+  assert.ok(html.includes('Jobsite2024 to the gallery.</button>'), 'not sent yet, still offered');
 });
 
 test('speech bubbles of characters in the upper yard sit below them, so the top signs stay visible', async () => {
@@ -205,4 +205,14 @@ test('the access report links to the running site in a new tab', async () => {
   const report = { allowed: [], blocked: [], narrowed: [], fixed: [], dataLeavesTo: [] };
   const html = renderToString(createElement(ReportScreen, { report, url: 'http://localhost:5050', onClose: () => {}, onReset: () => {}, resetBusy: false }));
   assert.ok(html.includes('<a href="http://localhost:5050" target="_blank" rel="noopener noreferrer">http://localhost:5050</a>'));
+});
+
+test('v1.4: without a url the report shows the launch note instead of a link', async () => {
+  const { ReportScreen } = await vite.ssrLoadModule('/src/ui/Report.tsx') as typeof import('../src/ui/Report.tsx');
+  const report = { allowed: [], blocked: [], narrowed: [], fixed: [], dataLeavesTo: [] };
+  const note = "The site folder isn't on this laptop, so there is nothing to open here.";
+  const html = renderToString(createElement(ReportScreen, { report, note, onClose: () => {}, onReset: () => {}, resetBusy: false })).replaceAll('&#x27;', "'");
+  assert.ok(html.includes(note) && !html.includes('Site running at'));
+  const both = renderToString(createElement(ReportScreen, { report, url: 'http://localhost:5050', note, onClose: () => {}, onReset: () => {}, resetBusy: false })).replaceAll('&#x27;', "'");
+  assert.ok(both.includes('Site running at') && !both.includes(note), 'a url wins over the note');
 });

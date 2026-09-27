@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { connectEngine } from '../src/net.ts';
 
 // The turn-1 demo prompt, exactly as the presenter types it (keep in sync with DEFAULT_PROMPT in src/ui/Project.tsx).
-const DEMO_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
+const DEMO_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects, a map of our office on the Contact page, and our team photo on the About page. Use our Google Maps key from the About folder so our custom pin shows. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 import { createStore } from '../src/store.ts';
 import type { EscalationOption, GameCommand } from '../../shared/events.ts';
 

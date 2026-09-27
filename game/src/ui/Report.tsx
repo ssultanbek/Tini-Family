@@ -18,7 +18,7 @@ function Section({ title, icon, lines, empty, kind }: { title: string; icon: str
 }
 
 /** End screen: drawn only from the engine's report.ready payload. */
-export function ReportScreen({ report, url, onClose, onReset, resetBusy }: { report: AccessReport; url?: string; onClose: () => void; onReset: () => void; resetBusy: boolean }) {
+export function ReportScreen({ report, url, note, onClose, onReset, resetBusy }: { report: AccessReport; url?: string; note?: string; onClose: () => void; onReset: () => void; resetBusy: boolean }) {
   const panel = useRef<HTMLDivElement>(null);
   // Focus the panel top (not the bottom buttons) so the title is what's on screen.
   useEffect(() => { panel.current?.focus({ preventScroll: true }); }, []);
@@ -30,6 +30,7 @@ export function ReportScreen({ report, url, onClose, onReset, resetBusy }: { rep
         <p className="eyebrow">LAUNCHED · ACCESS REPORT</p>
         <h2 id="report-title">Here’s everything the dog could touch</h2>
         {url && <p className="path">Site running at <a href={url} target="_blank" rel="noopener noreferrer">{url}</a></p>}
+        {!url && note && <p className="report-note">{note}</p>}
       </motion.header>
       <div className="report-grid">{sections.map(section => <Section key={section.key} kind={section.key} title={section.title} icon={section.icon} empty={section.empty} lines={report[section.key]} />)}</div>
       <motion.section className="report-leaves" variants={rise}>

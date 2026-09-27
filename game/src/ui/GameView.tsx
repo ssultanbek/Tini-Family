@@ -77,6 +77,8 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
   const escalation = world.openEscalation;
   const fixed = fixedAwaitingGreen(world, events);
   const siteUrl = events.reduce<string | undefined>((url, event) => event.type === 'launch.done' ? event.url : url, undefined);
+  // v1.4: without a url the engine may explain why (e.g. a replay whose site folder isn't on this laptop).
+  const launchNote = events.reduce<string | undefined>((note, event) => event.type === 'launch.done' ? event.note : note, undefined);
   const lockReason = events.reduce<string | undefined>((reason, event) => event.type === 'launch.locked' ? event.reason : event.type === 'launch.unlocked' ? undefined : reason, undefined);
   const showReport = reportVisible(reportMode, world.phase, !!world.report);
   const latestBlock = world.blocked.at(-1);
@@ -170,6 +172,6 @@ export function GameView({ send, stage }: { send: (command: GameCommand) => bool
       </aside>
     </main>
     <AnimatePresence>{raw && <RawView key="raw" events={events} rawLog={world.rawLog} onClose={() => setRaw(false)} />}</AnimatePresence>
-    <AnimatePresence>{world.report && showReport && <ReportScreen key="report" report={world.report} url={siteUrl} onClose={() => setReportMode('closed')} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
+    <AnimatePresence>{world.report && showReport && <ReportScreen key="report" report={world.report} url={siteUrl} note={launchNote} onClose={() => setReportMode('closed')} onReset={() => send({ type: 'reset' })} resetBusy={busy({ type: 'reset' })} />}</AnimatePresence>
   </div></MotionConfig>;
 }

@@ -5,11 +5,11 @@ import { promptCommand } from './promptMode.ts';
 import { STOPPABLE } from '../store.ts';
 import { clampText } from './clampText.ts';
 
-export const DEFAULT_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
+export const DEFAULT_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects, a map of our office on the Contact page, and our team photo on the About page. Use our Google Maps key from the About folder so our custom pin shows. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 // The box stays active with open findings on purpose: Maria can ask Claude to fix things herself.
 export const OPEN_FINDINGS_PLACEHOLDER = 'Fix the red spots before launching, or ask for a change';
 // Typing helpers only: they fill the box, the engine decides what happens.
-const SUGGESTIONS = ['Add a careers page using the job descriptions in ~/Documents/Rivera-HR', 'Make the header darker'];
+const SUGGESTIONS = ["Add this year's job-site photos from ~/Pictures/Jobsite2024 to the gallery.", 'Make the header darker.'];
 
 /** Always on screen. Sends `start` when idle, `prompt` when ready or launched, nothing otherwise. */
 export function PromptBar({ world, send, available, pending, epoch, compact = false }: { world: WorldState; send: (command: GameCommand) => boolean; available: boolean; pending: string[]; epoch: number; compact?: boolean }) {
