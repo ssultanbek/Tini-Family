@@ -1,7 +1,7 @@
 /* Game page (`/`) only: "Iris & Fog" chrome (docs/STYLE_GUIDE.md) around an unchanged yard; chat | yard | analysis.
    Everything is scoped under .gv so the dashboard (the frozen fallback) never changes. */
 /* ===== "Iris & Fog" tokens (docs/STYLE_GUIDE.md). On body:has(.gv) too, so overlays can read them. ===== */
-body:has(.gv), .gv {
+body:has(.app), .gv {
   --gv-page: #F6F5F9; --gv-card: #FFFFFF; --gv-soft: #EFEDF4; --gv-sunken: #F9F8FB;
   --gv-line: #E3E1EA; --gv-line-strong: #8F8B9E; --gv-ink: #1B1A24; --gv-muted: #5A5766; --gv-faint: #8F8B9E;
   --gv-head: #FFFFFF; --gv-head-ink: #1B1A24;
@@ -36,7 +36,7 @@ body:has(.gv), .gv {
   font-family: var(--gv-body); font-size: var(--gv-fs-base); font-weight: var(--gv-fw-regular); line-height: var(--gv-lh-base);
   color: var(--gv-ink); font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased;
 }
-body:has(.gv) {
+body:has(.app) {
   background-color: var(--gv-page);
   background-image: radial-gradient(rgb(27 26 36 / .055) 1px, transparent 1.2px); background-size: 28px 28px;
 }

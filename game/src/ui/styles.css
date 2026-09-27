@@ -219,52 +219,142 @@ a { color: #205640; }
 .report-note { margin-top: .4em; padding: .4em .7em; border-radius: 8px; background: #fff3cc; color: #6b4e00; font-size: 16px; }
 
 /* ======================================================================================
-   "Iris & Fog" overrides for the game page only (docs/STYLE_GUIDE.md). Scoped to body:has(.gv),
+   "Iris & Fog" overrides for the game page only (docs/STYLE_GUIDE.md). Scoped to body:has(.app),
    so the dashboard (/?view=dashboard) keeps its look. The yard column is pinned in game.css.
    ====================================================================================== */
-body:has(.gv) textarea { border-color: var(--gv-line-strong); }
-body:has(.gv) :is(button, a, input, textarea):focus-visible { outline: none; box-shadow: var(--gv-focus); }
-body:has(.gv) .link-button { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; text-underline-offset: 3px; }
-body:has(.gv) .link-button:hover:not(:disabled) { color: var(--gv-accent-hover); text-decoration: underline; }
-body:has(.gv) .toast { border: 1px solid var(--gv-bad-line); box-shadow: var(--gv-shadow-md); border-radius: var(--gv-r-md); }
+body:has(.app) textarea { border-color: var(--gv-line-strong); }
+body:has(.app) :is(button, a, input, textarea):focus-visible { outline: none; box-shadow: var(--gv-focus); }
+body:has(.app) .link-button { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; text-underline-offset: 3px; }
+body:has(.app) .link-button:hover:not(:disabled) { color: var(--gv-accent-hover); text-decoration: underline; }
+body:has(.app) .toast { border: 1px solid var(--gv-bad-line); box-shadow: var(--gv-shadow-md); border-radius: var(--gv-r-md); }
 
 /* Access report modal. A plain dark overlay, no backdrop blur: blurring over the live 3D canvas
    would re-blur every frame and can make the yard stutter. */
-body:has(.gv) .report-screen { background: rgb(27 26 36 / .55); }
-body:has(.gv) .report-panel { background: var(--gv-card); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); padding: var(--gv-s8); font-family: var(--gv-body); font-size: var(--gv-fs-base); color: var(--gv-ink); }
-body:has(.gv) .report-header .eyebrow { font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); letter-spacing: var(--gv-track-label); color: var(--gv-muted); }
-body:has(.gv) .report-header h2 { font-family: var(--gv-display); font-size: var(--gv-fs-hero); font-weight: var(--gv-fw-black); letter-spacing: var(--gv-track-tight); line-height: var(--gv-lh-tight); }
-body:has(.gv) .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gv-s4); }
-@media (max-width: 760px) { body:has(.gv) .report-grid { grid-template-columns: minmax(0, 1fr); } }
-body:has(.gv) .report-section, body:has(.gv) .report-leaves { background: var(--gv-card); border: 1px solid var(--gv-line); border-top: 4px solid var(--rs); border-radius: var(--gv-r-md); padding: var(--gv-s5); color: var(--gv-ink); }
-body:has(.gv) .report-section h3, body:has(.gv) .report-leaves h3 { font-size: var(--gv-fs-md); font-weight: var(--gv-fw-bold); color: var(--gv-ink); }
-body:has(.gv) .report-icon { width: 36px; height: 36px; border-radius: var(--gv-r-sm); border: none; background: var(--rs-bg); color: var(--rs-ink); font-size: 18px; }
-body:has(.gv) .report-count { background: var(--rs-bg); color: var(--rs-ink); border: 1px solid var(--rs-line); font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 2px 10px; }
-body:has(.gv) .report-section li { border-top-color: var(--gv-line); }
-body:has(.gv) .report-section li strong { color: var(--gv-ink); }
-body:has(.gv) .report-section li span { color: var(--gv-muted); }
-body:has(.gv) .report-allowed { --rs: var(--gv-good-solid); --rs-bg: var(--gv-good-bg); --rs-ink: var(--gv-good); --rs-line: var(--gv-good-line); }
-body:has(.gv) .report-blocked { --rs: var(--gv-bad-solid); --rs-bg: var(--gv-bad-bg); --rs-ink: var(--gv-bad); --rs-line: var(--gv-bad-line); }
-body:has(.gv) .report-narrowed { --rs: var(--gv-warn-solid); --rs-bg: var(--gv-warn-bg); --rs-ink: var(--gv-warn); --rs-line: var(--gv-warn-line); }
-body:has(.gv) .report-fixed { --rs: var(--gv-accent); --rs-bg: var(--gv-accent-soft); --rs-ink: var(--gv-accent-text); --rs-line: var(--gv-accent-line); }
-body:has(.gv) .report-leaves { --rs: var(--gv-sky); --rs-bg: var(--gv-sky-bg); --rs-ink: var(--gv-sky); --rs-line: var(--gv-sky-line); margin-top: var(--gv-s4); }
-body:has(.gv) .report-leaves li { background: var(--gv-sky-bg); color: var(--gv-sky); border: 1px solid var(--gv-sky-line); font-family: var(--gv-mono); }
-body:has(.gv) .report-note { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); }
-body:has(.gv) .report-actions { gap: var(--gv-s2); }
+body:has(.app) .report-screen { background: rgb(27 26 36 / .55); }
+body:has(.app) .report-panel { background: var(--gv-card); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); padding: var(--gv-s8); font-family: var(--gv-body); font-size: var(--gv-fs-base); color: var(--gv-ink); }
+body:has(.app) .report-header .eyebrow { font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); letter-spacing: var(--gv-track-label); color: var(--gv-muted); }
+body:has(.app) .report-header h2 { font-family: var(--gv-display); font-size: var(--gv-fs-hero); font-weight: var(--gv-fw-black); letter-spacing: var(--gv-track-tight); line-height: var(--gv-lh-tight); }
+body:has(.app) .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gv-s4); }
+@media (max-width: 760px) { body:has(.app) .report-grid { grid-template-columns: minmax(0, 1fr); } }
+body:has(.app) .report-section, body:has(.app) .report-leaves { background: var(--gv-card); border: 1px solid var(--gv-line); border-top: 4px solid var(--rs); border-radius: var(--gv-r-md); padding: var(--gv-s5); color: var(--gv-ink); }
+body:has(.app) .report-section h3, body:has(.app) .report-leaves h3 { font-size: var(--gv-fs-md); font-weight: var(--gv-fw-bold); color: var(--gv-ink); }
+body:has(.app) .report-icon { width: 36px; height: 36px; border-radius: var(--gv-r-sm); border: none; background: var(--rs-bg); color: var(--rs-ink); font-size: 18px; }
+body:has(.app) .report-count { background: var(--rs-bg); color: var(--rs-ink); border: 1px solid var(--rs-line); font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); padding: 2px 10px; }
+body:has(.app) .report-section li { border-top-color: var(--gv-line); }
+body:has(.app) .report-section li strong { color: var(--gv-ink); }
+body:has(.app) .report-section li span { color: var(--gv-muted); }
+body:has(.app) .report-allowed { --rs: var(--gv-good-solid); --rs-bg: var(--gv-good-bg); --rs-ink: var(--gv-good); --rs-line: var(--gv-good-line); }
+body:has(.app) .report-blocked { --rs: var(--gv-bad-solid); --rs-bg: var(--gv-bad-bg); --rs-ink: var(--gv-bad); --rs-line: var(--gv-bad-line); }
+body:has(.app) .report-narrowed { --rs: var(--gv-warn-solid); --rs-bg: var(--gv-warn-bg); --rs-ink: var(--gv-warn); --rs-line: var(--gv-warn-line); }
+body:has(.app) .report-fixed { --rs: var(--gv-accent); --rs-bg: var(--gv-accent-soft); --rs-ink: var(--gv-accent-text); --rs-line: var(--gv-accent-line); }
+body:has(.app) .report-leaves { --rs: var(--gv-sky); --rs-bg: var(--gv-sky-bg); --rs-ink: var(--gv-sky); --rs-line: var(--gv-sky-line); margin-top: var(--gv-s4); }
+body:has(.app) .report-leaves li { background: var(--gv-sky-bg); color: var(--gv-sky); border: 1px solid var(--gv-sky-line); font-family: var(--gv-mono); }
+body:has(.app) .report-note { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); }
+body:has(.app) .report-actions { gap: var(--gv-s2); }
 
 /* Raw view drawer: the one dark surface, violet-black. */
-body:has(.gv) .raw-view { background: #15141C; color: #E4E2EE; font-family: var(--gv-mono); font-size: 15px; line-height: 1.55; border-radius: var(--gv-r-lg) 0 0 var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); }
-body:has(.gv) .raw-head, body:has(.gv) .raw-filters { border-bottom-color: #2A2835; }
-body:has(.gv) .raw-head > strong { color: #A897FF; }
-body:has(.gv) .raw-tabs button, body:has(.gv) .raw-close { color: #9D99AD; border-color: #2A2835; background: transparent; font-family: var(--gv-mono); box-shadow: none; }
-body:has(.gv) .raw-tabs button[aria-selected="true"] { background: #211F2B; color: #E4E2EE; border-color: #A897FF; }
-body:has(.gv) .raw-tabs button:hover:not(:disabled), body:has(.gv) .raw-close:hover:not(:disabled) { background: #211F2B; }
-body:has(.gv) .raw-chip { background: transparent; border: 1px solid #2A2835; }
-body:has(.gv) .raw-chip:has(input:checked) { background: color-mix(in srgb, currentColor 16%, transparent); }
-body:has(.gv) .raw-line { border-bottom-color: #211F2B; }
-body:has(.gv) .raw-event { border-bottom-color: #2A2835; }
-body:has(.gv) .raw-event pre { background: #1C1A25; color: #E4E2EE; }
-body:has(.gv) .raw-seq, body:has(.gv) .raw-empty { color: #9D99AD; }
-body:has(.gv) .ch-hook { color: #FF8A80; } body:has(.gv) .ch-config { color: #8CC8FF; } body:has(.gv) .ch-sdk { color: #C9B2FF; }
-body:has(.gv) .ch-scan { color: #F2C45A; } body:has(.gv) .ch-ai { color: #6ADBD9; } body:has(.gv) .ch-engine { color: #F5A874; } body:has(.gv) .ch-other { color: #9D99AD; }
-body:has(.gv) .actor-tini { color: #8CC8FF; } body:has(.gv) .actor-tina { color: #C9B2FF; } body:has(.gv) .actor-dog { color: #F2C45A; } body:has(.gv) .actor-system { color: #9D99AD; }
+body:has(.app) .raw-view { background: #15141C; color: #E4E2EE; font-family: var(--gv-mono); font-size: 15px; line-height: 1.55; border-radius: var(--gv-r-lg) 0 0 var(--gv-r-lg); box-shadow: var(--gv-shadow-lg); }
+body:has(.app) .raw-head, body:has(.app) .raw-filters { border-bottom-color: #2A2835; }
+body:has(.app) .raw-head > strong { color: #A897FF; }
+body:has(.app) .raw-tabs button, body:has(.app) .raw-close { color: #9D99AD; border-color: #2A2835; background: transparent; font-family: var(--gv-mono); box-shadow: none; }
+body:has(.app) .raw-tabs button[aria-selected="true"] { background: #211F2B; color: #E4E2EE; border-color: #A897FF; }
+body:has(.app) .raw-tabs button:hover:not(:disabled), body:has(.app) .raw-close:hover:not(:disabled) { background: #211F2B; }
+body:has(.app) .raw-chip { background: transparent; border: 1px solid #2A2835; }
+body:has(.app) .raw-chip:has(input:checked) { background: color-mix(in srgb, currentColor 16%, transparent); }
+body:has(.app) .raw-line { border-bottom-color: #211F2B; }
+body:has(.app) .raw-event { border-bottom-color: #2A2835; }
+body:has(.app) .raw-event pre { background: #1C1A25; color: #E4E2EE; }
+body:has(.app) .raw-seq, body:has(.app) .raw-empty { color: #9D99AD; }
+body:has(.app) .ch-hook { color: #FF8A80; } body:has(.app) .ch-config { color: #8CC8FF; } body:has(.app) .ch-sdk { color: #C9B2FF; }
+body:has(.app) .ch-scan { color: #F2C45A; } body:has(.app) .ch-ai { color: #6ADBD9; } body:has(.app) .ch-engine { color: #F5A874; } body:has(.app) .ch-other { color: #9D99AD; }
+body:has(.app) .actor-tini { color: #8CC8FF; } body:has(.app) .actor-tina { color: #C9B2FF; } body:has(.app) .actor-dog { color: #F2C45A; } body:has(.app) .actor-system { color: #9D99AD; }
+
+/* ======================================================================================
+   Dashboard (/?view=dashboard) in "Iris & Fog": same tokens and recipes as the game page.
+   ====================================================================================== */
+body:has(.app:not(.game-app)) .app:not(.game-app) {
+  --radius: 20px; font-family: var(--gv-body); color: var(--gv-ink); font-weight: var(--gv-fw-regular);
+  font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+.app:not(.game-app) :is(h1, h2, h3) { font-family: var(--gv-display); letter-spacing: var(--gv-track-tight); }
+.app:not(.game-app) .muted, .app:not(.game-app) .event-meta { color: var(--gv-muted); }
+.app:not(.game-app) .path, .app:not(.game-app) pre, .app:not(.game-app) .event-log { font-family: var(--gv-mono); }
+
+/* Header */
+.app:not(.game-app) .titlebar { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-xs); padding: var(--gv-s3) var(--gv-s5); }
+.app:not(.game-app) .brand-mark { background: var(--gv-accent); color: #fff; border-radius: 12px; }
+.app:not(.game-app) .titlebar h1 { font-weight: var(--gv-fw-black); color: var(--gv-ink); }
+.app:not(.game-app) .tagline { font-family: var(--gv-serif); font-weight: 400; color: var(--gv-muted); font-variation-settings: "SOFT" 100, "WONK" 0; }
+.app:not(.game-app) .brand-view { background: var(--gv-accent-soft); color: var(--gv-accent-text); border: 1px solid var(--gv-accent-line); letter-spacing: var(--gv-track-label); }
+.app:not(.game-app) .titlebar .header-actions a { color: var(--gv-accent-text); font-weight: var(--gv-fw-semi); text-decoration: none; }
+.app:not(.game-app) .titlebar .header-actions a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.app:not(.game-app) .badge { border-radius: var(--gv-r-pill); padding: 6px 12px; font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); border: 1px solid transparent; }
+.app:not(.game-app) .badge.online { background: var(--gv-accent-soft); color: var(--gv-accent-text); border-color: var(--gv-accent-line); }
+.app:not(.game-app) .badge.offline { background: var(--gv-bad-bg); color: var(--gv-bad); border-color: var(--gv-bad-line); }
+
+/* Buttons */
+.app:not(.game-app) button { font-family: var(--gv-body); font-weight: var(--gv-fw-semi); background: var(--gv-accent); color: var(--gv-accent-ink); border: none; border-radius: var(--gv-r-sm); box-shadow: var(--gv-shadow-accent); min-height: 44px; transition: background var(--gv-t-fast) var(--gv-ease), transform var(--gv-t-fast); }
+.app:not(.game-app) button:hover:not(:disabled) { background: var(--gv-accent-hover); }
+.app:not(.game-app) button:active:not(:disabled) { transform: translateY(1px); background: var(--gv-accent-press); }
+.app:not(.game-app) button:disabled { background: var(--gv-soft); color: var(--gv-faint); box-shadow: none; opacity: 1; }
+.app:not(.game-app) :is(.secondary, .titlebar .secondary, .option.secondary) { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-xs); }
+.app:not(.game-app) :is(.secondary, .titlebar .secondary):hover:not(:disabled) { background: var(--gv-soft); border-color: var(--gv-line-strong); }
+.app:not(.game-app) :is(.raw-toggle, .titlebar .raw-toggle) { font-family: var(--gv-mono); background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: var(--gv-shadow-xs); }
+.app:not(.game-app) :is(.raw-toggle, .titlebar .raw-toggle).on { background: var(--gv-accent-soft); color: var(--gv-accent-text); border-color: var(--gv-accent-line); }
+.app:not(.game-app) .dismiss { background: transparent; color: var(--gv-bad); box-shadow: none; min-height: 0; }
+.app:not(.game-app) .stop-button { background: var(--gv-card); color: var(--gv-bad); border: 1px solid var(--gv-bad-line); box-shadow: none; }
+.app:not(.game-app) .stop-button.armed { background: var(--gv-bad-solid); color: #fff; }
+.app:not(.game-app) .link-button { background: none; box-shadow: none; }
+
+/* Stat tiles: light tiles instead of dark blocks */
+.app:not(.game-app) .stats > div { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); border-radius: var(--gv-r-md); box-shadow: var(--gv-shadow-xs); }
+.app:not(.game-app) .stats span { color: var(--gv-muted); font-size: var(--gv-fs-sm); }
+.app:not(.game-app) .stats strong { font-family: var(--gv-display); font-weight: var(--gv-fw-black); font-size: var(--gv-fs-stat); line-height: var(--gv-lh-tight); font-variant-numeric: tabular-nums; }
+
+/* Cards */
+.app:not(.game-app) .card { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-xs); }
+.app:not(.game-app) .card > h2 { font-weight: var(--gv-fw-bold); }
+.app:not(.game-app) .card.action-card { background: var(--gv-accent-soft); border: 1.5px solid var(--gv-accent); box-shadow: var(--gv-shadow-md); }
+.app:not(.game-app) .card.finding { border-left: 4px solid var(--gv-bad-solid); }
+.app:not(.game-app) .card.finding.fixed { border-left-color: var(--gv-good-solid); background: var(--gv-good-bg); }
+.app:not(.game-app) .adjust { border-top-color: var(--gv-line); }
+.app:not(.game-app) .option { background: var(--gv-card); color: var(--gv-ink); border: 1px solid var(--gv-line); box-shadow: none; }
+.app:not(.game-app) .option.recommended { border: 1.5px solid var(--gv-accent); box-shadow: var(--gv-shadow-sm); background: var(--gv-card); }
+.app:not(.game-app) .option .recommend-label { justify-self: start; background: var(--gv-accent); color: #fff; font-size: var(--gv-fs-xs); padding: 2px 10px; border-radius: var(--gv-r-pill); }
+.app:not(.game-app) .lock-reason { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); }
+.app:not(.game-app) .notice { background: var(--gv-warn-bg); color: var(--gv-warn); border: 1px solid var(--gv-warn-line); border-radius: var(--gv-r-sm); }
+.app:not(.game-app) .error { background: var(--gv-bad-bg); color: var(--gv-bad); border: 1px solid var(--gv-bad-line); border-radius: var(--gv-r-sm); }
+
+/* Status pills and fence segments: tint + 1px darker border + dark text */
+.app:not(.game-app) :is(.status, .tag) { border-radius: var(--gv-r-pill); padding: 4px 10px; font-size: var(--gv-fs-xs); font-weight: var(--gv-fw-bold); border: 1px solid transparent; }
+.app:not(.game-app) .tag { font-family: var(--gv-mono); border-radius: var(--gv-r-xs); background: var(--gv-warn-bg); color: var(--gv-warn); border-color: var(--gv-warn-line); }
+.app:not(.game-app) .planned { background: var(--gv-plan-bg); color: var(--gv-plan); border-color: var(--gv-plan-line); }
+.app:not(.game-app) .built { background: var(--gv-wood-bg); color: var(--gv-wood); border-color: var(--gv-wood-line); }
+.app:not(.game-app) .inspecting { background: var(--gv-warn-bg); color: var(--gv-warn); border-color: var(--gv-warn-line); }
+.app:not(.game-app) .red { background: var(--gv-bad-bg); color: var(--gv-bad); border-color: var(--gv-bad-line); }
+.app:not(.game-app) .green { background: var(--gv-good-bg); color: var(--gv-good); border-color: var(--gv-good-line); }
+.app:not(.game-app) .segment { border-width: 1px; border-left-width: 4px; border-radius: var(--gv-r-md); }
+.app:not(.game-app) .segment.planned { border-left-color: var(--gv-plan-solid); }
+.app:not(.game-app) .segment.built { border-left-color: #B07A4F; }
+.app:not(.game-app) .segment.inspecting { border-left-color: var(--gv-warn-solid); }
+.app:not(.game-app) .segment.red { border-left-color: var(--gv-bad-solid); }
+.app:not(.game-app) .segment.green { border-left-color: var(--gv-good-solid); }
+.app:not(.game-app) .segment h3 { color: var(--gv-ink); }
+.app:not(.game-app) .segment p { color: var(--gv-muted); }
+
+/* Turns, crew, log, toasts, prompt bar */
+.app:not(.game-app) .turns li { background: var(--gv-card); border: 1px solid var(--gv-line); border-left: 4px solid var(--gv-accent); border-radius: var(--gv-r-md); box-shadow: var(--gv-shadow-xs); }
+.app:not(.game-app) .turn-number { color: var(--gv-muted); letter-spacing: var(--gv-track-label); }
+.app:not(.game-app) .turn-summary { color: var(--gv-good); }
+.app:not(.game-app) .turn-summary.working { color: var(--gv-warn); }
+.app:not(.game-app) .speech { border-left-color: var(--gv-accent-line); }
+.app:not(.game-app) .event { border-bottom-color: var(--gv-line); }
+.app:not(.game-app) .blocked-history + .blocked-history { border-top-color: var(--gv-line); }
+.app:not(.game-app) .toast { background: var(--gv-card); }
+.app:not(.game-app) .toggle input { accent-color: var(--gv-accent); }
+.app:not(.game-app) .prompt-bar { background: var(--gv-card); border: 1px solid var(--gv-line); border-radius: var(--gv-r-lg); box-shadow: var(--gv-shadow-md); }
+.app:not(.game-app) .prompt-bar label { color: var(--gv-ink); }
+.app:not(.game-app) .prompt-bar.working { background: var(--gv-soft); }
+.app:not(.game-app) .prompt-bar textarea { background: var(--gv-sunken); border: 1px solid var(--gv-line-strong); border-radius: var(--gv-r-sm); color: var(--gv-ink); }
+.app:not(.game-app) .chip { background: var(--gv-card); color: var(--gv-accent-text); border: 1px solid var(--gv-line); border-radius: var(--gv-r-pill); box-shadow: none; }
+.app:not(.game-app) .chip:hover:not(:disabled) { background: var(--gv-accent-soft); border-color: var(--gv-accent-line); }
+.app:not(.game-app) .working-dot { background: var(--gv-warn-solid); }
