@@ -117,7 +117,12 @@ export class Family {
     const c = this.characters[event.actor];
     const move = (p: { x: number; y: number }, duration = F.motion.walk) => this.tween(c.root, p, duration, options, c.body);
     if (event.type === 'speech') {
-      c.speech = { text: event.text, until: performance.now() + F.motion.speech }; this.update(); return;
+      // Long lines stay up longer, and the next line from the same character waits until this one could be read.
+      // The queue still hurries (or skips) this hold when it falls behind the engine.
+      const read = Phaser.Math.Clamp(F.speech.baseMs + F.speech.perCharMs * event.text.length, F.speech.minMs, F.speech.maxMs);
+      c.speech = { text: event.text, until: performance.now() + read }; this.update();
+      await this.tween(c.root, { x: c.root.x, y: c.root.y }, Phaser.Math.Clamp(F.speech.holdPerCharMs * event.text.length, F.speech.minHoldMs, F.speech.maxHoldMs), options);
+      return;
     }
     switch (event.type) {
       case 'tini.carry.box':

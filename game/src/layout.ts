@@ -19,7 +19,7 @@ export const yardLayout = {
   ],
   fence: { length: 240, tileScale: 3, glowPad: 10, thickness: 24, postWidth: 12, postHeight: 40, postStep: 28,
     dash: 16, dashGap: 10, stroke: 3, railGap: 6, nailSize: 3, shake: 2 },
-  sign: { width: 268, height: 130, padding: 12, titleY: -47, detailY: -6, statusY: 43, shadow: 4 },
+  sign: { width: 268, height: 130, padding: 12, lineGap: 4, shadow: 4 },
   grass: { step: 44, blade: 4, offset: 14 },
   tileScale: 3,
   // "Your Mac" house: a strip added left of the old canvas (world x < 0), so every yard position stays put.
@@ -70,7 +70,8 @@ export const familyLayout = {
   spark: { count: 8, distance: 39, radius: 5, stroke: 3 },
   brick: { x: -34, y: -22, width: 28, height: 18, rise: 25 },
   bubble: { width: 300, offsetY: 55, edge: 160, padding: 12, fontSize: 18 },
-  motion: { walk: 330, carryLeg: 300, look: 180, bump: 240, place: 160, fastFactor: 0.22, speech: 2600 },
+  speech: { baseMs: 1800, perCharMs: 50, minMs: 2600, maxMs: 7000, holdPerCharMs: 30, minHoldMs: 1100, maxHoldMs: 3000 },
+  motion: { walk: 330, carryLeg: 300, look: 180, bump: 240, place: 160, fastFactor: 0.22 },
 };
 
 /** Unknown/pre-plan segments use the gate; no invented segment identity or facts. */

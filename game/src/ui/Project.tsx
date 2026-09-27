@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { GameCommand, WorldState } from '../../../shared/events.ts';
 import { promptCommand } from './promptMode.ts';
@@ -34,7 +34,7 @@ export function PromptBar({ world, send, available, pending, epoch, compact = fa
         onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
       <button disabled={disabled || !text.trim()}>{waiting ? 'Sent…' : first ? 'Start' : 'Send'}</button>
     </div>
-    {!first && !working && !text && <div className="prompt-suggestions">{SUGGESTIONS.map(suggestion => <button type="button" key={suggestion} className="secondary chip" onClick={() => setText(suggestion)}>{suggestion}</button>)}</div>}
+    {!first && !working && !text && <div className="prompt-suggestions">{SUGGESTIONS.filter(suggestion => !world.turns.some(turn => turn.prompt.trim() === suggestion)).map(suggestion => <button type="button" key={suggestion} className="secondary chip" onClick={() => setText(suggestion)}>{suggestion}</button>)}</div>}
   </form>;
 }
 
@@ -73,15 +73,13 @@ export function Summary({ text }: { text: string }) {
 
 /** The game page's chat: each turn is your prompt, then Claude's summary (or a typing indicator). */
 export function ChatHistory({ world }: { world: WorldState }) {
-  const end = useRef<HTMLDivElement>(null);
-  const last = world.turns.at(-1);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [world.turns.length, last?.summary]);
+  // While the crew waits on you, say so instead of showing a typing indicator.
+  const waiting = world.phase === 'contract' && world.contract ? 'Waiting for your OK on the plan' : world.openEscalation ? 'Waiting for your answer' : null;
   if (!world.turns.length) return <p className="chat-empty">Tell the crew what you need. Tini fences only what the job uses.</p>;
   return <ol className="chat" aria-label="Conversation">
     <AnimatePresence initial={false}>{world.turns.map(turn => <motion.li key={turn.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="chat-turn">
       <div className="msg me"><span className="who">You · Turn {turn.id}</span><p>{turn.prompt}</p></div>
-      <div className="msg crew"><span className="who">Claude</span>{turn.summary ? <Summary text={turn.summary} /> : <p className="typing" aria-label="Working">⋯</p>}</div>
+      <div className="msg crew"><span className="who">Claude</span>{turn.summary ? <Summary text={turn.summary} /> : <p className="typing" aria-label="Working">{waiting ?? '⋯'}</p>}</div>
     </motion.li>)}</AnimatePresence>
-    <div ref={end} />
   </ol>;
 }

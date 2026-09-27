@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { yardLayout, familyLayout, canvasWidth } from '../layout.ts';
 import { store } from '../store.ts';
 import { familyPresentation } from '../familyPresentation.ts';
@@ -29,12 +29,30 @@ export function Yard() {
     }).catch(() => { if (!cancelled) setError('The yard could not load. Open the dashboard to continue.'); });
     return () => { cancelled = true; game?.destroy(true); };
   }, []);
+  // Two characters talking at once (e.g. Tini and Tina) would stack on top of each other: lift the later bubble clear.
+  const bubbleLayer = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const items = [...(bubbleLayer.current?.children ?? [])] as HTMLElement[];
+    const placed: DOMRect[] = [];
+    for (const item of items) {
+      item.style.setProperty('--lift', '0px');
+      let rect = item.getBoundingClientRect(), lift = 0;
+      for (const other of placed) {
+        if (rect.left < other.right && rect.right > other.left && rect.top < other.bottom && rect.bottom > other.top) {
+          lift += rect.bottom - other.top + 8;
+          item.style.setProperty('--lift', `${lift}px`);
+          rect = item.getBoundingClientRect();
+        }
+      }
+      placed.push(rect);
+    }
+  }, [bubbles]);
   const description = `Tini in blue, Tina in purple, Dog in amber. Dog is ${world.dog}. ${world.bricks} bricks placed. ${world.segments.map(segment => `${segment.label}: ${segment.status}. ${segment.detail}`).join('. ') || 'No fence proposed yet.'}`;
   return <section className="yard-view" aria-label="The yard">
     <div className="yard-caption"><strong>The yard</strong><span>Only what the job needs</span><span className={`gv-phase ${['planning', 'fencing', 'building', 'inspecting'].includes(world.phase) ? 'busy' : world.phase === 'launched' ? 'done' : ''}`}>{world.phase}</span></div>
     {error ? <p role="alert">{error} <a href="/?view=dashboard">Dashboard</a></p> : <div className="yard-stage">
       <div className="yard-canvas" ref={host} role="img" aria-label={description} />
-      <div className="family-bubbles" aria-live="polite">{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}`} style={{
+      <div className="family-bubbles" aria-live="polite" ref={bubbleLayer}>{bubbles.map(bubble => <div key={bubble.actor} className={`family-bubble bubble-${bubble.actor}`} style={{
         // Bubble x is in yard coordinates; the canvas also shows the Mac strip to its left.
         left: `${Math.max(familyLayout.bubble.edge, Math.min(canvasWidth - familyLayout.bubble.edge, bubble.x + yardLayout.mac.strip)) / canvasWidth * 100}%`,
         top: `${(bubble.y - familyLayout.bubble.offsetY) / yardLayout.height * 100}%`,
