@@ -3,494 +3,596 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tini Family</title>
-<meta name="description" content="A safety crew for AI coding agents. Your agent gets the keys to the room, not the house.">
-<meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='12' width='5' height='17' rx='1' fill='%232f9e5b'/%3E%3Crect x='13.5' y='8' width='5' height='21' rx='1' fill='%232f9e5b'/%3E%3Crect x='24' y='12' width='5' height='17' rx='1' fill='%232f9e5b'/%3E%3Crect x='2' y='16' width='28' height='3' fill='%232f9e5b'/%3E%3Crect x='2' y='23' width='28' height='3' fill='%232f9e5b'/%3E%3C/svg%3E">
-<style>
-  :root {
-    --bg: #fbf8f2;
-    --bg-alt: #f2ede3;
-    --card: #ffffff;
-    --ink: #1f2420;
-    --muted: #5b625c;
-    --line: #e2dccf;
-    --green: #2f9e5b;
-    --green-soft: #dff1e5;
-    --red: #d64545;
-    --red-soft: #fbe3e1;
-    --accent: #2c6cb0;
-    --grass: #cfe8c4;
-    --grass-2: #b9dcab;
-    --wood: #a67c52;
-    --house: #f4d8a8;
-    --roof: #7b5a3c;
-    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(0,0,0,.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #151816;
-      --bg-alt: #1b1f1c;
-      --card: #20251f;
-      --ink: #eef0ea;
-      --muted: #a4aba3;
-      --line: #313730;
-      --green: #4cc27c;
-      --green-soft: #1e3a28;
-      --red: #f07070;
-      --red-soft: #3e2323;
-      --accent: #7fb2ea;
-      --grass: #2b3d2a;
-      --grass-2: #34492f;
-      --wood: #c49a6c;
-      --house: #8a7552;
-      --roof: #5e4630;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #151816; --bg-alt: #1b1f1c; --card: #20251f; --ink: #eef0ea; --muted: #a4aba3; --line: #313730;
-    --green: #4cc27c; --green-soft: #1e3a28; --red: #f07070; --red-soft: #3e2323; --accent: #7fb2ea;
-    --grass: #2b3d2a; --grass-2: #34492f; --wood: #c49a6c; --house: #8a7552; --roof: #5e4630;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
-  }
+<title>Tini Family: keys to the room, not the house</title>
+<meta name="description" content="Tini Family fences AI coding agents like Claude Code so they only touch what you approved. A local desktop app with a builder, an inspector and a dog.">
+<meta name="theme-color" content="#F6F5F9">
+<meta name="color-scheme" content="light">
 
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 17px;
-    line-height: 1.6;
-  }
-  a { color: var(--accent); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-  section { padding: 64px 0; }
-  section.alt { background: var(--bg-alt); }
-  h1, h2, h3 { line-height: 1.2; margin: 0 0 .5em; letter-spacing: -.01em; }
-  h1 { font-size: clamp(32px, 5.4vw, 54px); font-weight: 800; }
-  h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 750; }
-  h3 { font-size: 20px; font-weight: 700; }
-  p { margin: 0 0 1em; }
-  .lead { font-size: 19px; color: var(--muted); max-width: 640px; }
-  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--green); margin-bottom: 10px; }
+<!-- TODO(domain): once the domain is live, make og:url and og:image absolute (https://<domain>/og.png). -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tini Family">
+<meta property="og:description" content="Your AI agent gets the keys to the room, not the house. Tini Family fences AI coding agents so they only touch what you approved.">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A small island yard with a house, a wooden fence and a family of three: Tini, Tina and their dog.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tini Family">
+<meta name="twitter:description" content="Your AI agent gets the keys to the room, not the house.">
+<meta name="twitter:image" content="og.png">
 
-  /* nav */
-  nav { border-bottom: 1px solid var(--line); }
-  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 12px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: var(--ink); text-decoration: none; }
-  .brand svg { width: 26px; height: 26px; }
-  nav ul { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; font-size: 15px; }
-  nav ul a { color: var(--muted); text-decoration: none; }
-  nav ul a:hover { color: var(--ink); }
-  @media (max-width: 640px) { nav ul li.opt { display: none; } }
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235B45D6'/%3E%3Cpath d='M17 20c-6 2-8 14-5 22 2 5 7 4 8-1l2-15z' fill='%238A5A36'/%3E%3Ccircle cx='32' cy='34' r='16' fill='%23F3E4CB'/%3E%3Cpath d='M45 20c6 2 8 14 5 22-2 5-7 4-8-1l-2-15z' fill='%238A5A36'/%3E%3Cellipse cx='32' cy='41' rx='8.5' ry='6.5' fill='%23FFF8EC'/%3E%3Cellipse cx='32' cy='37.5' rx='3.6' ry='2.8' fill='%231B1A24'/%3E%3Ccircle cx='25.5' cy='30' r='2.3' fill='%231B1A24'/%3E%3Ccircle cx='38.5' cy='30' r='2.3' fill='%231B1A24'/%3E%3C/svg%3E">
 
-  /* hero */
-  .hero { padding: 56px 0 40px; }
-  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
-  @media (min-width: 880px) { .hero-grid { grid-template-columns: 1.05fr 1fr; } }
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-weight: 650; font-size: 16px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
-  .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
-  :root[data-theme="dark"] .btn.primary { color: #0f1a13; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0f1a13; } }
-  .btn svg { width: 18px; height: 18px; }
-  .scene { width: 100%; height: auto; display: block; border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
-
-  /* cards */
-  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 720px) { .grid.three { grid-template-columns: repeat(3, 1fr); } .grid.two { grid-template-columns: repeat(2, 1fr); } }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
-  .card p:last-child { margin-bottom: 0; }
-  .card .icon { width: 40px; height: 40px; margin-bottom: 12px; }
-  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-weight: 800; font-size: 14px; align-items: center; justify-content: center; margin-right: 8px; }
-  .muted { color: var(--muted); }
-
-  /* problem stats row */
-  .compare { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 28px; }
-  @media (min-width: 720px) { .compare { grid-template-columns: 1fr 1fr; } }
-  .compare .card h3 { display: flex; align-items: center; gap: 8px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  ul.clean { margin: 0; padding-left: 20px; }
-  ul.clean li { margin-bottom: 6px; }
-
-  /* steps */
-  .steps { display: grid; gap: 28px; }
-  .step { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: center; }
-  @media (min-width: 820px) { .step { grid-template-columns: 220px 1fr; } }
-  .step svg { width: 100%; max-width: 220px; height: auto; }
-  .fence-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
-  .seg { font-size: 14px; font-weight: 650; padding: 5px 12px; border-radius: 999px; border: 1px solid; }
-  .seg.g { color: var(--green); background: var(--green-soft); border-color: var(--green); }
-  .seg.r { color: var(--red); background: var(--red-soft); border-color: var(--red); }
-
-  /* privacy */
-  .split { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 720px) { .split { grid-template-columns: 1fr 1fr; } }
-  .who { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
-
-  /* video */
-  .video { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--card); box-shadow: var(--shadow); }
-  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-
-  /* team */
-  .team { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 600px) { .team { grid-template-columns: repeat(2, 1fr); } }
-  .person { display: flex; gap: 16px; align-items: center; }
-  .avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--bg-alt); border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; }
-  .avatar svg { width: 36px; height: 36px; }
-
-  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 15px; color: var(--muted); }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; background: var(--bg-alt); padding: 1px 5px; border-radius: 5px; }
-</style>
+<link rel="preload" href="fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
 
-<!-- Reusable character drawings: our own simple shapes (Tini, Tina, the dog). -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<!-- Character sprite: every illustration on this page reuses these three. All drawn in code. -->
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
   <defs>
-    <!-- Tini: builder cap, blue shirt, carries a key -->
-    <symbol id="tini" viewBox="0 0 60 100">
-      <rect x="18" y="80" width="9" height="18" rx="3" fill="#3b4a5a"/>
-      <rect x="33" y="80" width="9" height="18" rx="3" fill="#3b4a5a"/>
-      <rect x="12" y="42" width="36" height="42" rx="12" fill="#3f7fc4"/>
-      <rect x="5" y="46" width="9" height="28" rx="4.5" fill="#3f7fc4"/>
-      <rect x="46" y="46" width="9" height="28" rx="4.5" fill="#3f7fc4"/>
-      <circle cx="30" cy="26" r="15" fill="#e9b98f"/>
-      <path d="M14 22 Q30 4 46 22 Z" fill="#f2b632"/>
-      <rect x="12" y="20" width="38" height="5" rx="2.5" fill="#f2b632"/>
-      <circle cx="25" cy="28" r="1.8" fill="#2a2a2a"/>
-      <circle cx="35" cy="28" r="1.8" fill="#2a2a2a"/>
-      <path d="M25 34 Q30 38 35 34" stroke="#2a2a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <circle cx="50.5" cy="76" r="4" fill="none" stroke="#f2b632" stroke-width="2.5"/>
-      <rect x="49.3" y="79" width="2.4" height="9" fill="#f2b632"/>
-      <rect x="51" y="84" width="3.5" height="2" fill="#f2b632"/>
+    <!-- TINI: the husband and builder. Wood vest, cap, hammer. -->
+    <symbol id="ch-tini" viewBox="0 0 100 150">
+      <ellipse cx="50" cy="146" rx="28" ry="4" fill="#1B1A24" opacity=".09"/>
+      <rect x="36" y="104" width="12" height="36" rx="5" fill="#3E3C58"/>
+      <rect x="52" y="104" width="12" height="36" rx="5" fill="#3E3C58"/>
+      <rect x="32" y="135" width="18" height="10" rx="5" fill="#5A3A22"/>
+      <rect x="50" y="135" width="18" height="10" rx="5" fill="#5A3A22"/>
+      <rect x="21" y="68" width="12" height="34" rx="6" fill="#F4EEE4"/>
+      <circle cx="27" cy="103" r="6" fill="#EFC3A0"/>
+      <rect x="29" y="62" width="42" height="50" rx="15" fill="#F4EEE4"/>
+      <path d="M29 77c0-9 5-15 14-15h3v50H29z" fill="#B97A45"/>
+      <path d="M71 77c0-9-5-15-14-15h-3v50h17z" fill="#B97A45"/>
+      <rect x="33" y="88" width="9" height="8" rx="2" fill="#9C6436"/>
+      <rect x="58" y="88" width="9" height="8" rx="2" fill="#9C6436"/>
+      <rect x="47" y="70" width="6" height="6" rx="3" fill="#E3DCCF"/>
+      <g transform="rotate(-38 76 74)">
+        <rect x="70" y="60" width="12" height="32" rx="6" fill="#F4EEE4"/>
+      </g>
+      <circle cx="86" cy="54" r="6" fill="#EFC3A0"/>
+      <g transform="rotate(-24 86 52)">
+        <rect x="83" y="22" width="6" height="40" rx="3" fill="#8A5A36"/>
+        <rect x="75" y="16" width="24" height="11" rx="3" fill="#6E6A7E"/>
+        <rect x="75" y="16" width="6" height="11" rx="2" fill="#5A5766"/>
+      </g>
+      <circle cx="29" cy="41" r="4.5" fill="#EFC3A0"/>
+      <circle cx="71" cy="41" r="4.5" fill="#EFC3A0"/>
+      <circle cx="50" cy="40" r="22" fill="#F2CAA8"/>
+      <path d="M27 36c0-15 10-22 23-22s23 7 23 22z" fill="#2E6590"/>
+      <path d="M50 33h27c3 0 4 3 2 5H50z" fill="#24557A"/>
+      <circle cx="50" cy="17" r="3" fill="#24557A"/>
+      <circle cx="42" cy="42" r="2.6" fill="#1B1A24"/>
+      <circle cx="58" cy="42" r="2.6" fill="#1B1A24"/>
+      <circle cx="37" cy="49" r="3.6" fill="#EFA394" opacity=".55"/>
+      <circle cx="63" cy="49" r="3.6" fill="#EFA394" opacity=".55"/>
+      <path d="M43 50c3 2.6 11 2.6 14 0" fill="none" stroke="#5A3A22" stroke-width="3" stroke-linecap="round"/>
+      <path d="M45 55.5c3 2 7 2 10 0" fill="none" stroke="#1B1A24" stroke-width="2.2" stroke-linecap="round"/>
     </symbol>
-    <!-- Tina: green all over (she's allergic to red), holds a clipboard -->
-    <symbol id="tina" viewBox="0 0 60 100">
-      <rect x="20" y="82" width="8" height="16" rx="3" fill="#6b4f3a"/>
-      <rect x="32" y="82" width="8" height="16" rx="3" fill="#6b4f3a"/>
-      <path d="M16 44 Q30 36 44 44 L50 86 Q30 92 10 86 Z" fill="#2f9e5b"/>
-      <circle cx="30" cy="25" r="15" fill="#c98f65"/>
-      <path d="M14 26 Q13 8 30 8 Q47 8 46 26 Q44 16 30 15 Q16 16 14 26 Z" fill="#3a2a22"/>
-      <circle cx="46" cy="18" r="5" fill="#3a2a22"/>
-      <circle cx="25" cy="27" r="1.8" fill="#2a2a2a"/>
-      <circle cx="35" cy="27" r="1.8" fill="#2a2a2a"/>
-      <path d="M25 33 Q30 37 35 33" stroke="#2a2a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <rect x="2" y="50" width="16" height="21" rx="2" fill="#f5efe0" stroke="#8a6f4e" stroke-width="1.5"/>
-      <rect x="6" y="48" width="8" height="4" rx="1" fill="#8a6f4e"/>
-      <path d="M5.5 58 l2.5 2.5 l4.5 -5" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <path d="M5.5 65 l2.5 2.5 l4.5 -5" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- TINA: the wife and inspector. Sky coat, round glasses, magnifier, clipboard. -->
+    <symbol id="ch-tina" viewBox="0 0 100 150">
+      <ellipse cx="50" cy="146" rx="28" ry="4" fill="#1B1A24" opacity=".09"/>
+      <rect x="39" y="108" width="9" height="32" rx="4.5" fill="#3E3C58"/>
+      <rect x="52" y="108" width="9" height="32" rx="4.5" fill="#3E3C58"/>
+      <rect x="35" y="135" width="15" height="10" rx="5" fill="#1D5A85"/>
+      <rect x="50" y="135" width="15" height="10" rx="5" fill="#1D5A85"/>
+      <path d="M33 70c0-6 5-9 17-9s17 3 17 9l6 44H27z" fill="#7FB4DB"/>
+      <path d="M50 61v53" stroke="#5E97C2" stroke-width="2"/>
+      <circle cx="46" cy="80" r="1.8" fill="#1D5A85"/><circle cx="46" cy="92" r="1.8" fill="#1D5A85"/>
+      <path d="M42 61l8 9 8-9" fill="#FFFFFF"/>
+      <g transform="rotate(14 26 72)">
+        <rect x="20" y="68" width="11" height="30" rx="5.5" fill="#7FB4DB"/>
+      </g>
+      <g transform="rotate(-8 20 98)">
+        <rect x="8" y="84" width="24" height="30" rx="3" fill="#B97A45"/>
+        <rect x="11" y="89" width="18" height="22" rx="1.5" fill="#FFFFFF"/>
+        <rect x="15" y="81" width="10" height="6" rx="2" fill="#6E6A7E"/>
+        <path d="M14 95h12M14 100h12M14 105h8" stroke="#8F8B9E" stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+      <g transform="rotate(-42 72 72)">
+        <rect x="67" y="62" width="11" height="30" rx="5.5" fill="#7FB4DB"/>
+      </g>
+      <circle cx="82" cy="58" r="5.5" fill="#EFC3A0"/>
+      <path d="M84 55l6-10" stroke="#5A3A22" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="93" cy="37" r="10" fill="#E2F0F9" fill-opacity=".85" stroke="#53505C" stroke-width="3.5"/>
+      <path d="M88.5 33.5a6 6 0 0 1 5-3" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <circle cx="50" cy="13" r="9" fill="#4A2E1E"/>
+      <circle cx="29" cy="42" r="4.5" fill="#EFC3A0"/>
+      <circle cx="71" cy="42" r="4.5" fill="#EFC3A0"/>
+      <circle cx="50" cy="40" r="22" fill="#F2CAA8"/>
+      <path d="M27.5 40c0-14 9-21 22.5-21s22.5 7 22.5 21c-6-1-13-5-17-11-5 6-15 10-28 11z" fill="#4A2E1E"/>
+      <circle cx="42" cy="43" r="5.6" fill="#FFFFFF" fill-opacity=".5" stroke="#1B1A24" stroke-width="1.8"/>
+      <circle cx="58" cy="43" r="5.6" fill="#FFFFFF" fill-opacity=".5" stroke="#1B1A24" stroke-width="1.8"/>
+      <path d="M47.6 43h4.8" stroke="#1B1A24" stroke-width="1.8"/>
+      <circle cx="42" cy="43" r="2.2" fill="#1B1A24"/>
+      <circle cx="58" cy="43" r="2.2" fill="#1B1A24"/>
+      <circle cx="36" cy="51" r="3.4" fill="#EFA394" opacity=".55"/>
+      <circle cx="64" cy="51" r="3.4" fill="#EFA394" opacity=".55"/>
+      <path d="M45.5 53.5c2.6 2.2 6.4 2.2 9 0" fill="none" stroke="#1B1A24" stroke-width="2.2" stroke-linecap="round"/>
     </symbol>
-    <!-- The dog: the coding agent, building inside the yard -->
-    <symbol id="dog" viewBox="0 0 80 60">
-      <path d="M8 26 Q2 18 6 12" stroke="#b07a45" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <ellipse cx="32" cy="34" rx="24" ry="14" fill="#c8894f"/>
-      <rect x="14" y="40" width="7" height="16" rx="3" fill="#b07a45"/>
-      <rect x="40" y="40" width="7" height="16" rx="3" fill="#b07a45"/>
-      <circle cx="58" cy="22" r="13" fill="#c8894f"/>
-      <ellipse cx="68" cy="27" rx="8" ry="6" fill="#e8c19a"/>
-      <circle cx="73" cy="25" r="2.6" fill="#2a2a2a"/>
-      <path d="M49 12 Q44 26 52 30 Q54 20 49 12 Z" fill="#8a5a30"/>
-      <circle cx="60" cy="19" r="2" fill="#2a2a2a"/>
-      <rect x="44" y="24" width="4" height="12" rx="2" fill="#2f9e5b" transform="rotate(20 46 30)"/>
+
+    <!-- THE DOG: Claude Code, the builder of the house. Cream coat, floppy ears, navy collar. -->
+    <symbol id="ch-dog" viewBox="0 0 130 100">
+      <ellipse cx="62" cy="95" rx="42" ry="4" fill="#1B1A24" opacity=".09"/>
+      <path d="M26 54c-10-3-14-14-10-24 2-3 5-2 5 1-1 8 3 14 9 16z" fill="#EAD5B2"/>
+      <rect x="30" y="64" width="11" height="28" rx="5.5" fill="#DDC39B"/>
+      <rect x="70" y="64" width="11" height="28" rx="5.5" fill="#DDC39B"/>
+      <ellipse cx="60" cy="60" rx="35" ry="21" fill="#EAD5B2"/>
+      <ellipse cx="50" cy="51" rx="13" ry="8" fill="#9C6A43"/>
+      <ellipse cx="64" cy="69" rx="20" ry="8" fill="#F6EBDA"/>
+      <rect x="40" y="68" width="11" height="25" rx="5.5" fill="#EAD5B2"/>
+      <rect x="80" y="66" width="11" height="27" rx="5.5" fill="#EAD5B2"/>
+      <rect x="38" y="88" width="15" height="7" rx="3.5" fill="#F6EBDA"/>
+      <rect x="78" y="88" width="15" height="7" rx="3.5" fill="#F6EBDA"/>
+      <circle cx="94" cy="40" r="22" fill="#EAD5B2"/>
+      <path d="M81 42c3 4 13 5 20 3" stroke="#1D5A85" stroke-width="0" fill="none"/>
+      <path d="M76 52c6 7 22 9 32 3" fill="none" stroke="#1D5A85" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="92" cy="61" r="4" fill="#DDC3A7" stroke="#B08A62" stroke-width="1.4"/>
+      <ellipse cx="111" cy="47" rx="13" ry="9.5" fill="#F6EBDA"/>
+      <ellipse cx="120" cy="42" rx="5" ry="4" fill="#1B1A24"/>
+      <path d="M110 53c3 2.5 8 2.5 11 0" fill="none" stroke="#1B1A24" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="99" cy="33" r="3.2" fill="#1B1A24"/>
+      <circle cx="100.2" cy="31.8" r="1" fill="#FFFFFF"/>
+      <path d="M94 25c4-2 8-1 10 1" stroke="#9C6A43" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M86 20c-10-3-17 4-16 16 1 9 4 17 10 19 5 1 7-5 7-12z" fill="#8A5A36"/>
+    </symbol>
+
+    <!-- A small paper plane: the planted instruction that tries to get in. -->
+    <symbol id="ob-plane" viewBox="0 0 60 40">
+      <path d="M2 18L58 2 34 38 26 24z" fill="#FFFFFF" stroke="#53505C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M26 24L58 2" stroke="#53505C" stroke-width="2"/>
+      <path d="M26 24l-2 12 10-12" fill="#E3E1EA" stroke="#53505C" stroke-width="2" stroke-linejoin="round"/>
     </symbol>
   </defs>
 </svg>
 
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#top">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="5" height="17" rx="1" fill="var(--green)"/><rect x="13.5" y="8" width="5" height="21" rx="1" fill="var(--green)"/><rect x="24" y="12" width="5" height="17" rx="1" fill="var(--green)"/><rect x="2" y="16" width="28" height="3" fill="var(--green)"/><rect x="2" y="23" width="28" height="3" fill="var(--green)"/></svg>
-      Tini Family
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar-wrap">
+  <nav class="topbar" aria-label="Main">
+    <a class="brand" href="#top" aria-label="Tini Family, back to top">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="40" height="40"><path d="M9 29V17l3-3 3 3v12M18.5 29V13l3-3 3 3v16M28 29V17l3-3 3 3v12" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/><path d="M7 20.5h29M7 25.5h29" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-name">Tini Family</span>
     </a>
-    <ul>
-      <li class="opt"><a href="#problem">Problem</a></li>
-      <li class="opt"><a href="#how">How it works</a></li>
-      <li class="opt"><a href="#privacy">Privacy</a></li>
+    <ul class="navlinks">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#safety">Safety</a></li>
       <li><a href="#demo">Demo</a></li>
-      <li><a href="https://github.com/ssultanbek/Tini-Family">GitHub</a></li>
     </ul>
-  </div>
-</nav>
+    <a class="btn secondary small gh" href="https://github.com/ssultanbek/Tini-Family" rel="noopener">GitHub</a>
+    <details class="navmenu">
+      <summary aria-label="Menu"><span></span><span></span></summary>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#safety">Safety</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="https://github.com/ssultanbek/Tini-Family" rel="noopener">GitHub</a></li>
+      </ul>
+    </details>
+  </nav>
+</header>
 
-<main id="top">
+<main id="main">
 
-<!-- HERO -->
-<section class="hero">
+<!-- ============================== HERO ============================== -->
+<section class="hero" id="top">
   <div class="wrap hero-grid">
-    <div>
-      <div class="eyebrow">A safety crew for AI coding agents</div>
+    <div class="hero-copy">
+      <p class="eyebrow">A safety crew for AI coding agents</p>
       <h1>Your AI agent gets the keys to the room, not the house.</h1>
-      <p class="lead">Tini reads your prompt and builds a fence around only what the agent needs. Tina checks everything that comes in and everything that goes out. The agent builds inside the yard, and nothing leaves until every part of the fence is green.</p>
+      <p class="lead">Tini Family fences AI coding agents like Claude Code so they only touch what you approved.</p>
       <div class="cta">
-        <a class="btn primary" href="#demo">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4 L16 10 L6 16 Z" fill="currentColor"/></svg>
-          Watch the demo
-        </a>
-        <a class="btn" href="https://github.com/ssultanbek/Tini-Family">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5 L2 10 L7 15 M13 5 L18 10 L13 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Source on GitHub
-        </a>
+        <a class="btn primary" href="#demo">Watch the demo</a>
+        <a class="btn secondary" href="https://github.com/ssultanbek/Tini-Family" rel="noopener">View on GitHub</a>
       </div>
+      <p class="warm">A builder, an inspector and a very good dog.</p>
     </div>
 
-    <svg class="scene" viewBox="0 0 520 380" role="img" aria-label="A yard with a green fence around one small room. The dog builds a house inside. Tini stands at the gate with a key, Tina checks her clipboard. Outside the fence, the rest of the computer: Documents, Photos, SSH keys, Passwords, all locked.">
-      <!-- the big house: the rest of your computer -->
-      <rect x="0" y="0" width="520" height="380" fill="var(--grass)"/>
-      <path d="M0 300 Q130 280 260 300 T520 296 L520 380 L0 380 Z" fill="var(--grass-2)"/>
-      <g opacity=".9">
-        <text x="24" y="34" font-size="13" font-weight="700" fill="var(--muted)" font-family="inherit">Your computer</text>
-        <g font-size="11" font-family="inherit" fill="var(--muted)">
-          <rect x="24" y="46" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
-          <text x="34" y="72">Documents</text>
-          <rect x="24" y="96" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
-          <text x="34" y="122">Photos</text>
-          <rect x="24" y="146" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
-          <text x="34" y="172">SSH keys</text>
-          <rect x="24" y="196" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
-          <text x="34" y="222">Passwords</text>
-        </g>
-        <g fill="var(--muted)">
-          <rect x="100" y="60" width="9" height="8" rx="1.5"/><path d="M101.5 60 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
-          <rect x="100" y="110" width="9" height="8" rx="1.5"/><path d="M101.5 110 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
-          <rect x="100" y="160" width="9" height="8" rx="1.5"/><path d="M101.5 160 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
-          <rect x="100" y="210" width="9" height="8" rx="1.5"/><path d="M101.5 210 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
-        </g>
-      </g>
-
-      <!-- the yard -->
-      <rect x="160" y="60" width="330" height="220" rx="10" fill="var(--grass-2)" opacity=".55"/>
-      <!-- the house the dog builds -->
-      <g transform="translate(300 100)">
-        <path d="M0 50 L60 8 L120 50 Z" fill="var(--roof)"/>
-        <rect x="10" y="50" width="100" height="72" fill="var(--house)"/>
-        <g stroke="var(--wood)" stroke-width="1" opacity=".5">
-          <line x1="10" y1="68" x2="110" y2="68"/><line x1="10" y1="86" x2="110" y2="86"/><line x1="10" y1="104" x2="110" y2="104"/>
-        </g>
-        <rect x="48" y="88" width="24" height="34" rx="2" fill="var(--roof)"/>
-        <rect x="20" y="62" width="18" height="16" rx="2" fill="#bfe0f2"/>
-        <rect x="82" y="62" width="18" height="16" rx="2" fill="#bfe0f2"/>
-      </g>
-      <use href="#dog" x="222" y="186" width="80" height="60"/>
-      <!-- bricks -->
-      <g fill="#c86a3c"><rect x="236" y="248" width="16" height="8" rx="1.5"/><rect x="254" y="248" width="16" height="8" rx="1.5"/><rect x="245" y="239" width="16" height="8" rx="1.5"/></g>
-
-      <!-- the fence: labelled green segments -->
-      <g>
-        <g stroke="var(--green)" stroke-width="5" stroke-linecap="round">
-          <line x1="160" y1="60" x2="490" y2="60"/>
-          <line x1="490" y1="60" x2="490" y2="280"/>
-          <line x1="160" y1="280" x2="290" y2="280"/>
-          <line x1="360" y1="280" x2="490" y2="280"/>
-          <line x1="160" y1="60" x2="160" y2="280"/>
-        </g>
-        <g fill="var(--green)">
-          <circle cx="160" cy="60" r="6"/><circle cx="270" cy="60" r="6"/><circle cx="380" cy="60" r="6"/><circle cx="490" cy="60" r="6"/>
-          <circle cx="490" cy="170" r="6"/><circle cx="490" cy="280" r="6"/><circle cx="160" cy="170" r="6"/><circle cx="160" cy="280" r="6"/>
-          <circle cx="290" cy="280" r="6"/><circle cx="360" cy="280" r="6"/>
-        </g>
-        <g font-size="11" font-weight="700" font-family="inherit" fill="var(--green)" text-anchor="middle">
-          <text x="215" y="52">Photos</text><text x="325" y="52">About</text><text x="435" y="52">Services</text>
-        </g>
-      </g>
-      <!-- a blocked attempt at the fence -->
-      <g transform="translate(150 150)">
-        <path d="M-10 0 l6 -6 l-2 5 l7 -2 l-6 7 l2 -4 z" fill="#f2b632"/>
-        <path d="M-12 12 l7 -3 l-3 5 z" fill="#f2b632"/>
-      </g>
-      <!-- Tini at the gate, Tina inspecting -->
-      <use href="#tini" x="298" y="262" width="54" height="90"/>
-      <use href="#tina" x="408" y="276" width="50" height="84"/>
-      <g transform="translate(440 256)">
-        <rect x="0" y="0" width="68" height="22" rx="11" fill="var(--card)" stroke="var(--green)"/>
-        <text x="34" y="15" font-size="11" font-weight="700" text-anchor="middle" fill="var(--green)" font-family="inherit">all green</text>
-      </g>
-    </svg>
-  </div>
-</section>
-
-<!-- PROBLEM -->
-<section id="problem" class="alt">
-  <div class="wrap">
-    <div class="eyebrow">The problem</div>
-    <h2>Coding agents can reach your whole computer.</h2>
-    <p class="lead">An agent like Claude Code runs on your laptop with your permissions. Asked to build a small website, it can open your photos, your documents and your keys. It asks before it acts, but after the fortieth "Yes" nobody is reading anymore.</p>
-    <div class="compare">
-      <div class="card">
-        <h3><span class="dot" style="background:var(--red)"></span>What can go wrong</h3>
-        <ul class="clean">
-          <li><strong>Over-access.</strong> The agent can read far more than the job needs: a whole Pictures folder, HR files, credentials.</li>
-          <li><strong>Leaks at launch.</strong> What it builds can ship an API key in page code, or photos that still carry GPS and the owner's name.</li>
-          <li><strong>Hidden instructions.</strong> A downloaded template can tell the agent to read your SSH key.</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3><span class="dot" style="background:var(--green)"></span>The protections already exist</h3>
-        <p>Claude Code ships permission rules, hooks and an operating-system sandbox. But by default the sandbox lets commands read the entire computer, <code>~/.ssh</code> included, and almost nobody writes these rules by hand for every task.</p>
-        <p class="muted">The sandbox exists. Nobody configures it. Tini writes the borders for you, from what you asked for.</p>
-      </div>
+    <div class="hero-visual">
+      <figure class="stage hero-stage" id="hero-stage" aria-label="Animated scene">
+        <div class="stage-art" data-scene="hero" role="img" aria-label="A small island yard. Tini raises a wooden fence around a house while the dog lays bricks inside it. A paper plane from outside hits the fence and sparks. One fence segment turns red, Tina inspects it, and it turns green."></div>
+        <div class="stage-chip" data-chip="hero" aria-live="off"><span class="chip plan"><i></i>Tini is planning the fence</span></div>
+      </figure>
+      <p class="stage-legend">
+        <span><i class="dot wood"></i><b>Tini</b> builds the fence</span>
+        <span><i class="dot cream"></i><b>The dog</b> builds the house</span>
+        <span><i class="dot sky"></i><b>Tina</b> checks it all</span>
+      </p>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section id="how">
+<!-- ============================== PROBLEM ============================== -->
+<section class="section" id="problem" aria-labelledby="problem-h">
   <div class="wrap">
-    <div class="eyebrow">How it works</div>
-    <h2>Least privilege, written from your prompt.</h2>
-    <p class="lead">You type what you want, the way you'd give a work order. The family takes it from there.</p>
+    <header class="section-head reveal">
+      <p class="label">The problem</p>
+      <h2 id="problem-h">Coding agents get the whole house by default.</h2>
+      <p class="lead">An agent on your laptop runs with your permissions. The agent building a client's website can also open your personal photos, your HR folder and your keys.</p>
+    </header>
 
-    <div class="steps" style="margin-top:32px">
-      <div class="step">
-        <svg viewBox="0 0 220 150" role="img" aria-label="Tini reading a prompt card">
-          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
-          <rect x="84" y="22" width="120" height="70" rx="8" fill="var(--card)" stroke="var(--line)"/>
-          <g fill="var(--line)"><rect x="96" y="36" width="92" height="6" rx="3"/><rect x="96" y="50" width="76" height="6" rx="3"/><rect x="96" y="64" width="84" height="6" rx="3"/></g>
-          <rect x="96" y="76" width="40" height="8" rx="4" fill="var(--green-soft)" stroke="var(--green)"/>
-          <use href="#tini" x="14" y="36" width="66" height="110"/>
-        </svg>
-        <div>
-          <h3><span class="num">1</span>Tini builds the fence from your prompt</h3>
-          <p>Code finds every folder your prompt names and checks each one: it must exist, sit in your home folder, and not be a private location. Tina pre-inspects those folders. You get one plain-English card: what the agent can use, what gets stripped (like GPS locations in photos), and "everything else on your Mac stays outside." One Approve replaces dozens of unread Yes clicks.</p>
-          <div class="fence-bar"><span class="seg g">Photos</span><span class="seg g">About</span><span class="seg g">Services</span><span class="seg g">Web packages</span><span class="seg g">Workspace</span></div>
+    <div class="grid3">
+      <article class="card problem reveal">
+        <div class="illo" aria-hidden="true">
+          <svg viewBox="0 0 280 150">
+            <circle cx="92" cy="44" r="22" fill="none" stroke="#6E6A7E" stroke-width="6"/>
+            <g transform="rotate(12 92 66)"><rect x="86" y="62" width="12" height="62" rx="4" fill="#B97A45"/><rect x="98" y="104" width="12" height="7" rx="2" fill="#B97A45"/><rect x="98" y="114" width="8" height="7" rx="2" fill="#B97A45"/><circle cx="92" cy="62" r="11" fill="#B97A45"/></g>
+            <g transform="rotate(-8 92 66)"><rect x="86" y="62" width="12" height="58" rx="4" fill="#1D5A85"/><rect x="74" y="100" width="12" height="7" rx="2" fill="#1D5A85"/><circle cx="92" cy="62" r="11" fill="#1D5A85"/></g>
+            <g transform="rotate(-30 92 66)"><rect x="86" y="62" width="12" height="54" rx="4" fill="#9A97A6"/><rect x="98" y="98" width="10" height="7" rx="2" fill="#9A97A6"/><circle cx="92" cy="62" r="11" fill="#9A97A6"/></g>
+            <g transform="rotate(34 92 66)"><rect x="86" y="62" width="12" height="54" rx="4" fill="#3E3C58"/><rect x="74" y="96" width="12" height="7" rx="2" fill="#3E3C58"/><circle cx="92" cy="62" r="11" fill="#3E3C58"/></g>
+            <g transform="rotate(56 92 66)"><rect x="86" y="62" width="12" height="48" rx="4" fill="#DDC3A7"/><rect x="98" y="92" width="10" height="7" rx="2" fill="#DDC3A7"/><circle cx="92" cy="62" r="11" fill="#DDC3A7"/></g>
+            <use href="#ch-dog" x="150" y="52" width="118" height="91"/>
+          </svg>
         </div>
+        <h3>Full access by default</h3>
+        <p>The agent runs with your permissions. By default its sandbox still lets commands read the whole computer, <code>~/.ssh</code> and <code>~/.aws</code> included.</p>
+      </article>
+
+      <article class="card problem reveal">
+        <div class="illo" aria-hidden="true">
+          <svg viewBox="0 0 280 150">
+            <path d="M58 70l72-22 92 20-72 24z" fill="#DDC3A7"/>
+            <path d="M58 70v56l92 20V92z" fill="#E8D3BA"/>
+            <path d="M150 92v54l72-24V68z" fill="#D2B593"/>
+            <g fill="#B97A45"><rect x="92" y="34" width="9" height="56" rx="2"/><rect x="108" y="28" width="9" height="58" rx="2"/><rect x="124" y="36" width="9" height="54" rx="2"/></g>
+            <g fill="#9C6436"><path d="M92 34l4.5-7 4.5 7z"/><path d="M108 28l4.5-7 4.5 7z"/><path d="M124 36l4.5-7 4.5 7z"/></g>
+            <path d="M58 70l92 22 72-24" fill="none" stroke="#C4A27E" stroke-width="2"/>
+            <rect x="84" y="102" width="44" height="26" rx="4" fill="#FFFFFF" transform="rotate(10 106 115)"/>
+            <path d="M92 112l26 5M91 119l18 3" stroke="#8F8B9E" stroke-width="2.5" stroke-linecap="round" transform="rotate(10 106 115)"/>
+            <g transform="translate(206 20)"><rect width="56" height="68" rx="6" fill="#FFFFFF" stroke="#D8D6DF" stroke-width="2"/><path d="M12 16h32M12 26h32M12 36h24M12 46h28M12 56h18" stroke="#D8D6DF" stroke-width="3" stroke-linecap="round"/></g>
+            <g fill="#8F8B9E" opacity=".45"><circle cx="220" cy="100" r="2"/><circle cx="238" cy="106" r="1.6"/><circle cx="252" cy="96" r="1.8"/><circle cx="214" cy="112" r="1.4"/></g>
+          </svg>
+        </div>
+        <h3>The protections sit in the box</h3>
+        <p>Claude Code ships permission rules, hooks and an operating-system sandbox. Almost nobody writes those rules by hand for every task.</p>
+      </article>
+
+      <article class="card problem reveal">
+        <div class="illo" aria-hidden="true">
+          <svg viewBox="0 0 280 150">
+            <g transform="translate(60 14)">
+              <rect x="0" y="0" width="150" height="74" rx="10" fill="#FFFFFF" stroke="#E3E1EA" stroke-width="2"/>
+            </g>
+            <g transform="translate(70 28)">
+              <rect x="0" y="0" width="150" height="74" rx="10" fill="#FFFFFF" stroke="#E3E1EA" stroke-width="2"/>
+            </g>
+            <g transform="translate(80 42)">
+              <rect x="0" y="0" width="150" height="86" rx="10" fill="#FFFFFF" stroke="#D8D6DF" stroke-width="2"/>
+              <rect x="14" y="14" width="96" height="8" rx="4" fill="#E3E1EA"/>
+              <rect x="14" y="30" width="72" height="8" rx="4" fill="#EFEEF2"/>
+              <rect x="76" y="52" width="60" height="24" rx="7" fill="#1B1A24"/>
+              <text x="106" y="69" text-anchor="middle" font-family="Manrope Variable, system-ui, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Yes</text>
+              <rect x="14" y="52" width="54" height="24" rx="7" fill="#FFFFFF" stroke="#D8D6DF" stroke-width="2"/>
+            </g>
+            <g transform="translate(212 26)">
+              <circle r="21" fill="#FFF2C4" stroke="#EDCB6B" stroke-width="2"/>
+              <text y="6" text-anchor="middle" font-family="Manrope Variable, system-ui, sans-serif" font-size="17" font-weight="800" fill="#6B4B00">40</text>
+            </g>
+            <path d="M126 118l-8 18 5-2 4 8 4-2-4-8 6-1z" fill="#1B1A24" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round" transform="translate(58 -12)"/>
+          </svg>
+        </div>
+        <h3>Forty “Yes” clicks nobody reads</h3>
+        <p>The agent asks before it reads a folder or runs a command. After the fortieth “Yes”, nobody is reading anymore.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FAMILY ============================== -->
+<section class="section" id="family" aria-labelledby="family-h">
+  <div class="wrap">
+    <header class="section-head reveal">
+      <p class="label">Meet the family</p>
+      <h2 id="family-h">Three characters, one job each.</h2>
+      <p class="warm">The app is drawn as a yard, so you can see what your agent is doing at a glance.</p>
+    </header>
+    <div class="grid3 family">
+      <article class="card person reveal">
+        <div class="portrait wood"><svg viewBox="0 0 100 150" role="img" aria-label="Tini, a friendly builder in a blue cap and wood-brown work vest, holding up a hammer."><use href="#ch-tini"/></svg></div>
+        <h3>Tini <span class="role">the builder</span></h3>
+        <p>Reads your prompt and builds a fence around only what the job needs.</p>
+      </article>
+      <article class="card person reveal">
+        <div class="portrait sky"><svg viewBox="0 0 100 150" role="img" aria-label="Tina, an inspector in a light blue coat and round glasses, holding a clipboard and a magnifier."><use href="#ch-tina"/></svg></div>
+        <h3>Tina <span class="role">the inspector</span></h3>
+        <p>Checks folders before they come in and the work after every turn. She is allergic to red.</p>
+      </article>
+      <article class="card person reveal">
+        <div class="portrait grass"><svg viewBox="0 0 130 100" role="img" aria-label="The dog, a cream-coloured pup with floppy brown ears and a navy collar."><use href="#ch-dog"/></svg></div>
+        <h3>The dog <span class="role">Claude Code</span></h3>
+        <p>Your AI coding agent. It builds the house inside the yard, one brick at a time.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS ============================== -->
+<section class="section how" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <header class="section-head reveal">
+      <p class="label">How it works</p>
+      <h2 id="how-h">One prompt, one fence, one green light.</h2>
+    </header>
+
+    <div class="story">
+      <div class="story-stage-col">
+        <figure class="stage story-stage" id="story-stage">
+          <div class="stage-art" data-scene="story" role="img" aria-label="The yard for the current step of the story."></div>
+          <div class="stage-chip" data-chip="story" aria-live="polite"></div>
+          <ol class="story-dots" aria-hidden="true"><li></li><li></li><li></li><li></li></ol>
+        </figure>
       </div>
 
-      <div class="step">
-        <svg viewBox="0 0 220 150" role="img" aria-label="Three layers: copies, a check on every action, the OS sandbox">
-          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
-          <rect x="30" y="18" width="160" height="114" rx="12" fill="none" stroke="var(--green)" stroke-width="4"/>
-          <rect x="46" y="34" width="128" height="82" rx="9" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="8 6"/>
-          <rect x="62" y="50" width="96" height="50" rx="7" fill="var(--card)" stroke="var(--wood)" stroke-width="3"/>
-          <use href="#dog" x="80" y="56" width="60" height="45"/>
-        </svg>
-        <div>
-          <h3><span class="num">2</span>Three layers hold the fence</h3>
-          <ul class="clean">
-            <li><strong>Staged copies.</strong> The agent works in a fresh project folder. Tini copies in only the approved files, with photo locations removed. Your real folders are never opened by the agent.</li>
-            <li><strong>A check on every action.</strong> Every read, write, search and command goes through a hook. Anything outside the workspace, or any website not on the list, is denied on the spot with a plain reason.</li>
-            <li><strong>The OS sandbox.</strong> macOS's own sandbox backs the hook up, so a shell command can't read what the file tools can't.</li>
-          </ul>
-          <p class="muted" style="margin-top:10px">When the agent needs more, it asks. Tina inspects the folder first, and you pick the narrowest safe option, like "only the 12 job-site photos, locations removed."</p>
-        </div>
-      </div>
+      <ol class="steps">
+        <li class="step" data-step="1">
+          <p class="step-num">Step 1</p>
+          <h3>You ask.</h3>
+          <p>Type what you want, like a work order. No settings, no rules to write.</p>
+          <div class="mock prompt-mock" aria-label="Example prompt">
+            <p>Build a website for Rivera Construction with a gallery of this year’s projects. Use the photos in <code>~/Clients/Rivera/Photos</code>.</p>
+            <span class="mock-send" aria-hidden="true">Send</span>
+          </div>
+        </li>
 
-      <div class="step">
-        <svg viewBox="0 0 220 150" role="img" aria-label="Tina checking fence segments, one red turning green">
-          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
-          <g stroke-width="6" stroke-linecap="round">
-            <line x1="92" y1="40" x2="140" y2="40" stroke="var(--green)"/>
-            <line x1="150" y1="40" x2="198" y2="40" stroke="var(--red)"/>
-            <line x1="92" y1="80" x2="140" y2="80" stroke="var(--green)"/>
-            <line x1="150" y1="80" x2="198" y2="80" stroke="var(--green)"/>
-            <line x1="92" y1="120" x2="140" y2="120" stroke="var(--green)"/>
-            <line x1="150" y1="120" x2="198" y2="120" stroke="var(--green)"/>
+        <li class="step" data-step="2">
+          <p class="step-num">Step 2</p>
+          <h3>Tini fences only what’s needed.</h3>
+          <p>He reads the prompt and plans a fence: the folders you named, the web addresses the job needs and a fresh workspace. You get one plain card. One Approve replaces dozens of unread “Yes” clicks.</p>
+          <div class="mock contract" aria-label="Example contract card">
+            <p class="mock-title">Tini’s plan</p>
+            <p class="mini-label">Allowed</p>
+            <ul class="paths">
+              <li><code>~/Clients/Rivera/Photos</code></li>
+              <li><code>~/Clients/Rivera/About</code></li>
+              <li><code>~/Clients/Rivera/Services</code></li>
+              <li><code>registry.npmjs.org</code></li>
+            </ul>
+            <p class="mini-label">Removed first</p>
+            <p class="mock-line">31 photos contain GPS locations, removed before Claude sees them.</p>
+            <p class="mock-line muted">Everything else on your Mac stays outside the fence.</p>
+            <div class="mock-actions" aria-hidden="true"><span class="fake-btn accent">Approve</span><span class="fake-btn">Ask for a change</span></div>
+          </div>
+        </li>
+
+        <li class="step" data-step="3">
+          <p class="step-num">Step 3</p>
+          <h3>The dog builds inside the fence.</h3>
+          <p>Claude Code works on copies in its own folder. Every action it takes is checked. Anything outside the fence is stopped on the spot, with a plain reason.</p>
+          <div class="mock blocked" aria-label="Example blocked action">
+            <p class="mini-label bad-text">Blocked <span class="tag">simulated attack</span></p>
+            <p class="path-bad"><code>~/.ssh/id_rsa</code></p>
+            <p class="mock-line">Outside the fence. Nothing was read.</p>
+          </div>
+          <p class="note">Your next request goes straight through. You only hear from Tini when access changes.</p>
+        </li>
+
+        <li class="step" data-step="4">
+          <p class="step-num">Step 4</p>
+          <h3>Tina inspects. Red, fixed, green, launch.</h3>
+          <p>After every turn Tina scans what the agent wrote. A problem turns the fence segment it came from red, with a plain explanation and a one-click fix. Launch stays locked until every segment is green.</p>
+          <div class="mock finding" aria-label="Example finding">
+            <div class="finding-row">
+              <span class="chip bad"><i></i>Needs a fix</span>
+              <span class="chip ok"><i></i>Fixed</span>
+            </div>
+            <p class="mock-line strong">Google Maps key is visible in your website’s code</p>
+            <p class="mock-line muted">Fix: swap in a map that needs no key, then Tina scans again.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== THREE LAYERS ============================== -->
+<section class="section" id="safety" aria-labelledby="safety-h">
+  <div class="wrap">
+    <header class="section-head reveal">
+      <p class="label">Safety</p>
+      <h2 id="safety-h">Three layers of fence. None of them is AI.</h2>
+      <p class="lead">Each layer catches what the one before it can’t see.</p>
+    </header>
+
+    <div class="layers">
+      <div class="layers-art reveal" aria-hidden="true">
+        <svg viewBox="0 0 360 300">
+          <rect x="10" y="10" width="340" height="280" rx="34" fill="#E2F0F9" stroke="#1D5A85" stroke-width="2.5" stroke-dasharray="9 7"/>
+          <rect x="48" y="50" width="264" height="206" rx="26" fill="#F4E7DA"/>
+          <g fill="#B97A45">
+            <rect x="48" y="50" width="264" height="206" rx="26" fill="none" stroke="#B97A45" stroke-width="7"/>
           </g>
-          <path d="M174 50 v14 m-5 -5 l5 5 l5 -5" stroke="var(--muted)" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <use href="#tina" x="16" y="34" width="66" height="110"/>
+          <g fill="#9C6436">
+            <rect x="72" y="42" width="10" height="18" rx="3"/><rect x="128" y="42" width="10" height="18" rx="3"/><rect x="184" y="42" width="10" height="18" rx="3"/><rect x="240" y="42" width="10" height="18" rx="3"/>
+            <rect x="72" y="246" width="10" height="18" rx="3"/><rect x="128" y="246" width="10" height="18" rx="3"/><rect x="184" y="246" width="10" height="18" rx="3"/><rect x="240" y="246" width="10" height="18" rx="3"/>
+          </g>
+          <rect x="92" y="88" width="176" height="132" rx="18" fill="#FFFFFF" stroke="#DDC3A7" stroke-width="2"/>
+                    <path d="M106 150v-34a6 6 0 0 1 6-6h24l8 8h36a6 6 0 0 1 6 6v26z" fill="#DDC3A7"/>
+          <rect x="106" y="126" width="80" height="58" rx="6" fill="#EBD6BC"/>
+          <g transform="rotate(-8 128 150)"><rect x="114" y="132" width="30" height="24" rx="3" fill="#FFFFFF" stroke="#D8D6DF" stroke-width="1.5"/><path d="M118 152l7-8 5 5 4-3 6 6z" fill="#9FCB88"/></g>
+          <g transform="rotate(6 160 152)"><rect x="146" y="136" width="30" height="24" rx="3" fill="#FFFFFF" stroke="#D8D6DF" stroke-width="1.5"/><path d="M150 156l7-8 5 5 4-3 6 6z" fill="#7FB4DB"/></g>
+          <use href="#ch-dog" x="176" y="140" width="88" height="68"/>
+          <g font-family="Manrope Variable, system-ui, sans-serif" font-weight="800" font-size="15">
+            <circle cx="36" cy="36" r="14" fill="#FFFFFF" stroke="#1D5A85" stroke-width="2"/><text x="36" y="41" text-anchor="middle" fill="#1D5A85">3</text>
+            <circle cx="72" cy="76" r="14" fill="#FFFFFF" stroke="#B97A45" stroke-width="2"/><text x="72" y="81" text-anchor="middle" fill="#6B3F1F">2</text>
+            <circle cx="116" cy="112" r="14" fill="#FFFFFF" stroke="#8F8B9E" stroke-width="2"/><text x="116" y="117" text-anchor="middle" fill="#1B1A24">1</text>
+          </g>
         </svg>
-        <div>
-          <h3><span class="num">3</span>Tina inspects before and after every turn</h3>
-          <p>Before folders come in, she counts GPS-tagged photos and finds private documents by their content, like a driver's license scan hidden among 1,212 files. After every turn, she scans what the agent wrote: secrets with gitleaks, leftover photo metadata, personal data and risky files. Each problem turns the segment it came from red, with a plain explanation and a one-click fix.</p>
-          <div class="fence-bar"><span class="seg r">Web packages: API key in page code</span><span class="seg g">Photos</span></div>
-        </div>
       </div>
 
-      <div class="step">
-        <svg viewBox="0 0 220 150" role="img" aria-label="A locked gate that opens when every segment is green">
-          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
-          <g stroke="var(--green)" stroke-width="6" stroke-linecap="round"><line x1="20" y1="100" x2="80" y2="100"/><line x1="140" y1="100" x2="200" y2="100"/></g>
-          <rect x="88" y="54" width="44" height="46" rx="4" fill="var(--card)" stroke="var(--green)" stroke-width="3"/>
-          <path d="M100 76 l7 7 l13 -14" stroke="var(--green)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="110" y="128" text-anchor="middle" font-size="13" font-weight="700" fill="var(--green)" font-family="inherit">Launch unlocked</text>
-        </svg>
-        <div>
-          <h3><span class="num">4</span>Nothing leaves until every segment is green</h3>
-          <p>Launch stays locked while any segment is red. Fix the problems and it opens. Ask for another change and it locks again until Tina has checked the new work. At the end you get an access report: what was allowed, blocked, narrowed and fixed, turn by turn, and which outside servers the site talks to.</p>
-        </div>
-      </div>
+      <ol class="layer-list">
+        <li class="card layer reveal">
+          <span class="num">1</span>
+          <div>
+            <h3>Copies only</h3>
+            <p>Claude works in a fresh folder. Tini copies in only the approved files and strips GPS on the way. Your originals are never touched.</p>
+          </div>
+        </li>
+        <li class="card layer reveal">
+          <span class="num">2</span>
+          <div>
+            <h3>A check on every single action</h3>
+            <p>Every read, write, edit, search and command is checked before it runs. Paths are resolved, shortcuts included. Anything outside the fence is denied on the spot.</p>
+          </div>
+        </li>
+        <li class="card layer reveal">
+          <span class="num">3</span>
+          <div>
+            <h3>The operating system’s sandbox for commands</h3>
+            <p>The macOS sandbox wraps every command the agent runs. Reads stay in the workspace, writes stay in the workspace, and the network only reaches the listed sites.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="proof reveal"><span class="chip ok"><i></i>Tested</span><p>In our tests, the macOS sandbox stopped a trick the action check couldn’t see: a <code>cat</code> hidden inside a shell command. The answer was “Operation not permitted”.</p></div>
+  </div>
+</section>
+
+<!-- ============================== PRIVACY ============================== -->
+<section class="section" id="privacy" aria-labelledby="privacy-h">
+  <div class="wrap">
+    <header class="section-head reveal">
+      <p class="label">Privacy by design</p>
+      <h2 id="privacy-h">The AI helps with words. Code makes the calls.</h2>
+    </header>
+    <div class="grid2">
+      <article class="card priv reveal">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <div><h3>AI never decides what’s allowed</h3><p>Plain code enforces the fence. The AI writes labels and explanations, and code checks every answer it gives.</p></div>
+      </article>
+      <article class="card priv reveal">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8"/></svg></span>
+        <div><h3>Names and counts, never contents</h3><p>The planning AI sees folder names and file counts. It never sees what is inside your files.</p></div>
+      </article>
+      <article class="card priv reveal">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div><h3>A hostile answer, fully stripped</h3><p>In tests we fed the planner a deliberately hostile AI answer asking for <code>~/.ssh</code>, an HR folder and an unknown upload site. None of it made it into the plan.</p></div>
+      </article>
+      <article class="card priv reveal">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><path d="M4 4l16 16"/></svg></span>
+        <div><h3>No GPS in the photos</h3><p>Locations are removed from photos before the agent sees them. A photo that can’t be proven clean stays out.</p></div>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- PRIVACY -->
-<section id="privacy" class="alt">
-  <div class="wrap">
-    <div class="eyebrow">Privacy by design</div>
-    <h2>AI never decides access.</h2>
-    <p class="lead">Checking your private photos by uploading them to a cloud AI would be the leak itself. So the safety decisions are plain code, and the AI only ever sees summaries.</p>
-    <div class="split" style="margin-top:28px">
-      <div class="card">
-        <div class="who" style="color:var(--green)">Plain code, on your Mac</div>
-        <ul class="clean">
-          <li>Finds the folders in your prompt and decides what's inside the fence</li>
-          <li>Copies files and strips photo locations</li>
-          <li>Checks every action the agent takes</li>
-          <li>Scans for secrets, metadata and personal data</li>
-          <li>Applies the fixes and rechecks</li>
-        </ul>
+<!-- ============================== DEMO ============================== -->
+<section class="section" id="demo" aria-labelledby="demo-h">
+  <div class="wrap narrow">
+    <header class="section-head reveal">
+      <p class="label">Demo</p>
+      <h2 id="demo-h">See it build a real website.</h2>
+    </header>
+    <div class="video reveal">
+      <!-- TODO(video): replace this placeholder with the YouTube embed once the URL exists:
+           <iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID" title="Tini Family demo"
+             allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen
+             loading="lazy"></iframe>
+           (It is the only external request the page would make.) -->
+      <div class="video-ph" role="img" aria-label="Demo video placeholder">
+        <div class="stage-art" data-scene="poster"></div>
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+        <span class="soon">Video coming soon</span>
       </div>
-      <div class="card">
-        <div class="who" style="color:var(--accent)">The AI helper, on summaries only</div>
-        <ul class="clean">
-          <li>Writes the labels and plain-English explanations</li>
-          <li>Suggests which files in a folder match your request, from names and counts</li>
-          <li>Sees folder names, file counts and redacted snippets, never your files or secret values</li>
-          <li>Every answer is checked by code, and it can never add a file or grant access</li>
-        </ul>
-        <p class="muted" style="margin-top:12px">If the AI is down, saved answers and built-in wording take over. The fence doesn't depend on it.</p>
-      </div>
+    </div>
+    <p class="caption reveal">Tina checks a folder of 1,212 files and narrows it to the 12 job-site photos the site needs.<br>A leaked key and hidden photo details get fixed before launch.</p>
+  </div>
+</section>
+
+<!-- ============================== FAQ ============================== -->
+<section class="section" id="faq" aria-labelledby="faq-h">
+  <div class="wrap narrow">
+    <header class="section-head reveal">
+      <p class="label">Questions</p>
+      <h2 id="faq-h">Fair questions.</h2>
+    </header>
+    <div class="faq">
+      <details class="reveal">
+        <summary>Doesn’t Claude Code already do this?</summary>
+        <div class="ans"><p>It has the parts: permission rules, hooks and a sandbox. But by default the sandbox still lets commands read your whole home folder, and the rules are yours to write for every task. Tini writes all three layers from your one prompt, and Tina checks the work afterwards.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>Who pays for the extra safety?</summary>
+        <!-- TODO(cost): the brief says "a few cents per task in our tests"; no doc states that number yet. Confirm it before adding it here. -->
+        <div class="ans"><p>The fence itself is plain code, so it costs nothing to run. The AI helpers only write short labels and explanations, and saved answers are reused. Our whole demo run, with Claude building a four-page website, cost $1.32 in API usage.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>What if the AI is wrong?</summary>
+        <div class="ans"><p>AI never decides access. It suggests words and which files match the job, and code checks every answer. If both AI providers are down, the fence, the inspection and the fixes still work, with built-in wording.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>Is this a chatbot?</summary>
+        <div class="ans"><p>No. It’s a workspace with a fence. You give work orders in a prompt bar, the yard shows what the agent is doing, and your history is a timeline of turns.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>Does it only build websites?</summary>
+        <div class="ans"><p>Website builds are tested end to end, from prompt to launch. We also tested fence planning on other Claude Code tasks: analyzing a spreadsheet and making charts, renaming photos in a folder, and a follow-up request that needs nothing new.</p></div>
+      </details>
+      <details class="reveal">
+        <summary>What’s simulated in the demo?</summary>
+        <div class="ans"><p>The <code>~/.ssh</code> attack. A test harness sends a read of <code>~/.ssh/id_rsa</code> through the real fence check and shows the real block, labeled “simulated” on screen. The file is never opened. The client, its photos and its key are fake data made on our laptop.</p></div>
+      </details>
     </div>
   </div>
 </section>
 
-<!-- DEMO -->
-<section id="demo">
-  <div class="wrap">
-    <div class="eyebrow">Demo</div>
-    <h2>Watch a build inside the fence.</h2>
-    <p class="lead">Maria, a business student, builds a website for a client. The agent gets three folders, then only the 12 photos it needs from a fourth, and nothing ships until Tina signs off. The SSH-key attack in the demo is simulated and labeled as such; it runs through the real fence checker.</p>
-    <div class="video">
-      <!-- TODO: replace srcdoc with the YouTube embed once the video is up, e.g.
-           src="https://www.youtube-nocookie.com/embed/VIDEO_ID" allow="encrypted-media; picture-in-picture" allowfullscreen -->
-      <iframe title="Tini Family demo video" loading="lazy"
-        srcdoc="<style>html,body{height:100%;margin:0}body{display:flex;align-items:center;justify-content:center;font:600 18px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#5b625c;background:#f2ede3}@media (prefers-color-scheme:dark){body{background:#1b1f1c;color:#a4aba3}}</style><p>Demo video coming soon</p>"></iframe>
-    </div>
+<!-- ============================== NEXT + BUILT WITH ============================== -->
+<section class="section" id="more" aria-label="What's next and what it's built with">
+  <div class="wrap grid2 more">
+    <article class="card reveal">
+      <p class="label">What’s next</p>
+      <ul class="plain">
+        <li>Working inside folders you already have</li>
+        <li>Several projects at once</li>
+        <li>Approving new websites the agent wants to reach</li>
+        <li>Gemini photo checks, with your consent</li>
+        <li>Windows and Linux</li>
+      </ul>
+    </article>
+    <article class="card reveal">
+      <p class="label">Built with</p>
+      <ul class="plain">
+        <li>Claude Agent SDK and Claude Code</li>
+        <li>macOS sandbox</li>
+        <li>Gemini, with Claude as the backup</li>
+        <li>gitleaks and exiftool</li>
+        <li>React and Three.js</li>
+        <li>Node.js</li>
+      </ul>
+    </article>
   </div>
 </section>
 
-<!-- TEAM -->
-<section id="team" class="alt">
+<!-- ============================== TEAM ============================== -->
+<section class="section" id="team" aria-labelledby="team-h">
   <div class="wrap">
-    <div class="eyebrow">Team</div>
-    <h2>Who built it</h2>
-    <p class="lead">Built at ShellHacks 2026.</p>
-    <!-- TODO: team names, roles and links -->
-    <div class="team" style="margin-top:24px">
-      <div class="card person">
-        <div class="avatar"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="13" r="7" fill="var(--line)"/><path d="M5 34 Q18 16 31 34 Z" fill="var(--line)"/></svg></div>
-        <div><h3 style="margin:0">Team member</h3><p class="muted" style="margin:0">Engine, fence and inspections</p></div>
-      </div>
-      <div class="card person">
-        <div class="avatar"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="13" r="7" fill="var(--line)"/><path d="M5 34 Q18 16 31 34 Z" fill="var(--line)"/></svg></div>
-        <div><h3 style="margin:0">Team member</h3><p class="muted" style="margin:0">Game and interface</p></div>
-      </div>
+    <header class="section-head reveal">
+      <p class="label">Team</p>
+      <h2 id="team-h">Built in a weekend at ShellHacks 2026.</h2>
+    </header>
+    <!-- TODO(team): fill in names and roles. -->
+    <div class="team">
+      <div class="card member reveal"><span class="avatar" aria-hidden="true"></span><div><h3>[Name]</h3><p>[Role]</p></div></div>
+      <div class="card member reveal"><span class="avatar" aria-hidden="true"></span><div><h3>[Name]</h3><p>[Role]</p></div></div>
     </div>
   </div>
 </section>
 
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Tini Family · ShellHacks 2026</span>
-    <a href="https://github.com/ssultanbek/Tini-Family">github.com/ssultanbek/Tini-Family</a>
+<footer class="footer">
+  <div class="wrap footer-in">
+    <div class="footer-dog" aria-hidden="true"><svg viewBox="0 0 130 100"><use href="#ch-dog"/></svg></div>
+    <p><strong>Tini Family</strong> · ShellHacks 2026 · <a href="https://github.com/ssultanbek/Tini-Family" rel="noopener">GitHub</a></p>
+    <p class="muted">All art made in code. Fonts: Manrope, Fraunces and JetBrains Mono, under the SIL Open Font License (<a href="fonts/OFL-manrope.txt">1</a>, <a href="fonts/OFL-fraunces.txt">2</a>, <a href="fonts/OFL-jetbrains-mono.txt">3</a>). Three.js under the <a href="vendor/three-LICENSE.txt">MIT License</a>.</p>
   </div>
 </footer>
 
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+<script src="assets/scene-svg.js"></script>
+<script src="assets/site.js"></script>
 </body>
 </html>
