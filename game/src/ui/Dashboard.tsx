@@ -8,6 +8,7 @@ import { RawView } from './RawView.tsx';
 import { PromptBar, TurnHistory } from './Project.tsx';
 import { reportVisible, type ReportMode } from './promptMode.ts';
 import { dashboardLayout, gameLayout } from '../layout.ts';
+import { modeBadge } from './modeBadge.ts';
 
 const statusLabels: Record<SegmentStatus, string> = { planned: '○ Planned', built: '▤ Built', inspecting: '◉ Inspecting', red: '! Red · needs fix', green: '✓ Green' };
 const names = { tini: 'Tini', tina: 'Tina', dog: 'Dog', system: 'System' };
@@ -77,7 +78,7 @@ export function Dashboard({ send, yard }: { send: (command: GameCommand) => bool
 
   return <MotionConfig reducedMotion="user"><div className={`app ${yard ? 'game-app' : ''}`} style={(yard ? gameLayout : dashboardLayout) as CSSProperties}>
     <header className="topbar titlebar"><div className="brand"><span className="brand-mark" aria-hidden="true">▦</span><div><h1>Tini Family</h1><p className="tagline">Your agent gets the keys to the room, not the house.</p></div><span className="brand-view">{yard ? 'The yard' : 'Dashboard'} · ShellHacks 2026</span></div>
-      <div className="header-actions"><button className={`raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw view</button><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{connected ? synced ? '● Connected' : '● Connected · syncing' : '○ Disconnected'}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
+      <div className="header-actions"><button className={`raw-toggle ${raw ? 'on' : ''}`} aria-pressed={raw} onClick={() => setRaw(on => !on)}>{'{ }'} Raw view</button><a href={yard ? '/?view=dashboard' : '/'}>{yard ? 'Dashboard' : 'The yard'}</a><span role="status" className={`badge ${connected ? 'online' : 'offline'}`}>{modeBadge(world, connected, synced).text}</span><button className="secondary" disabled={busy({ type: 'reset' })} onClick={() => send({ type: 'reset' })}>{pending.includes('reset') ? 'Reset sent…' : 'Reset'}</button></div>
     </header>
     {!available && <p className="notice" role="status">{state.connectionError || (connected ? 'Waiting for the engine snapshot…' : 'Waiting for the engine at localhost:4000…')}</p>}
     {state.engineError && <p className="error" role="alert">Engine error: {state.engineError}</p>}
