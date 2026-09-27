@@ -18,7 +18,8 @@ function finish(error?: unknown) {
   stopped = true; clearTimeout(timeout); unsubscribe(); client.disconnect();
   if (error) { console.error(error); process.exitCode = 1; }
 }
-function once(key: string, command: GameCommand) { if (sent.has(key)) return; sent.add(key); client.send(command); }
+// A click the client refuses (e.g. still pending) is retried on the next update instead of being lost.
+function once(key: string, command: GameCommand) { if (sent.has(key)) return; if (client.send(command)) sent.add(key); }
 function check() {
   if (stopped) return;
   try {
@@ -31,7 +32,9 @@ function check() {
     if (world.contract && world.phase === 'contract') once(`approve-${turn}`, { type: 'approve.plan' });
     if (world.openEscalation) once(`esc-${world.openEscalation.escalationId}`, { type: 'escalation.choose', escalationId: world.openEscalation.escalationId, optionId: choice });
     for (const finding of world.findings) once(`fix-${finding.id}`, { type: 'fix.apply', findingId: finding.id, fixId: finding.fixes[0].id });
-    if (world.launchUnlocked && world.phase === 'ready' && !sent.has(`launch-${turn}`)) { launches++; once(`launch-${turn}`, { type: 'launch' }); }
+    // Launch only once the current turn has finished (its summary arrived), never while the next one is starting.
+    const finished = turn > 0 && !!world.turns[turn - 1]?.summary;
+    if (world.launchUnlocked && world.phase === 'ready' && finished && !sent.has(`launch-${turn}`)) { once(`launch-${turn}`, { type: 'launch' }); if (sent.has(`launch-${turn}`)) launches++; }
     if ((world.phase === 'ready' || world.phase === 'launched') && world.suggestedPrompt && turn > 0) once(`prompt-${turn}`, { type: 'prompt', text: world.suggestedPrompt });
     if (world.phase === 'launched' && world.report && turn >= 3 && world.turns.every(t => t.summary)) {
       assert.equal(world.findings.length, 0);
