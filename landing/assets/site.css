@@ -443,6 +443,37 @@ img, svg { display: block; max-width: 100%; }
 .footer-dog { width: 84px; margin-bottom: 6px; }
 .footer .muted { font-size: var(--gv-fs-sm); max-width: 44em; }
 
+/* ---------- Micro-interactions (hover, press, open). All off under reduced motion. ---------- */
+:root { interpolate-size: allow-keywords; }
+.card.problem, .card.layer, .card.priv, .card.person { transition: transform 260ms var(--gv-ease), box-shadow 260ms var(--gv-ease), border-color 260ms var(--gv-ease); }
+@media (hover: hover) {
+  .card.problem:hover, .card.layer:hover, .card.priv:hover, .card.person:hover { transform: translateY(-3px); box-shadow: var(--gv-shadow-md); border-color: var(--gv-plan-line); }
+  .card.problem:hover .illo svg { transform: scale(1.03); }
+  .brand:hover .logo { transform: rotate(-6deg); }
+  .btn.primary:hover { box-shadow: 0 10px 26px -8px rgb(91 69 214 / .5); }
+  .icon { transition: background var(--gv-t-med) var(--gv-ease); }
+  .card.priv:hover .icon { background: var(--gv-sky-bg); }
+  .num { transition: transform var(--gv-t-med) var(--gv-ease); }
+  .card.layer:hover .num { transform: scale(1.08); }
+}
+.problem .illo svg { transition: transform 400ms var(--gv-ease); }
+.logo { transition: transform 300ms var(--gv-ease); }
+.btn.primary:active { box-shadow: 0 4px 12px -6px rgb(91 69 214 / .5); }
+.faq summary { transition: background var(--gv-t-fast) var(--gv-ease); }
+.faq details::details-content { height: 0; overflow: clip; transition: height 280ms var(--gv-ease), content-visibility 280ms allow-discrete; }
+.faq details[open]::details-content { height: auto; }
+.faq details[open] .ans { animation: ans-in 320ms var(--gv-ease); }
+@keyframes ans-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.video-ph .play { transition: transform 260ms var(--gv-ease), box-shadow 260ms var(--gv-ease); }
+.video-ph:hover .play { transform: scale(1.06); box-shadow: var(--gv-shadow-lg); }
+.footer-dog svg { transition: transform 400ms var(--gv-ease); transform-origin: 50% 90%; }
+.footer-dog:hover svg { transform: rotate(-6deg) translateY(-2px); }
+.footer-dog { pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .card.problem:hover, .card.layer:hover, .card.priv:hover, .card.person:hover { transform: none; }
+  .card.problem:hover .illo svg, .brand:hover .logo, .video-ph:hover .play, .footer-dog:hover svg { transform: none; }
+}
+
 /* ---------- Reveal on scroll (only when JS and motion are available) ---------- */
 .js .reveal { opacity: 0; transform: translateY(14px); transition: opacity 700ms var(--gv-ease), transform 700ms var(--gv-ease); }
 .js .reveal.in { opacity: 1; transform: none; }

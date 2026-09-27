@@ -350,23 +350,30 @@ function buildWorld(scene) {
     scene.add(seg.group);
     W.segs.push(seg);
   }
-  // Gate: two little doors between the last and the first post
+  // Gate: a closed picket gate between the last and the first post, facing the path
   {
     const a = onRing(FENCE_R, postAngle(N - 1)), b = onRing(FENCE_R, postAngle(0));
     const gate = new THREE.Group();
-    const w = a.distanceTo(b) / 2 - 0.08;
-    for (const [p, dir] of [[b, -1], [a, 1]]) {
-      const door = new THREE.Group();
-      const board = mesh(new THREE.BoxGeometry(w, 0.62, 0.06), mat(COL.rail));
-      board.position.set(dir * -w / 2, 0.5, 0);
-      door.add(board);
-      for (const y of [0.32, 0.68]) {
-        const slat = mesh(new THREE.BoxGeometry(w, 0.1, 0.1), mat(COL.woodCap), false);
-        slat.position.set(dir * -w / 2, y, 0.04); door.add(slat);
+    const span = a.distanceTo(b) - 0.24, half = span / 2 - 0.03;
+    for (const side of [-1, 1]) {
+      const leaf = new THREE.Group();
+      for (let p = 0; p < 3; p++) {
+        const picket = mesh(new THREE.BoxGeometry(0.13, 0.82, 0.06), mat(COL.rail));
+        picket.position.set((p + 0.5) * (half / 3), 0.46, 0);
+        const tip = mesh(new THREE.ConeGeometry(0.09, 0.12, 4), mat(COL.rail), false);
+        tip.rotation.y = Math.PI / 4; tip.position.set(picket.position.x, 0.93, 0);
+        leaf.add(picket, tip);
       }
-      door.position.set(p.x, 0, p.z);
-      gate.add(door);
+      for (const y of [0.3, 0.66]) {
+        const slat = mesh(new THREE.BoxGeometry(half, 0.09, 0.07), mat(COL.woodCap), false);
+        slat.position.set(half / 2, y, 0.05); leaf.add(slat);
+      }
+      leaf.position.x = side < 0 ? -span / 2 : span / 2;
+      leaf.scale.x = side < 0 ? 1 : -1;
+      gate.add(leaf);
     }
+    gate.position.set((a.x + b.x) / 2, 0, (a.z + b.z) / 2);
+    gate.rotation.y = -Math.atan2(a.z - b.z, a.x - b.x);
     gate.scale.set(1, 0.001, 1);
     scene.add(gate);
     W.gate = gate;
@@ -658,7 +665,7 @@ function create3D(artEl, kind) {
 
     // Fence rise and colour
     W.segs.forEach((s, k) => {
-      s.p = s.target > s.p ? Math.min(1, s.p + dt / 0.6) : Math.max(0, s.p - dt / 0.35);
+      if (s.target > s.p) s.p = Math.min(s.target, s.p + dt / 0.6); else if (s.target < s.p) s.p = Math.max(s.target, s.p - dt / 0.35);
       s.posts.forEach((post, j) => {
         const pj = clamp01((s.p * 1.7 - j * 0.12) / 0.55);
         post.scale.y = Math.max(0.001, pj > 0 ? easeBack(pj) : 0);
@@ -715,7 +722,7 @@ function create3D(artEl, kind) {
     H.door.scale.y = damp(H.door.scale.y, rowsDone > 5 ? 1 : 0.001, 8, dt);
     H.wins.forEach((w) => w.scale.setScalar(damp(w.scale.x, rowsDone > 6 ? 1 : 0.001, 8, dt)));
     H.inner.scale.y = Math.max(0.001, clamp01((rowsDone - 0.6) / 8));
-    H.roofP = H.roofTarget > H.roofP ? Math.min(1, H.roofP + dt / 0.9) : Math.max(0, H.roofP - dt / 0.4);
+    if (H.roofTarget > H.roofP) H.roofP = Math.min(1, H.roofP + dt / 0.9); else if (H.roofTarget < H.roofP) H.roofP = Math.max(0, H.roofP - dt / 0.4);
     H.roof.visible = H.roofP > 0.001;
     H.roof.position.y = HOUSE.rows * HOUSE.bh + (1 - easeOut(H.roofP)) * 2.6;
     H.roof.scale.setScalar(0.4 + 0.6 * easeOut(H.roofP));
@@ -870,7 +877,7 @@ function create3D(artEl, kind) {
     const drift = step === "hero" ? Math.sin(t * 0.11) * 0.22 : Math.sin(t * 0.15) * 0.06;
     const az = cam.az + drift + tilt.x * 0.14;
     const el = Math.max(0.25, cam.el - tilt.y * 0.07 + Math.sin(t * 0.17) * 0.015);
-    const fit = aspect < 1.25 ? 1.25 / aspect : 1;
+    const fit = aspect < 1.4 ? 1.4 / aspect : 1;
     const d = cam.dist * Math.min(fit, 1.7);
     camera.position.set(cam.look[0] + d * Math.cos(el) * Math.sin(az), cam.look[1] + d * Math.sin(el), cam.look[2] + d * Math.cos(el) * Math.cos(az));
     camera.lookAt(cam.look[0], cam.look[1], cam.look[2]);
