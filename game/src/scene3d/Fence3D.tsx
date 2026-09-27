@@ -5,6 +5,7 @@ import type { Group, Mesh, MeshStandardMaterial } from 'three';
 import type { Segment, SegmentStatus } from '../../../shared/events.ts';
 import { diorama as D, yardLayout as L } from '../layout.ts';
 import { fencePosts, fenceSpan, toWorld } from './world.ts';
+import { BOARD_PX, fitBoardLabel } from './boardLabel.ts';
 
 const C = D.colors;
 // Colour is never the only signal: every status also has an icon and a word on the sign.
@@ -76,14 +77,15 @@ function Signpost({ segment, x, z, look }: { segment: Segment; x: number; z: num
     <mesh ref={lantern} position={[0, s.post + 0.2, -0.05]} castShadow>
       <icosahedronGeometry args={[0.22, 1]} /><meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={0.9} roughness={0.3} toneMapped={false} />
     </mesh>
-    <Html position={[0, s.boardY, 0.06]} transform distanceFactor={s.text} zIndexRange={[10, 0]}>
-      <div className={`d3-board st-${segment.status}${segment.label.length > 16 ? ' longest' : segment.label.length > 10 ? ' long' : ''}`} title={`${segment.label}: ${look.word}. ${segment.detail}`} aria-label={`${segment.label}: ${look.word}`}>
+    <Html position={[0, s.boardY, 0.06]} transform distanceFactor={(s.board[0] * 0.92 * 400) / BOARD_PX} zIndexRange={[10, 0]}>
+      <div className={`d3-board st-${segment.status}`} title={`${segment.label}: ${look.word}. ${segment.detail}`} aria-label={`${segment.label}: ${look.word}`}>
         <span className="d3-badge" aria-hidden="true">{look.icon}</span>
-        <strong>{segment.label}</strong>
+        {(() => { const fit = fitBoardLabel(segment.label); return <strong style={{ fontSize: fit.size }}>{fit.lines.map((line, i) => <span key={i}>{line}</span>)}</strong>; })()}
       </div>
     </Html>
   </group>;
 }
+
 
 export function Fences({ segments, reducedMotion }: { segments: Segment[]; reducedMotion: boolean }) {
   return <group>{segments.map((segment, index) => index < L.slots.length ? <FenceSegment key={segment.id} segment={segment} index={index} reducedMotion={reducedMotion} /> : null)}</group>;

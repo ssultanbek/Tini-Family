@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html, RoundedBox } from '@react-three/drei';
 import type { Group, Mesh } from 'three';
 import type { EngineEvent, WorldState } from '../../../shared/events.ts';
-import { diorama as D, familyLayout as F, segmentPosition } from '../layout.ts';
+import { diorama as D, familyLayout as F, yardLayout as L, segmentPosition } from '../layout.ts';
 import { animationQueues, type AnimatedActor, type AnimationOptions } from '../queue.ts';
 import { store } from '../store.ts';
 import { route, toWorld, type XZ } from './world.ts';
@@ -352,6 +352,29 @@ function EffectView({ e }: { e: Effect }) {
   </group>;
 }
 
+/** Two wooden gate doors hinged on the gate posts. They swing open while anyone is near, and close after. */
+function GateDoors({ bodies }: { bodies: Record<AnimatedActor, Body> }) {
+  const left = useRef<Group>(null), right = useRef<Group>(null), open = useRef(0);
+  const g = w({ x: L.gate.x, y: L.gate.y }), half = (L.gate.width * D.unit) / 2;
+  useFrame((_, dt) => {
+    const near = Object.values(bodies).some(b => Math.hypot(b.pos.x - g.x, b.pos.z - g.z) < D.gate.openRadius);
+    open.current += ((near ? 1 : 0) - open.current) * Math.min(1, dt * (near ? 6 : 3));
+    const angle = open.current * D.gate.swing;
+    if (left.current) left.current.rotation.y = -angle;
+    if (right.current) right.current.rotation.y = angle;
+  });
+  const door = (side: -1 | 1, ref: React.RefObject<Group | null>) => <group ref={ref} position={[g.x + side * half, 0, g.z]}>
+    {/* The door extends from its hinge toward the gate's middle: two rails and three slats. */}
+    {[0.45, 1.05].map(y => <RoundedBox key={y} args={[half - 0.12, 0.12, 0.1]} radius={0.03} position={[-side * (half / 2 + 0.02), y, 0]} castShadow>
+      <meshStandardMaterial color={D.colors.wood} roughness={0.85} />
+    </RoundedBox>)}
+    {[0.2, 0.5, 0.8].map(k => <RoundedBox key={k} args={[0.12, 0.95, 0.08]} radius={0.03} position={[-side * (0.14 + k * (half - 0.3)), 0.75, 0]} castShadow>
+      <meshStandardMaterial color={D.colors.woodDark} roughness={0.85} />
+    </RoundedBox>)}
+  </group>;
+  return <>{door(-1, left)}{door(1, right)}</>;
+}
+
 /** The family: attaches to the per-actor animation queues (only one yard view is mounted at a time). */
 export function Family3D() {
   const bodies = useFamily();
@@ -377,6 +400,7 @@ export function Family3D() {
       </group>
     </Person>
     <Dog body={bodies.dog} world={world} />
+    <GateDoors bodies={bodies} />
     <Effects />
   </>;
 }

@@ -60,3 +60,16 @@ test('walking routes go around the house, never through it', async () => {
   const a = { x: house.x - house.width, z: house.z + house.depth * 2 }, b = { x: house.x + house.width, z: house.z + house.depth * 2 };
   assert.deepEqual(route(a, b), [b], 'clear line: walk straight');
 });
+
+test('sign labels fit their plank: one big line, or two balanced lines for long names', async () => {
+  const { fitBoardLabel } = await import('../src/scene3d/boardLabel.ts');
+  assert.deepEqual(fitBoardLabel('Photos').lines, ['Photos']);
+  assert.ok(fitBoardLabel('Photos').size >= 24);
+  assert.deepEqual(fitBoardLabel('Web packages').lines, ['Web', 'packages']);
+  assert.deepEqual(fitBoardLabel('Job-site photos').lines, ['Job-site', 'photos']);
+  for (const label of ['Workspace', 'Construction project photos', 'Company Info', 'Rivera-HR']) {
+    const { lines, size } = fitBoardLabel(label);
+    assert.ok(size >= 14, `${label} stays readable (${size}px)`);
+    assert.ok(Math.max(...lines.map(l => l.length)) * size * 0.56 <= 141 + 1, `${label} fits the width`);
+  }
+});
