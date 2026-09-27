@@ -5,7 +5,7 @@ import { promptCommand } from './promptMode.ts';
 import { STOPPABLE } from '../store.ts';
 import { clampText } from './clampText.ts';
 
-export const DEFAULT_PROMPT = 'Build a modern, serious-looking website for Rivera Construction. Use the photos in /Clients/Rivera/Photos and the company info in /Clients/Rivera/About and /Clients/Rivera/Services.';
+export const DEFAULT_PROMPT = "Build a modern, serious-looking website for Rivera Construction with a gallery of this year's projects. Use the photos in ~/Clients/Rivera/Photos and the company info in ~/Clients/Rivera/About and ~/Clients/Rivera/Services.";
 // Typing helpers only: they fill the box, the engine decides what happens.
 const SUGGESTIONS = ['Add a careers page using the job descriptions in ~/Documents/Rivera-HR', 'Make the header darker'];
 
