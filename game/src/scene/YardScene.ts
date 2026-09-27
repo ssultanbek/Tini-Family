@@ -118,16 +118,36 @@ export class YardScene extends Phaser.Scene {
       this.segmentViews.set(segment.id, { signature, objects: this.drawSegment(segment, slot, instant) });
     });
     this.drawHedge(state.world.segments.length);
+    this.mac?.request(state.world.openEscalation?.requested ?? null);
     this.family?.sync(state.world, instant);
     if (this.bricks !== state.world.bricks) this.drawHouse(state.world);
   }
 
-  /** Wrap sentences; shrink a single long word (like a folder path) instead of splitting it mid-word. */
+  /** Wrap sentences; break a long path at its slashes (never mid-name); shrink only what still does not fit. */
   private fitText(text: Phaser.GameObjects.Text, maxWidth: number) {
     if (text.width <= maxWidth) return text;
-    if (/\s/.test(text.text.trim())) return text.setWordWrapWidth(maxWidth, true);
+    const value = text.text.trim();
+    if (/\s/.test(value)) return text.setWordWrapWidth(maxWidth, true);
+    const parts = value.split(/(?<=\/)/);
+    if (parts.length > 1) {
+      const lines: string[] = [];
+      for (const part of parts) {
+        const line = lines.at(-1);
+        if (line !== undefined && text.setText(line + part).width <= maxWidth) lines[lines.length - 1] = line + part;
+        else lines.push(part);
+      }
+      text.setText(lines.slice(0, 2).join('\n'));
+      if (text.width <= maxWidth && lines.length <= 2) return text;
+    }
+    return this.fitLine(text, maxWidth);
+  }
+
+  /** Keep one line (a sign title): shrink the font just enough, never below the readable minimum. */
+  private fitLine(text: Phaser.GameObjects.Text, maxWidth: number) {
+    if (text.width <= maxWidth) return text;
     const size = parseFloat(String(text.style.fontSize));
-    return text.setFontSize(Math.max(L.type.minFit, Math.floor(size * maxWidth / text.width)));
+    // Bold canvas text renders a little wider than it measures; keep a margin so it is never clipped.
+    return text.setFontSize(Math.max(L.type.minFit, Math.floor(size * maxWidth * 0.92 / text.width)));
   }
 
   /** A hedge seals every left-side slot (facing the Mac) that has no fence segment yet. */
@@ -174,13 +194,23 @@ export class YardScene extends Phaser.Scene {
     }
     const sign = this.add.container(slot.labelX, slot.labelY);
     const s = L.sign;
+    const inner = s.width - s.padding * 2;
+    // A long title wraps rather than shrinking past readable; the sign then grows to fit its lines.
+    const title = this.text(0, 0, segment.label, L.type.label, undefined, true);
+    if (title.width > inner) {
+      if (/\s/.test(segment.label.trim())) title.setWordWrapWidth(inner, true);
+      else this.fitLine(title, inner);
+    }
+    const detail = this.fitText(this.text(0, 0, segment.detail), inner);
+    const status = this.text(0, 0, style.label, L.type.small, style.text, true);
+    const lines = [title, detail, status];
+    const height = Math.max(s.height, lines.reduce((sum, line) => sum + line.height, 0) + s.lineGap * 2 + s.padding * 2);
+    let y = -height / 2 + s.padding;
+    for (const line of lines) { line.setY(y + line.height / 2); y += line.height + s.lineGap; }
     const plate = this.add.graphics();
-    plate.fillStyle(0x203523, 0.1).fillRect(-s.width / 2 + s.shadow, -s.height / 2 + s.shadow, s.width, s.height);
-    plate.fillStyle(0xfffdf4).fillRect(-s.width / 2, -s.height / 2, s.width, s.height);
-    plate.lineStyle(f.stroke, style.color).strokeRect(-s.width / 2, -s.height / 2, s.width, s.height);
-    const title = this.text(0, s.titleY, segment.label, L.type.label, undefined, true);
-    const detail = this.fitText(this.text(0, s.detailY, segment.detail), s.width - s.padding * 2);
-    const status = this.text(0, s.statusY, style.label, L.type.small, style.text, true);
+    plate.fillStyle(0x203523, 0.1).fillRect(-s.width / 2 + s.shadow, -height / 2 + s.shadow, s.width, height);
+    plate.fillStyle(0xfffdf4).fillRect(-s.width / 2, -height / 2, s.width, height);
+    plate.lineStyle(f.stroke, style.color).strokeRect(-s.width / 2, -height / 2, s.width, height);
     sign.add([plate, title, detail, status]);
     // Snapshot/reset is a static redraw. Live status effects never queue or delay facts.
     if (!instant && !this.reducedMotion) {

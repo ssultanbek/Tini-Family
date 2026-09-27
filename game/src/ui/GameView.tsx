@@ -66,6 +66,8 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
   const [raw, setRaw] = useState(false);
   const [reportMode, setReportMode] = useState<ReportMode>('auto');
   const log = useRef<HTMLDivElement>(null);
+  const analysis = useRef<HTMLElement>(null);
+  const chat = useRef<HTMLDivElement>(null);
   const available = connected && synced;
   const busy = (command: GameCommand) => !available || pending.includes(commandKey(command));
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [events.length, raw]);
@@ -79,6 +81,12 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
   const latestBlock = world.blocked.at(-1);
   const needsYou = !!world.contract || !!escalation || world.findings.length > 0 || fixed.length > 0;
   const launch: GameCommand = { type: 'launch' };
+  // A new decision (plan, request, red finding) brings the Needs-you cards back into view.
+  const decisions = [world.contract?.title, escalation?.escalationId, ...world.findings.map(finding => finding.id)].join('|');
+  useEffect(() => { if (decisions && analysis.current) analysis.current.scrollTop = 0; }, [decisions]);
+  // The chat follows the newest message, like a messenger.
+  const lastTurn = world.turns.at(-1);
+  useEffect(() => { if (chat.current) chat.current.scrollTop = chat.current.scrollHeight; }, [world.turns.length, lastTurn?.summary, world.phase]);
 
   return <MotionConfig reducedMotion="user"><div className="app game-app gv" style={gameLayout as CSSProperties}>
     <header className="gv-top">
@@ -97,22 +105,20 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
     <main className="gv-cols">
       <aside className="gv-panel gv-chat-panel" aria-label="Chat">
         <h2>Chat</h2>
-        <div className="gv-chat-scroll"><ChatHistory world={world} /></div>
+        <div className="gv-chat-scroll" ref={chat}><ChatHistory world={world} /></div>
         <PromptBar compact world={world} send={send} available={available} pending={pending} epoch={state.epoch} />
       </aside>
 
       <section className="gv-center" aria-label="The yard"><Yard /></section>
 
-      <aside className="gv-panel gv-analysis" aria-label="Analysis">
+      <aside className="gv-panel gv-analysis" aria-label="Analysis" ref={analysis}>
         <h2>Analysis</h2>
         <section className="gv-needs" aria-label="Needs you">
           <span className="gv-label">{needsYou ? 'Needs you' : 'All quiet'}</span>
           {!needsYou && <p className="gv-quiet">Nothing to decide right now.</p>}
           <AnimatePresence initial={false}>
           {world.contract && <MotionCard key="contract" title={world.contract.title} className="action-card">
-            <span className="gv-label">Allowed</span><Lines items={world.contract.allowed} />
-            {world.contract.stripped.length > 0 && <><span className="gv-label">Removed first</span><Lines items={world.contract.stripped} /></>}
-            <p className="gv-small">{world.contract.outside}</p>
+            {/* The decision first; the engine's detail lines follow, so Approve never hides below the fold. */}
             <button className="gv-btn" disabled={busy({ type: 'approve.plan' }) || world.phase !== 'contract'} onClick={() => send({ type: 'approve.plan' })}>{pending.includes('approve.plan') ? 'Approving…' : world.phase === 'contract' ? 'Approve' : 'Tini is updating the plan…'}</button>
             <details className="gv-adjust"><summary>Ask for a change</summary>
               <form className="adjust" onSubmit={e => { e.preventDefault(); if (send({ type: 'adjust.plan', text: adjustment.trim() })) setAdjustSent(true); }}>
@@ -122,6 +128,9 @@ export function GameView({ send }: { send: (command: GameCommand) => boolean }) 
                 {adjustSent && <p role="status" className="gv-small">Sent. Tini is updating the plan…</p>}
               </form>
             </details>
+            <span className="gv-label">Allowed</span><Lines items={world.contract.allowed} />
+            {world.contract.stripped.length > 0 && <><span className="gv-label">Removed first</span><Lines items={world.contract.stripped} /></>}
+            <p className="gv-small">{world.contract.outside}</p>
           </MotionCard>}
           {escalation && <MotionCard key={escalation.escalationId} title={escalation.source === 'prompt' ? 'Your request needs something outside the fence' : 'Claude is asking for more'} className="action-card">
             <p>{escalation.ask}</p><p className="path">{escalation.requested}</p>

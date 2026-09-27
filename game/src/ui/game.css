@@ -162,3 +162,11 @@ body:has(.gv) { background: #f1f3f4; }
 /* Messenger behaviour: the chat sits at the bottom and opens scrolled to the newest message. */
 .gv .gv-chat-scroll { display: flex; flex-direction: column-reverse; }
 .gv .prompt-bar.working > span[role="status"] { flex: 1 1 0; }
+
+/* Demo walkthrough fixes */
+.gv .gv-chat-scroll { display: flex; flex-direction: column; }
+.gv .gv-chat-scroll > .chat, .gv .gv-chat-scroll > .chat-empty { margin-top: auto; }
+.gv .msg .typing { letter-spacing: normal; font-weight: 600; font-size: 15px; }
+.gv .gv-fence li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.gv .action-card > .gv-btn { margin-top: 2px; }
+.gv .family-bubble { transform: translate(-50%, calc(-100% - var(--lift, 0px))); }

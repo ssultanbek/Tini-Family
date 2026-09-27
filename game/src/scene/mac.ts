@@ -79,6 +79,24 @@ export class MacHouse {
     this.scene.tweens.add({ targets: parts, alpha: { from: 1, to: 0 }, delay: m.flashMs * 0.55, duration: m.flashMs * 0.45, onComplete: done });
   }
 
+  /** While an escalation is open, the room holding the requested folder glows amber ("ASKED"). State-driven. */
+  private asked?: { id: MacRoomId; parts: Phaser.GameObjects.GameObject[] };
+  request(target: string | null) {
+    const id = target ? macRoomFor(target) : null;
+    if (this.asked?.id === id) return;
+    this.asked?.parts.forEach(part => part.destroy());
+    this.asked = undefined;
+    const room = id && this.rooms.get(id);
+    if (!id || !room) return;
+    const glow = this.scene.add.graphics().setDepth(4);
+    glow.fillStyle(0xf2b705, 0.28).fillRect(room.x, room.y, room.width, room.height);
+    glow.lineStyle(5, 0xd99a00).strokeRect(room.x, room.y, room.width, room.height);
+    const stamp = this.text(room.x + room.width - 12, room.y + 16, 'ASKED', L.type.small, '#3a2a00', true).setOrigin(1, 0.5)
+      .setBackgroundColor('#f2b705').setPadding(6, 2, 6, 2).setDepth(5);
+    if (!this.reducedMotion) this.scene.tweens.add({ targets: glow, alpha: { from: 1, to: 0.55 }, duration: 700, yoyo: true, repeat: -1 });
+    this.asked = { id, parts: [glow, stamp] };
+  }
+
   /** Snapshots and resets redraw instantly: drop any pointer still on screen. */
   clear() {
     for (const part of this.transient) part.destroy();

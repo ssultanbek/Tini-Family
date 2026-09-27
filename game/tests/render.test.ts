@@ -102,3 +102,14 @@ test('v1.3: a cleared finding card says "Cleared" with the reason, then leaves w
   store.event({ actor: 'tina', type: 'segment.green', segmentId: 'photos', seq: 803, ts: 0 });
   assert.ok(!page().includes('✓ Cleared'), 'gone once Tina turns the segment green');
 });
+
+test('suggestion chips hide prompts already sent in this project', async () => {
+  const { store } = await vite.ssrLoadModule('/src/store.ts') as typeof import('../src/store.ts');
+  const { GameView } = await vite.ssrLoadModule('/src/ui/GameView.tsx') as typeof import('../src/ui/GameView.tsx');
+  const { initialState } = await import('../../shared/reducer.ts');
+  store.connection(true);
+  store.snapshot({ ...initialState(), seq: 900, phase: 'ready', turns: [{ id: 1, prompt: 'Build it', summary: 'Built.' }, { id: 2, prompt: 'Make the header darker', summary: 'Done.' }] });
+  const html = renderToString(createElement(GameView, { send: () => true }));
+  assert.ok(!html.includes('>Make the header darker</button>'), 'already sent');
+  assert.ok(html.includes('Rivera-HR</button>'), 'not sent yet, still offered');
+});
