@@ -139,7 +139,7 @@ export function House({ bricks, epoch }: { bricks: number; epoch: number }) {
 
     {landed && st.courses > 0 && <LandingBrick key={`${epoch}-${bricks}`} x={landing.x} y={Math.min(wallTop, fullTop) + 0.12} z={landing.z} />}
 
-    <Html position={[r.x - w * 0.62, 0.35, r.z + d / 2 + 0.9]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[8, 0]} className="d3-tag house">
+    <Html position={[r.x, fullTop + H.roofRise * st.roof + 0.55, r.z + d * 0.28]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[8, 0]} className="d3-tag house">
       {st.lit ? 'The project · complete' : 'The project'}<span>{bricks} {bricks === 1 ? 'brick' : 'bricks'}</span>
     </Html>
   </group>;

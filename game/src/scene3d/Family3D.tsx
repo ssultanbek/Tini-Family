@@ -267,7 +267,7 @@ function Dog({ body, world }: { body: Body; world: WorldState }) {
   const furMat = <meshStandardMaterial color={fur} roughness={1} />;
   return <group ref={set('root')}>
     <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.45, 16]} /><meshBasicMaterial color="#000" transparent opacity={0.16} depthWrite={false} /></mesh>
-    <group ref={set('body')}>
+    <group scale={1.5}><group ref={set('body')}>
       {/* stubby legs */}
       {([[-0.17, 'legL'], [0.17, 'legR']] as const).map(([x, key]) => <group key={key} position={[x, 0.24, 0]} ref={set(key)}>
         <mesh position={[0, -0.12, 0]} castShadow><capsuleGeometry args={[0.11, 0.1, 4, 10]} />{furMat}</mesh>
@@ -292,8 +292,8 @@ function Dog({ body, world }: { body: Body; world: WorldState }) {
         <mesh position={[-0.07, -0.03, 0]} rotation={[0, 0, 0.7]}><boxGeometry args={[0.1, 0.035, 0.02]} /><meshStandardMaterial color={mark} /></mesh>
         <mesh position={[0.07, -0.06, 0]}><boxGeometry args={[0.12, 0.035, 0.02]} /><meshStandardMaterial color={mark} /></mesh>
       </group>
-    </group>
-    <Html position={[0, 1.65, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[12, 0]} className="d3-name">
+    </group></group>
+    <Html position={[0, 2.45, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[12, 0]} className="d3-name">
       {asleep ? 'Agent · Zzz' : world.dog === 'waiting' ? 'Agent · ?' : 'Agent'}
     </Html>
     <Bubble body={body} kind="dog" />
@@ -323,7 +323,7 @@ function Bubble({ body, kind }: { body: Body; kind: AnimatedActor }) {
     if (live !== text) setText(live);
   });
   if (!text) return null;
-  return <Html position={[0, kind === 'dog' ? 2.1 : 2.45, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[20, 0]}>
+  return <Html position={[0, kind === 'dog' ? 2.95 : 2.45, 0]} transform sprite distanceFactor={D.sign.scale} zIndexRange={[20, 0]}>
     <div className={`d3-bubble ${kind}`}><strong>{kind === 'tini' ? 'Tini' : kind === 'tina' ? 'Tina' : 'Agent'}</strong><p>{text}</p></div>
   </Html>;
 }
