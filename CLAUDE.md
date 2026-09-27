@@ -36,7 +36,7 @@ Feature freeze **3:00 AM Sunday** (revised Sat 6:30 PM; see the schedule in docs
 | `mock/` | you | Fake engine on :4000 for the teammate. Keep it in sync with contract changes. |
 | `engine/` | you | Real engine. |
 | `game/` | teammate | Read-only for you. |
-| `landing/` | teammate | Public landing page. Never edit. |
+| `landing/` | Sultan's landing session | Public landing page (Vercel, root directory landing/). |
 | `docs/` | you + manager | Keep STATUS.md current. |
 
 ## How we work
