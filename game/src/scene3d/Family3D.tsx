@@ -14,7 +14,7 @@ import { route, toWorld, type XZ } from './world.ts';
 // ---------------------------------------------------------------------------------------------
 type Action = { name: string; start: number; duration: number; data?: number };
 type Effect = { id: number; kind: 'dust' | 'stars' | 'ring' | 'cards' | 'achoo' | 'check'; at: XZ; y: number; start: number; duration: number };
-type Body = {
+export type Body = {
   pos: XZ; yaw: number; path: XZ[]; speed: number; moving: boolean; walkPhase: number;
   action?: Action; carrying?: number; speech?: { text: string; until: number }; face?: number;
   arrive?: () => void;
@@ -43,32 +43,56 @@ function useFamily() {
   return bodies.current;
 }
 
-/** Wait for a body's action or walk to finish; abort snaps to the end state (or stops, on 'clear'). */
-function settle(body: Body, options: AnimationOptions, finish: () => void, ms: number) {
+/** One frame of walking: move along the path at body.speed (never jumping), face the travel direction, cycle the legs.
+ *  Leg cadence is capped so a hurrying character jogs instead of blurring. Exported for tests. */
+export function advance(body: Body, dt: number, cadence: number) {
+  if (!body.moving || !body.path.length) return;
+  const frame = Math.min(dt, 0.05);
+  let budget = body.speed * frame;
+  while (budget > 0 && body.path.length) {
+    const target = body.path[0];
+    const dx = target.x - body.pos.x, dz = target.z - body.pos.z, d = Math.hypot(dx, dz);
+    if (d > 1e-4) body.face = Math.atan2(dx, dz);
+    const step = Math.min(d, budget);
+    if (d > 1e-4) body.pos = { x: body.pos.x + dx / d * step, z: body.pos.z + dz / d * step };
+    budget -= step;
+    if (d - step < 0.02) { body.pos = { ...target }; body.path.shift(); }
+  }
+  if (!body.path.length) { body.moving = false; body.arrive?.(); }
+  body.walkPhase += frame * Math.min(body.speed, M.walk * 1.8) * cadence;
+}
+
+/** Wait for a walk or action to finish. Never snaps: on abort or timeout the body keeps moving on screen
+ *  toward its target; only the queue moves on. (The queue gives each event ~1.6s; 3D walks can be longer.) */
+function settle(body: Body, options: AnimationOptions, ms: number, onArrive = false) {
   return new Promise<void>(resolve => {
     let done = false;
-    const end = () => { if (done) return; done = true; clearTimeout(timer); options.signal.removeEventListener('abort', abort); resolve(); };
-    const abort = () => { if (options.signal.reason !== 'clear') finish(); end(); };
-    const timer = setTimeout(() => { finish(); end(); }, ms);
-    body.arrive = () => { finish(); end(); };
-    if (options.signal.aborted) abort(); else options.signal.addEventListener('abort', abort, { once: true });
+    const end = () => { if (done) return; done = true; clearTimeout(timer); options.signal.removeEventListener('abort', end); resolve(); };
+    const timer = setTimeout(end, ms);
+    if (onArrive) body.arrive = end;
+    if (options.signal.aborted) end(); else options.signal.addEventListener('abort', end, { once: true });
   });
 }
-const factor = (options: AnimationOptions) => options.speed === 'fast' ? M.fastFactor : 1;
+/** Time budget per walk: normal events stroll, a backed-up queue makes characters hurry, never teleport. */
+const walkBudget = (options: AnimationOptions) => options.speed === 'instant' ? M.budget.instant : options.speed === 'fast' ? M.budget.fast : M.budget.walk;
+const actBudget = (options: AnimationOptions) => options.speed === 'instant' ? M.budget.actInstant : options.speed === 'fast' ? M.fastFactor : 1;
 
 function walk(body: Body, to: XZ, options: AnimationOptions, pace = 1) {
   const points = route(body.pos, to);
-  if (options.speed === 'instant' || options.signal.aborted) { body.pos = to; body.path = []; body.moving = false; return Promise.resolve(); }
-  body.path = points; body.speed = M.walk * pace / factor(options); body.moving = true;
   const length = points.reduce((sum, p, i) => sum + Math.hypot(p.x - (i ? points[i - 1] : body.pos).x, p.z - (i ? points[i - 1] : body.pos).z), 0);
-  return settle(body, options, () => { body.pos = to; body.path = []; body.moving = false; }, (length / body.speed) * 1000 + 400);
+  if (length < 0.05) return Promise.resolve();
+  body.path = points; body.moving = true;
+  body.speed = Math.min(M.maxSpeed, Math.max(M.walk * pace, length / walkBudget(options)));
+  if (options.signal.aborted) return Promise.resolve();
+  return settle(body, options, (length / body.speed) * 1000 + 150, true);
 }
 
 function act(body: Body, name: string, seconds: number, options: AnimationOptions, data?: number) {
-  if (options.speed === 'instant' || options.signal.aborted) return Promise.resolve();
-  const duration = seconds * factor(options);
+  // Actions always show; a backed-up queue only shortens them.
+  const duration = Math.max(0.18, seconds * actBudget(options));
   body.action = { name, start: now(), duration, data };
-  return settle(body, options, () => { if (body.action?.name === name) body.action = undefined; }, duration * 1000);
+  if (options.signal.aborted) return Promise.resolve();
+  return settle(body, options, duration * 1000);
 }
 
 function speechSeconds(text: string) {
@@ -78,7 +102,7 @@ function speechSeconds(text: string) {
 // ---------------------------------------------------------------------------------------------
 // The per-event choreography (event → what each character does). Mirrors the spec table.
 // ---------------------------------------------------------------------------------------------
-async function animate(bodies: Record<AnimatedActor, Body>, event: EngineEvent, options: AnimationOptions) {
+export async function animate(bodies: Record<AnimatedActor, Body>, event: EngineEvent, options: AnimationOptions) {
   if (event.actor === 'system') return;
   const b = bodies[event.actor];
   switch (event.type) {
@@ -149,14 +173,7 @@ function usePose(body: Body, kind: AnimatedActor, parts: React.MutableRefObject<
     const p = parts.current, t = now();
     if (!p.root || !p.body) return;
     // Walk along the path, turning smoothly toward travel.
-    if (body.moving && body.path.length) {
-      const target = body.path[0];
-      const dx = target.x - body.pos.x, dz = target.z - body.pos.z, d = Math.hypot(dx, dz);
-      const step = Math.min(d, body.speed * Math.min(dt, 0.05));
-      if (d > 1e-4) { body.pos = { x: body.pos.x + dx / d * step, z: body.pos.z + dz / d * step }; body.face = Math.atan2(dx, dz); }
-      if (d - step < 0.02) { body.path.shift(); if (!body.path.length) { body.moving = false; body.arrive?.(); } }
-      body.walkPhase += dt * body.speed * (kind === 'dog' ? 5.5 : 4.2);
-    }
+    advance(body, dt, kind === 'dog' ? 5.5 : 4.2);
     const asking = kind === 'tini' && !!world.openEscalation && !body.moving;
     const wanted = asking ? Math.atan2(D.camera.position[0] - body.pos.x, D.camera.position[2] - body.pos.z) : body.face ?? body.yaw;
     const delta = ((wanted - body.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
