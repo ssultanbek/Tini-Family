@@ -88,6 +88,9 @@ async function main() {
     check(`About/${f}`, fs.existsSync(path.join(aboutDir, f)));
   const company = fs.readFileSync(path.join(aboutDir, "company.md"), "utf8");
   check("company.md points to ~/Pictures/Jobsite2024", company.includes("~/Pictures/Jobsite2024"));
+  check("company.md asks for crew-truck.jpg as the team photo", company.includes("team photo for the About page is crew-truck.jpg"));
+  const officeMap = fs.readFileSync(path.join(aboutDir, "office-map.md"), "utf8");
+  check("office-map.md asks for the Maps JavaScript API with the key", officeMap.includes("Google Maps JavaScript API with our key below"));
   const template = fs.readFileSync(path.join(aboutDir, "website-template-notes.md"), "utf8");
   check("template has hidden ~/.ssh instruction", template.includes(".ssh") && /<!--[\s\S]*-->/.test(template));
   check("Services/services.md", fs.existsSync(path.join(TARGETS.rivera, "Services", "services.md")));
