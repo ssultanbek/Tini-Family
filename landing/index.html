@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tini Family</title>
+<meta name="description" content="A safety crew for AI coding agents. Your agent gets the keys to the room, not the house.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='12' width='5' height='17' rx='1' fill='%232f9e5b'/%3E%3Crect x='13.5' y='8' width='5' height='21' rx='1' fill='%232f9e5b'/%3E%3Crect x='24' y='12' width='5' height='17' rx='1' fill='%232f9e5b'/%3E%3Crect x='2' y='16' width='28' height='3' fill='%232f9e5b'/%3E%3Crect x='2' y='23' width='28' height='3' fill='%232f9e5b'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fbf8f2;
+    --bg-alt: #f2ede3;
+    --card: #ffffff;
+    --ink: #1f2420;
+    --muted: #5b625c;
+    --line: #e2dccf;
+    --green: #2f9e5b;
+    --green-soft: #dff1e5;
+    --red: #d64545;
+    --red-soft: #fbe3e1;
+    --accent: #2c6cb0;
+    --grass: #cfe8c4;
+    --grass-2: #b9dcab;
+    --wood: #a67c52;
+    --house: #f4d8a8;
+    --roof: #7b5a3c;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151816;
+      --bg-alt: #1b1f1c;
+      --card: #20251f;
+      --ink: #eef0ea;
+      --muted: #a4aba3;
+      --line: #313730;
+      --green: #4cc27c;
+      --green-soft: #1e3a28;
+      --red: #f07070;
+      --red-soft: #3e2323;
+      --accent: #7fb2ea;
+      --grass: #2b3d2a;
+      --grass-2: #34492f;
+      --wood: #c49a6c;
+      --house: #8a7552;
+      --roof: #5e4630;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151816; --bg-alt: #1b1f1c; --card: #20251f; --ink: #eef0ea; --muted: #a4aba3; --line: #313730;
+    --green: #4cc27c; --green-soft: #1e3a28; --red: #f07070; --red-soft: #3e2323; --accent: #7fb2ea;
+    --grass: #2b3d2a; --grass-2: #34492f; --wood: #c49a6c; --house: #8a7552; --roof: #5e4630;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 64px 0; }
+  section.alt { background: var(--bg-alt); }
+  h1, h2, h3 { line-height: 1.2; margin: 0 0 .5em; letter-spacing: -.01em; }
+  h1 { font-size: clamp(32px, 5.4vw, 54px); font-weight: 800; }
+  h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 750; }
+  h3 { font-size: 20px; font-weight: 700; }
+  p { margin: 0 0 1em; }
+  .lead { font-size: 19px; color: var(--muted); max-width: 640px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--green); margin-bottom: 10px; }
+
+  /* nav */
+  nav { border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: var(--ink); text-decoration: none; }
+  .brand svg { width: 26px; height: 26px; }
+  nav ul { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; font-size: 15px; }
+  nav ul a { color: var(--muted); text-decoration: none; }
+  nav ul a:hover { color: var(--ink); }
+  @media (max-width: 640px) { nav ul li.opt { display: none; } }
+
+  /* hero */
+  .hero { padding: 56px 0 40px; }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
+  @media (min-width: 880px) { .hero-grid { grid-template-columns: 1.05fr 1fr; } }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-weight: 650; font-size: 16px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
+  .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+  :root[data-theme="dark"] .btn.primary { color: #0f1a13; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0f1a13; } }
+  .btn svg { width: 18px; height: 18px; }
+  .scene { width: 100%; height: auto; display: block; border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
+
+  /* cards */
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .grid.three { grid-template-columns: repeat(3, 1fr); } .grid.two { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+  .card p:last-child { margin-bottom: 0; }
+  .card .icon { width: 40px; height: 40px; margin-bottom: 12px; }
+  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-weight: 800; font-size: 14px; align-items: center; justify-content: center; margin-right: 8px; }
+  .muted { color: var(--muted); }
+
+  /* problem stats row */
+  .compare { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 28px; }
+  @media (min-width: 720px) { .compare { grid-template-columns: 1fr 1fr; } }
+  .compare .card h3 { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  ul.clean { margin: 0; padding-left: 20px; }
+  ul.clean li { margin-bottom: 6px; }
+
+  /* steps */
+  .steps { display: grid; gap: 28px; }
+  .step { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: center; }
+  @media (min-width: 820px) { .step { grid-template-columns: 220px 1fr; } }
+  .step svg { width: 100%; max-width: 220px; height: auto; }
+  .fence-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+  .seg { font-size: 14px; font-weight: 650; padding: 5px 12px; border-radius: 999px; border: 1px solid; }
+  .seg.g { color: var(--green); background: var(--green-soft); border-color: var(--green); }
+  .seg.r { color: var(--red); background: var(--red-soft); border-color: var(--red); }
+
+  /* privacy */
+  .split { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .split { grid-template-columns: 1fr 1fr; } }
+  .who { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+
+  /* video */
+  .video { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--card); box-shadow: var(--shadow); }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  /* team */
+  .team { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 600px) { .team { grid-template-columns: repeat(2, 1fr); } }
+  .person { display: flex; gap: 16px; align-items: center; }
+  .avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--bg-alt); border: 1px dashed var(--line); display: flex; align-items: center; justify-content: center; }
+  .avatar svg { width: 36px; height: 36px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 15px; color: var(--muted); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; background: var(--bg-alt); padding: 1px 5px; border-radius: 5px; }
+</style>
+</head>
+<body>
+
+<!-- Reusable character drawings: our own simple shapes (Tini, Tina, the dog). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Tini: builder cap, blue shirt, carries a key -->
+    <symbol id="tini" viewBox="0 0 60 100">
+      <rect x="18" y="80" width="9" height="18" rx="3" fill="#3b4a5a"/>
+      <rect x="33" y="80" width="9" height="18" rx="3" fill="#3b4a5a"/>
+      <rect x="12" y="42" width="36" height="42" rx="12" fill="#3f7fc4"/>
+      <rect x="5" y="46" width="9" height="28" rx="4.5" fill="#3f7fc4"/>
+      <rect x="46" y="46" width="9" height="28" rx="4.5" fill="#3f7fc4"/>
+      <circle cx="30" cy="26" r="15" fill="#e9b98f"/>
+      <path d="M14 22 Q30 4 46 22 Z" fill="#f2b632"/>
+      <rect x="12" y="20" width="38" height="5" rx="2.5" fill="#f2b632"/>
+      <circle cx="25" cy="28" r="1.8" fill="#2a2a2a"/>
+      <circle cx="35" cy="28" r="1.8" fill="#2a2a2a"/>
+      <path d="M25 34 Q30 38 35 34" stroke="#2a2a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <circle cx="50.5" cy="76" r="4" fill="none" stroke="#f2b632" stroke-width="2.5"/>
+      <rect x="49.3" y="79" width="2.4" height="9" fill="#f2b632"/>
+      <rect x="51" y="84" width="3.5" height="2" fill="#f2b632"/>
+    </symbol>
+    <!-- Tina: green all over (she's allergic to red), holds a clipboard -->
+    <symbol id="tina" viewBox="0 0 60 100">
+      <rect x="20" y="82" width="8" height="16" rx="3" fill="#6b4f3a"/>
+      <rect x="32" y="82" width="8" height="16" rx="3" fill="#6b4f3a"/>
+      <path d="M16 44 Q30 36 44 44 L50 86 Q30 92 10 86 Z" fill="#2f9e5b"/>
+      <circle cx="30" cy="25" r="15" fill="#c98f65"/>
+      <path d="M14 26 Q13 8 30 8 Q47 8 46 26 Q44 16 30 15 Q16 16 14 26 Z" fill="#3a2a22"/>
+      <circle cx="46" cy="18" r="5" fill="#3a2a22"/>
+      <circle cx="25" cy="27" r="1.8" fill="#2a2a2a"/>
+      <circle cx="35" cy="27" r="1.8" fill="#2a2a2a"/>
+      <path d="M25 33 Q30 37 35 33" stroke="#2a2a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <rect x="2" y="50" width="16" height="21" rx="2" fill="#f5efe0" stroke="#8a6f4e" stroke-width="1.5"/>
+      <rect x="6" y="48" width="8" height="4" rx="1" fill="#8a6f4e"/>
+      <path d="M5.5 58 l2.5 2.5 l4.5 -5" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M5.5 65 l2.5 2.5 l4.5 -5" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- The dog: the coding agent, building inside the yard -->
+    <symbol id="dog" viewBox="0 0 80 60">
+      <path d="M8 26 Q2 18 6 12" stroke="#b07a45" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="32" cy="34" rx="24" ry="14" fill="#c8894f"/>
+      <rect x="14" y="40" width="7" height="16" rx="3" fill="#b07a45"/>
+      <rect x="40" y="40" width="7" height="16" rx="3" fill="#b07a45"/>
+      <circle cx="58" cy="22" r="13" fill="#c8894f"/>
+      <ellipse cx="68" cy="27" rx="8" ry="6" fill="#e8c19a"/>
+      <circle cx="73" cy="25" r="2.6" fill="#2a2a2a"/>
+      <path d="M49 12 Q44 26 52 30 Q54 20 49 12 Z" fill="#8a5a30"/>
+      <circle cx="60" cy="19" r="2" fill="#2a2a2a"/>
+      <rect x="44" y="24" width="4" height="12" rx="2" fill="#2f9e5b" transform="rotate(20 46 30)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="12" width="5" height="17" rx="1" fill="var(--green)"/><rect x="13.5" y="8" width="5" height="21" rx="1" fill="var(--green)"/><rect x="24" y="12" width="5" height="17" rx="1" fill="var(--green)"/><rect x="2" y="16" width="28" height="3" fill="var(--green)"/><rect x="2" y="23" width="28" height="3" fill="var(--green)"/></svg>
+      Tini Family
+    </a>
+    <ul>
+      <li class="opt"><a href="#problem">Problem</a></li>
+      <li class="opt"><a href="#how">How it works</a></li>
+      <li class="opt"><a href="#privacy">Privacy</a></li>
+      <li><a href="#demo">Demo</a></li>
+      <li><a href="https://github.com/ssultanbek/Tini-Family">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">A safety crew for AI coding agents</div>
+      <h1>Your AI agent gets the keys to the room, not the house.</h1>
+      <p class="lead">Tini reads your prompt and builds a fence around only what the agent needs. Tina checks everything that comes in and everything that goes out. The agent builds inside the yard, and nothing leaves until every part of the fence is green.</p>
+      <div class="cta">
+        <a class="btn primary" href="#demo">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4 L16 10 L6 16 Z" fill="currentColor"/></svg>
+          Watch the demo
+        </a>
+        <a class="btn" href="https://github.com/ssultanbek/Tini-Family">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5 L2 10 L7 15 M13 5 L18 10 L13 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Source on GitHub
+        </a>
+      </div>
+    </div>
+
+    <svg class="scene" viewBox="0 0 520 380" role="img" aria-label="A yard with a green fence around one small room. The dog builds a house inside. Tini stands at the gate with a key, Tina checks her clipboard. Outside the fence, the rest of the computer: Documents, Photos, SSH keys, Passwords, all locked.">
+      <!-- the big house: the rest of your computer -->
+      <rect x="0" y="0" width="520" height="380" fill="var(--grass)"/>
+      <path d="M0 300 Q130 280 260 300 T520 296 L520 380 L0 380 Z" fill="var(--grass-2)"/>
+      <g opacity=".9">
+        <text x="24" y="34" font-size="13" font-weight="700" fill="var(--muted)" font-family="inherit">Your computer</text>
+        <g font-size="11" font-family="inherit" fill="var(--muted)">
+          <rect x="24" y="46" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
+          <text x="34" y="72">Documents</text>
+          <rect x="24" y="96" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
+          <text x="34" y="122">Photos</text>
+          <rect x="24" y="146" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
+          <text x="34" y="172">SSH keys</text>
+          <rect x="24" y="196" width="92" height="42" rx="6" fill="var(--card)" stroke="var(--line)"/>
+          <text x="34" y="222">Passwords</text>
+        </g>
+        <g fill="var(--muted)">
+          <rect x="100" y="60" width="9" height="8" rx="1.5"/><path d="M101.5 60 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
+          <rect x="100" y="110" width="9" height="8" rx="1.5"/><path d="M101.5 110 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
+          <rect x="100" y="160" width="9" height="8" rx="1.5"/><path d="M101.5 160 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
+          <rect x="100" y="210" width="9" height="8" rx="1.5"/><path d="M101.5 210 v-3 a3 3 0 0 1 6 0 v3" stroke="var(--muted)" stroke-width="1.6" fill="none"/>
+        </g>
+      </g>
+
+      <!-- the yard -->
+      <rect x="160" y="60" width="330" height="220" rx="10" fill="var(--grass-2)" opacity=".55"/>
+      <!-- the house the dog builds -->
+      <g transform="translate(300 100)">
+        <path d="M0 50 L60 8 L120 50 Z" fill="var(--roof)"/>
+        <rect x="10" y="50" width="100" height="72" fill="var(--house)"/>
+        <g stroke="var(--wood)" stroke-width="1" opacity=".5">
+          <line x1="10" y1="68" x2="110" y2="68"/><line x1="10" y1="86" x2="110" y2="86"/><line x1="10" y1="104" x2="110" y2="104"/>
+        </g>
+        <rect x="48" y="88" width="24" height="34" rx="2" fill="var(--roof)"/>
+        <rect x="20" y="62" width="18" height="16" rx="2" fill="#bfe0f2"/>
+        <rect x="82" y="62" width="18" height="16" rx="2" fill="#bfe0f2"/>
+      </g>
+      <use href="#dog" x="222" y="186" width="80" height="60"/>
+      <!-- bricks -->
+      <g fill="#c86a3c"><rect x="236" y="248" width="16" height="8" rx="1.5"/><rect x="254" y="248" width="16" height="8" rx="1.5"/><rect x="245" y="239" width="16" height="8" rx="1.5"/></g>
+
+      <!-- the fence: labelled green segments -->
+      <g>
+        <g stroke="var(--green)" stroke-width="5" stroke-linecap="round">
+          <line x1="160" y1="60" x2="490" y2="60"/>
+          <line x1="490" y1="60" x2="490" y2="280"/>
+          <line x1="160" y1="280" x2="290" y2="280"/>
+          <line x1="360" y1="280" x2="490" y2="280"/>
+          <line x1="160" y1="60" x2="160" y2="280"/>
+        </g>
+        <g fill="var(--green)">
+          <circle cx="160" cy="60" r="6"/><circle cx="270" cy="60" r="6"/><circle cx="380" cy="60" r="6"/><circle cx="490" cy="60" r="6"/>
+          <circle cx="490" cy="170" r="6"/><circle cx="490" cy="280" r="6"/><circle cx="160" cy="170" r="6"/><circle cx="160" cy="280" r="6"/>
+          <circle cx="290" cy="280" r="6"/><circle cx="360" cy="280" r="6"/>
+        </g>
+        <g font-size="11" font-weight="700" font-family="inherit" fill="var(--green)" text-anchor="middle">
+          <text x="215" y="52">Photos</text><text x="325" y="52">About</text><text x="435" y="52">Services</text>
+        </g>
+      </g>
+      <!-- a blocked attempt at the fence -->
+      <g transform="translate(150 150)">
+        <path d="M-10 0 l6 -6 l-2 5 l7 -2 l-6 7 l2 -4 z" fill="#f2b632"/>
+        <path d="M-12 12 l7 -3 l-3 5 z" fill="#f2b632"/>
+      </g>
+      <!-- Tini at the gate, Tina inspecting -->
+      <use href="#tini" x="298" y="262" width="54" height="90"/>
+      <use href="#tina" x="408" y="276" width="50" height="84"/>
+      <g transform="translate(440 256)">
+        <rect x="0" y="0" width="68" height="22" rx="11" fill="var(--card)" stroke="var(--green)"/>
+        <text x="34" y="15" font-size="11" font-weight="700" text-anchor="middle" fill="var(--green)" font-family="inherit">all green</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">The problem</div>
+    <h2>Coding agents can reach your whole computer.</h2>
+    <p class="lead">An agent like Claude Code runs on your laptop with your permissions. Asked to build a small website, it can open your photos, your documents and your keys. It asks before it acts, but after the fortieth "Yes" nobody is reading anymore.</p>
+    <div class="compare">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--red)"></span>What can go wrong</h3>
+        <ul class="clean">
+          <li><strong>Over-access.</strong> The agent can read far more than the job needs: a whole Pictures folder, HR files, credentials.</li>
+          <li><strong>Leaks at launch.</strong> What it builds can ship an API key in page code, or photos that still carry GPS and the owner's name.</li>
+          <li><strong>Hidden instructions.</strong> A downloaded template can tell the agent to read your SSH key.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>The protections already exist</h3>
+        <p>Claude Code ships permission rules, hooks and an operating-system sandbox. But by default the sandbox lets commands read the entire computer, <code>~/.ssh</code> included, and almost nobody writes these rules by hand for every task.</p>
+        <p class="muted">The sandbox exists. Nobody configures it. Tini writes the borders for you, from what you asked for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Least privilege, written from your prompt.</h2>
+    <p class="lead">You type what you want, the way you'd give a work order. The family takes it from there.</p>
+
+    <div class="steps" style="margin-top:32px">
+      <div class="step">
+        <svg viewBox="0 0 220 150" role="img" aria-label="Tini reading a prompt card">
+          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
+          <rect x="84" y="22" width="120" height="70" rx="8" fill="var(--card)" stroke="var(--line)"/>
+          <g fill="var(--line)"><rect x="96" y="36" width="92" height="6" rx="3"/><rect x="96" y="50" width="76" height="6" rx="3"/><rect x="96" y="64" width="84" height="6" rx="3"/></g>
+          <rect x="96" y="76" width="40" height="8" rx="4" fill="var(--green-soft)" stroke="var(--green)"/>
+          <use href="#tini" x="14" y="36" width="66" height="110"/>
+        </svg>
+        <div>
+          <h3><span class="num">1</span>Tini builds the fence from your prompt</h3>
+          <p>Code finds every folder your prompt names and checks each one: it must exist, sit in your home folder, and not be a private location. Tina pre-inspects those folders. You get one plain-English card: what the agent can use, what gets stripped (like GPS locations in photos), and "everything else on your Mac stays outside." One Approve replaces dozens of unread Yes clicks.</p>
+          <div class="fence-bar"><span class="seg g">Photos</span><span class="seg g">About</span><span class="seg g">Services</span><span class="seg g">Web packages</span><span class="seg g">Workspace</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <svg viewBox="0 0 220 150" role="img" aria-label="Three layers: copies, a check on every action, the OS sandbox">
+          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
+          <rect x="30" y="18" width="160" height="114" rx="12" fill="none" stroke="var(--green)" stroke-width="4"/>
+          <rect x="46" y="34" width="128" height="82" rx="9" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="8 6"/>
+          <rect x="62" y="50" width="96" height="50" rx="7" fill="var(--card)" stroke="var(--wood)" stroke-width="3"/>
+          <use href="#dog" x="80" y="56" width="60" height="45"/>
+        </svg>
+        <div>
+          <h3><span class="num">2</span>Three layers hold the fence</h3>
+          <ul class="clean">
+            <li><strong>Staged copies.</strong> The agent works in a fresh project folder. Tini copies in only the approved files, with photo locations removed. Your real folders are never opened by the agent.</li>
+            <li><strong>A check on every action.</strong> Every read, write, search and command goes through a hook. Anything outside the workspace, or any website not on the list, is denied on the spot with a plain reason.</li>
+            <li><strong>The OS sandbox.</strong> macOS's own sandbox backs the hook up, so a shell command can't read what the file tools can't.</li>
+          </ul>
+          <p class="muted" style="margin-top:10px">When the agent needs more, it asks. Tina inspects the folder first, and you pick the narrowest safe option, like "only the 12 job-site photos, locations removed."</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <svg viewBox="0 0 220 150" role="img" aria-label="Tina checking fence segments, one red turning green">
+          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
+          <g stroke-width="6" stroke-linecap="round">
+            <line x1="92" y1="40" x2="140" y2="40" stroke="var(--green)"/>
+            <line x1="150" y1="40" x2="198" y2="40" stroke="var(--red)"/>
+            <line x1="92" y1="80" x2="140" y2="80" stroke="var(--green)"/>
+            <line x1="150" y1="80" x2="198" y2="80" stroke="var(--green)"/>
+            <line x1="92" y1="120" x2="140" y2="120" stroke="var(--green)"/>
+            <line x1="150" y1="120" x2="198" y2="120" stroke="var(--green)"/>
+          </g>
+          <path d="M174 50 v14 m-5 -5 l5 5 l5 -5" stroke="var(--muted)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <use href="#tina" x="16" y="34" width="66" height="110"/>
+        </svg>
+        <div>
+          <h3><span class="num">3</span>Tina inspects before and after every turn</h3>
+          <p>Before folders come in, she counts GPS-tagged photos and finds private documents by their content, like a driver's license scan hidden among 1,212 files. After every turn, she scans what the agent wrote: secrets with gitleaks, leftover photo metadata, personal data and risky files. Each problem turns the segment it came from red, with a plain explanation and a one-click fix.</p>
+          <div class="fence-bar"><span class="seg r">Web packages: API key in page code</span><span class="seg g">Photos</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <svg viewBox="0 0 220 150" role="img" aria-label="A locked gate that opens when every segment is green">
+          <rect x="0" y="0" width="220" height="150" rx="14" fill="var(--bg-alt)"/>
+          <g stroke="var(--green)" stroke-width="6" stroke-linecap="round"><line x1="20" y1="100" x2="80" y2="100"/><line x1="140" y1="100" x2="200" y2="100"/></g>
+          <rect x="88" y="54" width="44" height="46" rx="4" fill="var(--card)" stroke="var(--green)" stroke-width="3"/>
+          <path d="M100 76 l7 7 l13 -14" stroke="var(--green)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="110" y="128" text-anchor="middle" font-size="13" font-weight="700" fill="var(--green)" font-family="inherit">Launch unlocked</text>
+        </svg>
+        <div>
+          <h3><span class="num">4</span>Nothing leaves until every segment is green</h3>
+          <p>Launch stays locked while any segment is red. Fix the problems and it opens. Ask for another change and it locks again until Tina has checked the new work. At the end you get an access report: what was allowed, blocked, narrowed and fixed, turn by turn, and which outside servers the site talks to.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section id="privacy" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Privacy by design</div>
+    <h2>AI never decides access.</h2>
+    <p class="lead">Checking your private photos by uploading them to a cloud AI would be the leak itself. So the safety decisions are plain code, and the AI only ever sees summaries.</p>
+    <div class="split" style="margin-top:28px">
+      <div class="card">
+        <div class="who" style="color:var(--green)">Plain code, on your Mac</div>
+        <ul class="clean">
+          <li>Finds the folders in your prompt and decides what's inside the fence</li>
+          <li>Copies files and strips photo locations</li>
+          <li>Checks every action the agent takes</li>
+          <li>Scans for secrets, metadata and personal data</li>
+          <li>Applies the fixes and rechecks</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="who" style="color:var(--accent)">The AI helper, on summaries only</div>
+        <ul class="clean">
+          <li>Writes the labels and plain-English explanations</li>
+          <li>Suggests which files in a folder match your request, from names and counts</li>
+          <li>Sees folder names, file counts and redacted snippets, never your files or secret values</li>
+          <li>Every answer is checked by code, and it can never add a file or grant access</li>
+        </ul>
+        <p class="muted" style="margin-top:12px">If the AI is down, saved answers and built-in wording take over. The fence doesn't depend on it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="wrap">
+    <div class="eyebrow">Demo</div>
+    <h2>Watch a build inside the fence.</h2>
+    <p class="lead">Maria, a business student, builds a website for a client. The agent gets three folders, asks for a fourth, gets only the 12 photos it needs, and ships nothing until Tina signs off. The SSH-key attack in the demo is simulated and labeled as such; it runs through the real fence checker.</p>
+    <div class="video">
+      <!-- TODO: replace srcdoc with the YouTube embed once the video is up, e.g.
+           src="https://www.youtube-nocookie.com/embed/VIDEO_ID" allow="encrypted-media; picture-in-picture" allowfullscreen -->
+      <iframe title="Tini Family demo video" loading="lazy"
+        srcdoc="<style>html,body{height:100%;margin:0}body{display:flex;align-items:center;justify-content:center;font:600 18px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#5b625c;background:#f2ede3}@media (prefers-color-scheme:dark){body{background:#1b1f1c;color:#a4aba3}}</style><p>Demo video coming soon</p>"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Team</div>
+    <h2>Who built it</h2>
+    <p class="lead">Built at ShellHacks 2026, with Claude Code working inside Tini's fence.</p>
+    <!-- TODO: team names, roles and links -->
+    <div class="team" style="margin-top:24px">
+      <div class="card person">
+        <div class="avatar"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="13" r="7" fill="var(--line)"/><path d="M5 34 Q18 16 31 34 Z" fill="var(--line)"/></svg></div>
+        <div><h3 style="margin:0">Team member</h3><p class="muted" style="margin:0">Engine, fence and inspections</p></div>
+      </div>
+      <div class="card person">
+        <div class="avatar"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="13" r="7" fill="var(--line)"/><path d="M5 34 Q18 16 31 34 Z" fill="var(--line)"/></svg></div>
+        <div><h3 style="margin:0">Team member</h3><p class="muted" style="margin:0">Game and interface</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Tini Family · ShellHacks 2026</span>
+    <a href="https://github.com/ssultanbek/Tini-Family">github.com/ssultanbek/Tini-Family</a>
+  </div>
+</footer>
+
+</body>
+</html>
