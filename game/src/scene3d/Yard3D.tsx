@@ -87,5 +87,6 @@ export default function Yard3D() {
       </Canvas>
     </div>
     <p className="yard-help">○ Planned &nbsp; ▤ Built &nbsp; ◉ Inspecting &nbsp; ⚠ Needs fix &nbsp; ✓ Green{fx ? '' : ' · effects off'} &nbsp;·&nbsp; Drag to turn · scroll to zoom · double-click to reset</p>
+    <p className="yard-note yard3d-credit">3D world, characters and props are built in code from simple shapes (no third-party models or textures). 2D backup art: Kenney Tiny Town &amp; Tiny Dungeon (CC0). Fonts: Bricolage Grotesque &amp; Instrument Sans (OFL).</p>
   </section>;
 }

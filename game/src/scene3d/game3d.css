@@ -63,3 +63,4 @@
 .d3-ask { font: 900 40px/1 "Bricolage Grotesque Variable", system-ui, sans-serif; color: #d99a00; pointer-events: none; }
 .gv .yard3d-stage { cursor: grab; }
 .gv .yard3d-stage:active { cursor: grabbing; }
+.gv .yard3d-credit { display: block; font-size: 12.5px; color: var(--gv-muted); background: var(--gv-card); padding: .2em 1em .5em; text-align: center; }
