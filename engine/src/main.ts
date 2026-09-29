@@ -60,7 +60,7 @@ startServer({ hub, driver, mode, port, gameDist: path.resolve(engineDir, "../gam
   })
   .catch((e) => { console.error(`could not listen on 127.0.0.1:${port}: ${(e as Error).message}`); process.exit(1); });
 
-// Shutdown: stop exiftool's background process (Stage 3/5 use the shared instance).
+// Shutdown: stop exiftool's background process (the stager and escalation use the shared instance).
 for (const sig of ["SIGINT", "SIGTERM"] as const) {
   process.once(sig, () => { void Promise.allSettled([exiftool.end(), stopSite()]).finally(() => process.exit(0)); });
 }

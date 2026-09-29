@@ -1,6 +1,6 @@
 // ============================================================================
-// TINI FAMILY EVENT CONTRACT  (v1.3)
-// Only Sultan edits this file. The game imports it; it never adds to it.
+// TINI FAMILY EVENT CONTRACT  (v1.4)
+// The engine side owns this file. The game imports it; it never adds to it.
 // Engine -> game: "event" messages (EngineEvent) and one "snapshot" on connect.
 // Game -> engine: "command" messages (GameCommand). Clicks only, never decisions.
 // A project is long-lived: Maria sends many prompts (turns) into the same fence,

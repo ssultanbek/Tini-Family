@@ -1,4 +1,4 @@
-// Stage 5 tests: Tina's folder inspection, the escalation card, applying each choice,
+// Tests: Tina's folder inspection, the escalation card, applying each choice,
 // a hostile tina.subset answer, a dead AI ladder, and the simulated attack harness
 // (with proof that nothing under ~/.ssh is ever opened). Uses the demo kit's folders.
 import fs from "node:fs"; import fsp from "node:fs/promises"; import os from "node:os"; import path from "node:path";

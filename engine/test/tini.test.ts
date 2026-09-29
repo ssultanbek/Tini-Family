@@ -1,4 +1,4 @@
-// Stage 3 tests: paths, planning (incl. a hostile AI answer and a dead ladder), staging,
+// Tini tests: paths, planning (incl. a hostile AI answer and a dead ladder), staging,
 // the per-turn access check and the prompt rewrite. Uses the demo kit's real folders.
 // Workspaces go to a temp TINI_PROJECTS_DIR so the test never clutters ~/tini-projects.
 import fs from "node:fs"; import os from "node:os"; import path from "node:path";

@@ -78,7 +78,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #17251e; color
 footer { margin-top: var(--gap); color: #53685a; }
 a { color: #205640; }
 
-/* Shared M1 controls form the React overlay; the canvas owns no input or state. */
+/* Shared controls form the React overlay; the canvas owns no input or state. */
 .yard-details { min-width: 0; }
 .yard-details > summary { display: none; }
 .yard-shell { display: grid; grid-template-columns: minmax(0, 1fr) var(--yard-controls-width); gap: var(--gap); align-items: start; }
@@ -108,10 +108,10 @@ a { color: #205640; }
 .bubble-dog { border-color: #a96624; }
 @media (max-width: 1100px) { .yard-stage { min-width: var(--yard-min-width); } }
 
-/* M4: cards animate in and out; a fixed finding turns green before it leaves. */
+/* Cards animate in and out; a fixed finding turns green before it leaves. */
 .finding.fixed { border-left-color: #397848; background: #f1f9f1; transition: background .3s, border-color .3s; }
 
-/* M4: access report end screen. */
+/* Access report end screen. */
 .report-reopen { margin-left: .6em; }
 .report-screen { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--page-padding); background: #0f1f18d9; overflow: auto; }
 .report-panel { width: min(1100px, 100%); max-height: calc(100vh - 2 * var(--page-padding)); overflow: auto; background: #fbfcf8; border-radius: calc(var(--radius) * 1.4); padding: calc(var(--card-padding) * 1.5); box-shadow: 0 24px 80px #0008; font-size: 19px; }
@@ -134,7 +134,7 @@ a { color: #205640; }
 .report-leaves li { margin: 0; padding: .3em .8em; border-radius: 999px; background: #ece8f6; color: #2e2350; }
 .report-actions { margin-top: calc(var(--gap) * 1.5); justify-content: flex-end; }
 
-/* M4: raw view drawer for engineer judges. */
+/* Raw view drawer for engineers. */
 .raw-toggle { font-family: ui-monospace, "SF Mono", Menlo, monospace; background: #17251e; border-color: #17251e; }
 .raw-toggle.on { background: #7ee2a8; border-color: #7ee2a8; color: #0d1712; }
 .raw-view { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 100vw); z-index: 15; display: flex; flex-direction: column; background: #0d1410; color: #d8e4dc; box-shadow: -12px 0 40px #0007; font: 16px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
@@ -160,7 +160,7 @@ a { color: #205640; }
 .json-key { color: #79c0ff; } .json-string { color: #a5d6a7; } .json-number { color: #f0a868; } .json-literal { color: #ff7b72; }
 .raw-empty { color: #6e8577; }
 
-/* M4: title bar. */
+/* Title bar. */
 .titlebar { background: #172f24; color: #fffdf4; padding: .9em 1.2em; border-radius: var(--radius); box-shadow: 0 4px 0 #0e1f17; }
 .brand { display: flex; align-items: center; gap: .9em; flex-wrap: wrap; }
 .brand-mark { display: grid; place-items: center; width: 2.2em; height: 2.2em; border-radius: 10px; background: #7ee2a8; color: #172f24; font-size: 24px; }
@@ -219,7 +219,7 @@ a { color: #205640; }
 .report-note { margin-top: .4em; padding: .4em .7em; border-radius: 8px; background: #fff3cc; color: #6b4e00; font-size: 16px; }
 
 /* ======================================================================================
-   "Iris & Fog" overrides for the game page only (docs/STYLE_GUIDE.md). Scoped to body:has(.app),
+   "Iris & Fog" overrides for the game page only. Scoped to body:has(.app),
    so the dashboard (/?view=dashboard) keeps its look. The yard column is pinned in game.css.
    ====================================================================================== */
 body:has(.app) textarea { border-color: var(--gv-line-strong); }

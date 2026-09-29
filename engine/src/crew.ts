@@ -1,6 +1,6 @@
 // The Crew: everything Tini, Tina and the dog actually do. project.ts owns the
-// phases, the turn loop and emit(); the crew only does the work. Stage 1 plugs in
-// the stand-ins (standins.ts); Stages 3-7 replace these functions one by one.
+// phases, the turn loop and emit(); the crew only does the work. standins.ts is a
+// test crew with no Claude or AI calls; live.ts composes the real modules.
 import type {
   AccessReport, Actor, ContractCard, EngineEvent, EscalationOption, Finding, InspectionHighlight, Segment, WorldState,
 } from "../../shared/events.ts";

@@ -1,4 +1,4 @@
-// Stage 4 probe: the OS sandbox now allows ~/.npm (package cache). Check that this is a
+// Probe: the OS sandbox allows ~/.npm (package cache). Check that this is a
 // real subpath rule, not a string prefix: ~/.npmrc-tini-probe (same ".npm" prefix) must stay
 // blocked, while ~/.npm is readable. Uses a hook bypass (cd; relative path), like spike check 3.
 // Run: cd engine && npx tsx --env-file=.env spike/probe-npm.ts

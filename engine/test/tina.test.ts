@@ -1,4 +1,4 @@
-// Stages 6+7: Tina's per-turn inspection, fixes and the report, on a fixture site built
+// Tina's per-turn inspection, fixes and the report, on a fixture site built
 // from the real Rivera staging. The demo Maps key is read from the staged copy at runtime
 // (never written in this file). Workspaces go to a temp TINI_PROJECTS_DIR.
 import { spawnSync } from "node:child_process";
@@ -168,7 +168,7 @@ ok(rep.fixed.length >= 4 && rep.fixed.every((l) => /\(turn \d+\)$/.test(l.why)),
 ok(rep.dataLeavesTo.includes("fonts.googleapis.com") && !rep.dataLeavesTo.includes("maps.googleapis.com"), "dataLeavesTo reflects the latest scan (maps gone after the fix)", JSON.stringify(rep.dataLeavesTo));
 const live = fs.readdirSync("recordings").filter((f) => f.endsWith("-live.jsonl")).sort().pop();
 if (live) {
-  console.log(`\n(5) buildReport on the Stage 4 live recording ${live}:`);
+  console.log(`\n(5) buildReport on a live recording ${live}:`);
   const lr = buildReport(eventsFromRecording(fs.readFileSync(path.join("recordings", live), "utf8")));
   for (const k of ["allowed", "blocked", "narrowed", "fixed"] as const) for (const l of lr[k]) console.log(`        ${k.padEnd(8)} ${l.what}  —  ${l.why}`);
   ok(lr.allowed.length >= 3 && lr.narrowed.some((l) => /turn 2/.test(l.why)), "live report: lines across turns 1 and 2");

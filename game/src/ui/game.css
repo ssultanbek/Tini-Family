@@ -1,6 +1,6 @@
-/* Game page (`/`) only: "Iris & Fog" chrome (docs/STYLE_GUIDE.md) around an unchanged yard; chat | yard | analysis.
+/* Game page (`/`) only: "Iris & Fog" chrome around an unchanged yard; chat | yard | analysis.
    Everything is scoped under .gv so the dashboard (the frozen fallback) never changes. */
-/* ===== "Iris & Fog" tokens (docs/STYLE_GUIDE.md). On body:has(.gv) too, so overlays can read them. ===== */
+/* ===== "Iris & Fog" tokens. On body:has(.gv) too, so overlays can read them. ===== */
 body:has(.app), .gv {
   --gv-page: #F6F5F9; --gv-card: #FFFFFF; --gv-soft: #EFEDF4; --gv-sunken: #F9F8FB;
   --gv-line: #E3E1EA; --gv-line-strong: #8F8B9E; --gv-ink: #1B1A24; --gv-muted: #5A5766; --gv-faint: #8F8B9E;
@@ -240,7 +240,7 @@ body:has(.app) {
 .gv .gv-pill.info { background: #33404b; color: #d6dee6; }
 
 /* ======================================================================================
-   "Iris & Fog" component rules (docs/STYLE_GUIDE.md §2). CSS only; the yard column is pinned above.
+   "Iris & Fog" component rules. CSS only; the yard column is pinned above.
    ====================================================================================== */
 
 /* Panels and cards */

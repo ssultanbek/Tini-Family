@@ -68,10 +68,13 @@ about $1.30). It needs:
 - Optional: `gitleaks` from Homebrew (Tina also runs her own secret patterns).
 
 ```bash
-cd game && npm install && npm run build
-cd engine && npm install && npm run engine -- --mode live --demo
-# open http://localhost:4000
+cd engine && npm install && npm run live
 ```
+
+`npm run live` builds the game if it changed, starts the engine with `--mode live --demo` on port
+4000 (serving the built game) and opens it in a Chrome app window. Ctrl+C stops it. To run the
+pieces by hand: `cd game && npm install && npm run build`, then
+`cd engine && npm run engine -- --mode live --demo` and open http://localhost:4000.
 
 `--demo` fires the simulated attack once in turn 1. The dog has a per-turn cost cap (default $2,
 `--turn-budget`) and a session cap (default $6, `--session-budget`). `--mode observe` is the
@@ -104,4 +107,3 @@ Tests: `cd engine && npm test` (fence guard), `npm run test:loop`, `npm run type
 | `demo-kit/` | Generates the fake demo world on the laptop. |
 | `landing/` | The public landing page. |
 | `scripts/` | `demo.sh`. |
-| `docs/` | Plan, status, verified API facts and the Devpost write-up. |

@@ -1,8 +1,8 @@
 // --mode live: the real crew, assembled piece by piece.
-//   Tini (Stage 3): planFence / stageFence / checkAccess / rewritePrompt
-//   Dog  (Stage 4): runner.ts, one Claude session across turns, plus the request door
-//   Escalation + harness (Stage 5): createEscalation, simulateAttack
-//   Tina (Stages 6-7): runInspection / applyFix in crew mode, buildReport, launch
+//   Tini: planFence / stageFence / checkAccess / rewritePrompt
+//   Dog: runner.ts, one Claude session across turns, plus the request door
+//   Escalation + harness: createEscalation, simulateAttack
+//   Tina: runInspection / applyFix in crew mode, buildReport, launch
 import type { Crew, CrewCtx } from "./crew.ts";
 import { simulateAttack } from "./harness.ts";
 import { isWebsite, openInFinder, serveSite, stopSite } from "./launcher.ts";
@@ -19,7 +19,7 @@ const DEMO_PAGES = "This is a timed demo, so work fast: keep it to 4 pages (a ho
   "Write the pages directly from what's in ./assets, keep the CSS simple, don't re-read files you have already written, " +
   "and finish with one quick check instead of a full link audit.";
 
-// The request door, replacing Stage 3's "say so in one sentence" line in the fence note.
+// The request door, replacing the stager's "say so in one sentence" line in the fence note.
 export const REQUEST_LINE = "Everything you were given is in ./assets. If you need a file or folder outside this workspace, don't try to open it: call request_access with the path and a one-line reason, then keep working.";
 export function withRequestDoor(fenceNote: string): string {
   const lines = fenceNote.split("\n");

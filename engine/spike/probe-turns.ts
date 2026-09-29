@@ -1,4 +1,4 @@
-// Stage 4 probe (cheap, ~$0.05): in one streaming-input session,
+// Probe (cheap, ~$0.05): in one streaming-input session,
 //  (1) is maxTurns per user turn or per session?  maxTurns=3, then two turns that
 //      each need 2 round-trips (4 in total). If it's per session, turn B errors with max_turns.
 //  (2) how does interrupt() show up in the stream, and does the session keep working after it?

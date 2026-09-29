@@ -1,6 +1,5 @@
 // Stand-in crew: realistic events with no Claude, no files, no AI calls, so the
-// turn loop can be tested end to end. Each function is replaced by the real module
-// in Stages 3-7. Covers: an agent escalation mid-turn (the dog keeps working while
+// turn loop can be tested end to end (live.ts uses the real modules instead). Covers: an agent escalation mid-turn (the dog keeps working while
 // it's open), prompt-sourced escalations for ~/ paths, one simulated attack block,
 // two reds in turn 1 with fixes, and all-green later turns. `speed` scales delays.
 import type { AccessReport, Finding, Segment } from "../../shared/events.ts";
@@ -128,7 +127,7 @@ export function standinCrew(speed = 1): Crew {
     },
 
     async access(ctx, text) {
-      // Same shape as the real Stage 3 check: code only, paths in the prompt vs the fence.
+      // Same shape as the real access check (tini/access.ts): code only, paths in the prompt vs the fence.
       await nap(300, speed, ctx.signal);
       const paths = [...text.matchAll(/~\/[^\s,;"'()]+/g)].map((m) => m[0].replace(/[.:!?]+$/, ""));
       return [...new Set(paths)].filter((p) => !FENCED_ROOTS.some((r) => p === r || p.startsWith(r + "/")));

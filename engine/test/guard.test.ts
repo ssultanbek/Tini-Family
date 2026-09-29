@@ -47,7 +47,7 @@ const cases: [string, any, boolean][] = [
   // HTML closing tags are not paths (live run: a spark on "/div" from grep "</div"); input redirects still are
   ["Bash", { command: `grep -c "</div>" index.html && grep -n '</section' about.html` }, true],
   ["Bash", { command: "cat </etc/passwd" }, false],
-  // teammate report: "</div" in a command became a /div block. Every shape Claude uses:
+  // "</div" in a command must not become a /div block. Every shape Claude uses:
   ["Bash", { command: "grep -c '</div' index.html gallery.html" }, true],
   ["Bash", { command: "echo '</div>' >> about.html" }, true],
   ["Bash", { command: "sed -i '' 's#</div>#</div>\\n#g' contact.html" }, true],
