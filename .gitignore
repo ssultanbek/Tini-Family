@@ -6,3 +6,4 @@ dist/
 
 # Internal notes (kept locally, not published)
 .internal/
+/CLAUDE.md
